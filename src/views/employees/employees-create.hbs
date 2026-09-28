@@ -1,0 +1,107 @@
+<div class="modal-header">
+  <h5 class="modal-title">Thêm nhân sự</h5>
+  </button>
+</div>
+
+<form action="/employees/create" method="POST">
+  <div class="modal-body">
+    <div class="mb-3">
+      <label for="employee_code" class="form-label">
+        Mã nhân sự
+        <span class="text-danger">*</span>
+      </label>
+
+      <input
+        type="text"
+        class="form-control"
+        id="employee_code"
+        name="employee_code"
+        placeholder="Ví dụ: NV001"
+        required
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="full_name" class="form-label">
+        Họ và tên
+        <span class="text-danger">*</span>
+      </label>
+
+      <input
+        type="text"
+        class="form-control"
+        id="full_name"
+        name="full_name"
+        placeholder="Ví dụ: Nguyễn Văn An"
+        required
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="department_id" class="form-label">
+        Phòng ban
+      </label>
+
+      <select class="form-select" id="department_id" name="department_id">
+        <option value="">-- Chọn phòng ban --</option>
+        {{#each departments}}
+          <option value="{{this.department_id}}">
+            {{this.department_name}}
+          </option>
+        {{/each}}
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="position" class="form-label">
+        Chức vụ
+      </label>
+
+      <input
+        type="text"
+        class="form-control"
+        id="position"
+        name="position"
+        placeholder="Ví dụ: Nhân viên IT"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="phone" class="form-label">
+        Số điện thoại
+      </label>
+
+      <input
+        type="text"
+        class="form-control"
+        id="phone"
+        name="phone"
+        placeholder="Ví dụ: 0987654321"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="email" class="form-label">
+        Email
+      </label>
+
+      <input
+        type="email"
+        class="form-control"
+        id="email"
+        name="email"
+        placeholder="Ví dụ: an@gmail.com"
+      />
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+      Hủy
+    </button>
+
+    <button type="submit" class="btn btn-primary">
+      Thêm nhân sự
+    </button>
+  </div>
+</form>

@@ -1,0 +1,221 @@
+<form action="/assets/{{asset.asset_id}}/update" method="POST">
+  <div class="modal-header">
+    <h5 class="modal-title">Sửa tài sản</h5>
+  </div>
+
+  <div class="modal-body">
+    <h6 class="mb-3">Thông tin cơ bản</h6>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="asset_code" class="form-label">
+          Mã tài sản <span class="text-danger">*</span>
+        </label>
+
+        <input
+          type="text"
+          class="form-control"
+          id="asset_code"
+          name="asset_code"
+          value="{{asset.asset_code}}"
+          required
+        />
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label for="asset_name" class="form-label">
+          Tên tài sản <span class="text-danger">*</span>
+        </label>
+
+        <input
+          type="text"
+          class="form-control"
+          id="asset_name"
+          name="asset_name"
+          value="{{asset.asset_name}}"
+          required
+        />
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label for="category_id" class="form-label">
+          Danh mục <span class="text-danger">*</span>
+        </label>
+
+        <select
+          class="form-select"
+          id="category_id"
+          name="category_id"
+          required
+        >
+          <option value="">-- Chọn danh mục --</option>
+          {{#each categories}}
+            <option
+              value="{{this.category_id}}"
+              {{#if (eq this.category_id ../asset.category_id)}}selected{{/if}}
+            >
+              {{this.category_name}}
+            </option>
+          {{/each}}
+        </select>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label for="serial_number" class="form-label">
+          Số sê-ri <span class="text-danger">*</span>
+        </label>
+
+        <input
+          type="text"
+          class="form-control"
+          id="serial_number"
+          name="serial_number"
+          value="{{asset.serial_number}}"
+          required
+        />
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label for="purchase_date" class="form-label">
+          Ngày mua <span class="text-danger">*</span>
+        </label>
+
+        <input
+          type="date"
+          class="form-control"
+          id="purchase_date"
+          name="purchase_date"
+          value="{{asset.purchase_date}}"
+          required
+        />
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label for="original_cost" class="form-label">
+          Nguyên giá (VNĐ) <span class="text-danger">*</span>
+        </label>
+
+        <input
+          type="number"
+          class="form-control"
+          id="original_cost"
+          name="original_cost"
+          value="{{asset.original_cost}}"
+          min="0"
+          required
+        />
+      </div>
+    </div>
+    <hr />
+
+    <h6 class="mb-3">Vị trí và sử dụng</h6>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="location" class="form-label">
+          Vị trí <span class="text-danger">*</span>
+        </label>
+
+        <input
+          type="text"
+          class="form-control"
+          id="location"
+          name="location"
+          value="{{asset.location}}"
+          required
+        />
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label for="department_id" class="form-label">
+          Phòng ban <span class="text-danger">*</span>
+        </label>
+
+        <select
+          class="form-select"
+          id="department_id"
+          name="department_id"
+          required
+        >
+          <option value="">-- Chọn phòng ban --</option>
+
+          {{#each departments}}
+            <option
+              value="{{this.department_id}}"
+              {{#if (eq this.department_id ../asset.department_id)}}selected{{/if}}
+            >
+              {{this.department_name}}
+            </option>
+          {{/each}}
+        </select>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label for="employee_id" class="form-label">
+          Nhân sự sử dụng <span class="text-danger">*</span>
+        </label>
+
+        <select
+          class="form-select"
+          id="employee_id"
+          name="employee_id"
+          required
+        >
+          <option value="">-- Chọn nhân sự --</option>
+          {{#each employees}}
+            <option
+              value="{{this.employee_id}}"
+              {{#if (eq this.employee_id ../asset.employee_id)}}selected{{/if}}
+            >
+              {{this.full_name}}
+            </option>
+          {{/each}}
+        </select>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label for="status" class="form-label">
+          Trạng thái <span class="text-danger">*</span>
+        </label>
+
+        <select
+          class="form-select"
+          id="status"
+          name="status"
+          required
+        >
+          <option value="in_stock" {{#if (eq asset.status "in_stock")}}selected{{/if}}>
+            Trong kho
+          </option>
+          <option value="in_use" {{#if (eq asset.status "in_use")}}selected{{/if}}>
+            Đang sử dụng
+          </option>
+          <option value="maintenance" {{#if (eq asset.status "maintenance")}}selected{{/if}}>
+            Đang bảo trì
+          </option>
+        </select>
+      </div>
+
+      <div class="col-12 mb-3">
+        <label for="description" class="form-label">
+          Ghi chú
+        </label>
+
+        <textarea
+          class="form-control"
+          id="description"
+          name="description"
+          rows="3"
+        >{{asset.description}}</textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <a href="/assets" class="btn btn-secondary">
+      Hủy
+    </a>
+
+    <button type="submit" class="btn btn-primary">
+      Lưu thay đổi
+    </button>
+  </div>
+</form>

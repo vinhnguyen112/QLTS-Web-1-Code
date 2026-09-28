@@ -1,0 +1,61 @@
+<form action="/categories" method="POST">
+  <div class="modal-header">
+    <h5 class="modal-title">
+      Thêm danh mục tài sản
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal">
+    </button>
+  </div>
+
+  <div class="modal-body">
+    <div class="mb-3">
+      <label for="category_code" class="form-label">
+        Mã danh mục
+      </label>
+      <input
+        type="text"
+        class="form-control"
+        id="category_code"
+        name="category_code"
+        placeholder="Ví dụ: DM001"
+        required
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="category_name" class="form-label">
+        Tên danh mục
+      </label>
+      <input
+        type="text"
+        class="form-control"
+        id="category_name"
+        name="category_name"
+        placeholder="Ví dụ: Máy tính"
+        required
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="description" class="form-label">
+        Mô tả
+      </label>
+      <textarea
+        class="form-control"
+        id="description"
+        name="description"
+        rows="3"
+        placeholder="Nhập mô tả danh mục"
+      ></textarea>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+      Hủy
+    </button>
+    <button type="submit" class="btn btn-primary">
+      Lưu danh mục
+    </button>
+  </div>
+</form>

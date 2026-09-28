@@ -1,0 +1,207 @@
+<form action="/assets" method="POST">
+  <div class="modal-header">
+    <h5 class="modal-title">Thêm tài sản</h5>
+  </div>
+  <div class="modal-body">
+    <h6 class="mb-3">Thông tin cơ bản</h6>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="asset_code" class="form-label">
+          Mã tài sản
+          <span class="text-danger">*</span>
+        </label>
+
+        <input
+          type="text"
+          class="form-control"
+          id="asset_code"
+          name="asset_code"
+          placeholder="Ví dụ: TS001"
+          required
+        />
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="asset_name" class="form-label">
+          Tên tài sản
+          <span class="text-danger">*</span>
+        </label>
+
+        <input
+          type="text"
+          class="form-control"
+          id="asset_name"
+          name="asset_name"
+          placeholder="Ví dụ: Laptop Dell"
+          required
+        />
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label for="category_id" class="form-label">
+          Danh mục
+          <span class="text-danger">*</span>
+        </label>
+        <select
+          class="form-select"
+          id="category_id"
+          name="category_id"
+          required
+        >
+          <option value="">-- Chọn danh mục --</option>
+          {{#each categories}}
+            <option value="{{this.category_id}}">
+              {{this.category_name}}
+            </option>
+          {{/each}}
+        </select>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label for="serial_number" class="form-label">
+          Số sê-ri
+          <span class="text-danger">*</span>
+        </label>
+
+        <input
+          type="text"
+          class="form-control"
+          id="serial_number"
+          name="serial_number"
+          placeholder="Ví dụ: SN123456"
+          required
+        />
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label for="purchase_date" class="form-label">
+          Ngày mua
+          <span class="text-danger">*</span>
+        </label>
+
+        <input
+          type="date"
+          class="form-control"
+          id="purchase_date"
+          name="purchase_date"
+          required
+        />
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label for="original_cost" class="form-label">
+          Nguyên giá (VNĐ)
+          <span class="text-danger">*</span>
+        </label>
+
+        <input
+          type="number"
+          class="form-control"
+          id="original_cost"
+          name="original_cost"
+          placeholder="Ví dụ: 15000000"
+          min="0"
+          required
+        />
+      </div>
+    </div>
+    <hr />
+    <h6 class="mb-3">Vị trí và sử dụng</h6>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="location" class="form-label">
+          Vị trí
+          <span class="text-danger">*</span>
+        </label>
+        <input
+          type="text"
+          class="form-control"
+          id="location"
+          name="location"
+          placeholder="Ví dụ: Phòng CNTT"
+          required
+        />
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label for="department_id" class="form-label">
+          Phòng ban
+          <span class="text-danger">*</span>
+        </label>
+
+        <select
+          class="form-select"
+          id="department_id"
+          name="department_id"
+          required
+        >
+          <option value="">-- Chọn phòng ban --</option>
+          {{#each departments}}
+            <option value="{{this.department_id}}">
+              {{this.department_name}}
+            </option>
+          {{/each}}
+        </select>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label for="employee_id" class="form-label">
+          Nhân sự sử dụng
+          <span class="text-danger">*</span>
+        </label>
+        <select
+          class="form-select"
+          id="employee_id"
+          name="employee_id"
+          required
+        >
+          <option value="">-- Chọn nhân sự --</option>
+          {{#each employees}}
+            <option value="{{this.employee_id}}">
+              {{this.full_name}}
+            </option>
+          {{/each}}
+        </select>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label for="status" class="form-label">
+          Trạng thái
+          <span class="text-danger">*</span>
+        </label>
+        <select class="form-select" id="status" name="status" required>
+          <option value="in_stock" selected>
+            Trong kho
+          </option>
+          <option value="in_use">
+            Đang sử dụng
+          </option>
+          <option value="maintenance">
+            Đang bảo trì
+          </option>
+        </select>
+      </div>
+      <div class="col-12 mb-3">
+        <label for="description" class="form-label">
+          Ghi chú
+        </label>
+
+        <textarea
+          class="form-control"
+          id="description"
+          name="description"
+          rows="3"
+          placeholder="Ghi chú thêm về tài sản..."
+        ></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <a href="/assets" class="btn btn-secondary">
+      Hủy
+    </a>
+    <button type="submit" class="btn btn-primary">
+      Lưu
+    </button>
+  </div>
+</form>

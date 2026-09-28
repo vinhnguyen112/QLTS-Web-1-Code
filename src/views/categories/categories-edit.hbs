@@ -1,0 +1,58 @@
+<form action="/categories/{{category.category_id}}/update" method="POST">
+  <div class="modal-header">
+    <h5 class="modal-title">
+      Sửa danh mục tài sản
+    </h5>
+  </div>
+
+  <div class="modal-body">
+    <div class="mb-3">
+      <label for="category_code" class="form-label">
+        Mã danh mục
+      </label>
+
+      <input
+        type="text"
+        class="form-control"
+        id="category_code"
+        name="category_code"
+        value="{{category.category_code}}"
+      />
+
+    </div>
+
+    <div class="mb-3">
+      <label for="category_name" class="form-label">
+        Tên danh mục
+      </label>
+      <input
+        type="text"
+        class="form-control"
+        id="category_name"
+        name="category_name"
+        value="{{category.category_name}}"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="description" class="form-label">
+        Mô tả
+      </label>
+      <textarea
+        class="form-control"
+        id="description"
+        name="description"
+        rows="3"
+      >{{category.description}}</textarea>
+    </div>
+
+  </div>
+  <div class="modal-footer">
+    <a href="/categories" class="btn btn-secondary">
+      Hủy
+    </a>
+    <button type="submit" class="btn btn-primary">
+      Cập nhật danh mục
+    </button>
+  </div>
+</form>

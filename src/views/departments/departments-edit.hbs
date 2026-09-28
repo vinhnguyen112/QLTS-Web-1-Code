@@ -1,0 +1,56 @@
+<div class="modal-header">
+  <h5 class="modal-title">Chỉnh sửa phòng ban</h5>
+</div>
+
+<div class="modal-body">
+  <div class="mb-3">
+    <label class="form-label">
+      Mã phòng ban
+    </label>
+
+    <input
+      type="text"
+      name="department_code"
+      class="form-control"
+      value="{{department.department_code}}"
+      required
+    />
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">
+      Tên phòng ban
+    </label>
+
+    <input
+      type="text"
+      name="department_name"
+      class="form-control"
+      value="{{department.department_name}}"
+      required
+    />
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">
+      Mô tả
+    </label>
+
+    <textarea
+      name="description"
+      class="form-control"
+      rows="3"
+    >{{department.description}}</textarea>
+  </div>
+
+</div>
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+    Hủy
+  </button>
+
+  <button type="submit" class="btn btn-primary">
+    Lưu thay đổi
+  </button>
+</div>
