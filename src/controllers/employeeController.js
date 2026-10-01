@@ -2,7 +2,7 @@ const db = require("../config/db");
 
 const employeeController = {
   async index(req, res) {
-    const employeeSql = `
+    let employeeSql = `
       SELECT
         e.employee_id,
         e.employee_code,
@@ -15,6 +15,15 @@ const employeeController = {
         ON e.department_id = d.department_id
       LEFT JOIN assets a
         ON e.employee_id = a.employee_id
+    `;
+
+    const name = req.query.name;
+
+    if (name) {
+      employeeSql += ` WHERE e.full_name LIKE ? OR e.employee_code LIKE ?`;
+    }
+
+    employeeSql += `
       GROUP BY
         e.employee_id,
         e.employee_code,
@@ -33,13 +42,17 @@ const employeeController = {
     `;
 
     try {
-      const [employees] = await db.query(employeeSql);
+      const [employees] = await db.query(
+        employeeSql,
+        name ? [`%${name}%`, `%${name}%`] : []
+      );
       const [departments] = await db.query(departmentSql);
 
       res.render("employees/index", {
         title: "Nhân sự",
         employees,
         departments,
+        searchName: name || "",
       });
     } catch (error) {
       console.log(error);

@@ -2,22 +2,33 @@ const db = require("../config/db");
 
 const categoryController = {
   async index(req, res) {
-    const sql = `
+    let sql = `
       SELECT
         category_id,
         category_code,
         category_name,
         description
       FROM categories
-      ORDER BY category_id ASC
     `;
 
+    const name = req.query.name;
+
+    if (name) {
+      sql += ` WHERE category_name LIKE ? OR category_code LIKE ?`;
+    }
+
+    sql += ` ORDER BY category_id ASC`;
+
     try {
-      const [categories] = await db.query(sql);
+      const [categories] = await db.query(
+        sql,
+        name ? [`%${name}%`, `%${name}%`] : []
+      );
 
       res.render("categories/index", {
         title: "Danh mục tài sản",
-        categories: categories,
+        categories,
+        searchName: name || "",
       });
     } catch (err) {
       console.log("Lỗi lấy danh sách danh mục:", err);
@@ -115,7 +126,24 @@ const categoryController = {
     console.log("Lỗi cập nhật danh mục:", err);
     res.status(500).send("Lỗi cập nhật danh mục: " + err.message);
   }
-}
+},
+  async delete(req, res) {
+    const { id } = req.params;
+
+    const sql = `
+      DELETE FROM categories
+      WHERE category_id = ?
+    `;
+
+    try {
+      await db.query(sql, [id]);
+
+      res.redirect("/categories");
+    } catch (err) {
+      console.log("Lỗi xóa danh mục:", err);
+      res.status(500).send("Lỗi xóa danh mục: " + err.message);
+    }
+  }
 };
 
 module.exports = categoryController;

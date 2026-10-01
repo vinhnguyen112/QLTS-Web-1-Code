@@ -2,30 +2,43 @@ const db = require("../config/db");
 
 const departmentController = {
   async index(req, res) {
-    const sql = `
-    SELECT
+    let sql = `
+      SELECT
         d.department_id,
         d.department_code,
         d.department_name,
         d.description,
         COUNT(e.employee_id) AS employee_count
-    FROM departments d
-    LEFT JOIN employees e
+      FROM departments d
+      LEFT JOIN employees e
         ON d.department_id = e.department_id
-    GROUP BY
+    `;
+
+    const name = req.query.name;
+
+    if (name) {
+      sql += ` WHERE d.department_name LIKE ? OR d.department_code LIKE ?`;
+    }
+
+    sql += `
+      GROUP BY
         d.department_id,
         d.department_code,
         d.department_name,
         d.description
-    ORDER BY d.department_id ASC
-`;
+      ORDER BY d.department_id ASC
+    `;
 
     try {
-      const [departments] = await db.query(sql);
+      const [departments] = await db.query(
+        sql,
+        name ? [`%${name}%`, `%${name}%`] : []
+      );
 
       res.render("departments/index", {
         title: "Phòng ban",
         departments,
+        searchName: name || "",
       });
     } catch (error) {
       console.log(error);

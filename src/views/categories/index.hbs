@@ -1,97 +1,79 @@
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h3 class="mb-1">Danh mục tài sản</h3>
-            <p class="text-secondary mb-0">
-                Quản lý các danh mục tài sản trong hệ thống
-            </p>
+  <div class="card">
+    <div class="card-header bg-white py-3">
+      <div class="row align-items-center g-2">
+        <div class="col">
+          <h5 class="mb-0">Danh mục tài sản</h5>
+          <small class="text-muted">Quản lý các danh mục tài sản trong hệ thống</small>
         </div>
 
-        <button type="button"
-                class="btn btn-primary "
-                data-bs-toggle="modal"
-                data-bs-target="#addCategoryModal">
-            Thêm danh mục
-        </button>
-    </div>
-
-  <div class="card mb-4">
-    <div class="card-body">
-      <div class="row g-3">
-        <div class="col-md-7">
-          <label class="form-label">
-            Tìm kiếm
-          </label>
-          <input
-            type="text"
-            class="form-control"
-            placeholder="Mã danh mục hoặc tên danh mục..."
-          />
-        </div>
-
-        <div class="col-md-4">
-          <label class="form-label">
-            Danh mục
-          </label>
-          <select class="form-select">
-            <option selected>Tất cả danh mục</option>
-            <option>Máy tính</option>
-            <option>Máy in</option>
-            <option>Thiết bị văn phòng</option>
-          </select>
-        </div>
-
-        <div class="col-md-1 d-flex align-items-end">
-          <button class="btn btn-secondary w-100">
-            Lọc
-          </button>
+        <div class="col-auto d-flex align-items-center gap-2">
+          <form action="" method="get" class="m-0" role="search">
+            <div class="input-group">
+              <input
+                type="text"
+                name="name"
+                class="form-control"
+                value="{{searchName}}"
+                placeholder="Tìm danh mục..."
+              />
+              <button class="btn btn-secondary" type="submit">Lọc</button>
+            </div>
+          </form>
+          <button
+            type="button"
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#addCategoryModal"
+          >Thêm danh mục</button>
         </div>
       </div>
     </div>
-  </div>
 
-    <div class="card">
-        <div class="card-header">
-            Danh sách danh mục tài sản
-        </div>
-
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead>
-                    <tr>
-                        <th>STT</th>
-                        <th>Mã danh mục</th>
-                        <th>Tên danh mục</th>
-                        <th>Mô tả</th>
-                        <th>Thao tác</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                      {{#each categories}}
-                    <tr>
-                        <td>{{@index}}</td>
-                        <td>{{this.category_code}}</td>
-                        <td>{{this.category_name}}</td>
-                        <td>{{this.description}}</td>
-                        <td>
-                            <a href="/categories/{{this.category_id}}/edit" class="btn btn-sm btn-warning"> Sửa </a>
-                            <button class="btn btn-sm btn-danger"> Xóa</button>
-                        </td>
-                    </tr>
-                    {{/each}}
-                </tbody>
-            </table>
-        </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>STT</th>
+            <th>Mã danh mục</th>
+            <th>Tên danh mục</th>
+            <th>Mô tả</th>
+            <th class="text-center">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each categories}}
+            <tr>
+              <td>{{addOne @index}}</td>
+              <td>{{this.category_code}}</td>
+              <td>{{this.category_name}}</td>
+              <td>{{this.description}}</td>
+              <td>
+                <div class="d-flex justify-content-center gap-1">
+                  <a href="/categories/{{this.category_id}}/edit" class="btn btn-sm btn-warning">Sửa</a>
+                  <form
+                    action="/categories/{{this.category_id}}/delete"
+                    method="POST"
+                    class="m-0"
+                    onsubmit="return confirm('Bạn có chắc chắn muốn xóa danh mục này không?');"
+                  >
+                    <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
     </div>
+
+  </div>
 </div>
 
-<div class="modal fade"
-     id="addCategoryModal"
-     tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            {{> categories-create}}
-        </div>
+<div class="modal fade" id="addCategoryModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      {{> categories-create}}
     </div>
+  </div>
 </div>

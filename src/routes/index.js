@@ -16,6 +16,7 @@ router.get("/assets", assetController.index);
 router.get("/assets/create", assetController.createForm);
 router.post("/assets", assetController.create);
 router.get("/assets/:id/edit", assetController.edit);
+router.get("/assets/:id", assetController.show);
 router.post("/assets/:id/update", assetController.update);
 router.post("/assets/:id/delete", assetController.delete);
 
@@ -23,6 +24,7 @@ router.get("/categories", categoryController.index);
 router.post("/categories", categoryController.create);
 router.get("/categories/:id/edit", categoryController.edit);
 router.post("/categories/:id/update", categoryController.update);
+router.post("/categories/:id/delete", categoryController.delete);
 
 router.get("/departments", departmentController.index);
 router.post("/departments/create", departmentController.create);
@@ -35,4 +37,6 @@ router.post("/employees/create", employeeController.create);
 router.get("/employees/:id/edit", employeeController.edit);
 router.post("/employees/:id/update", employeeController.update);
 router.post("/employees/:id/delete", employeeController.delete);
+
+
 module.exports = router;
