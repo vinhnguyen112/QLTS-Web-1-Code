@@ -50,6 +50,7 @@
               <td>{{this.description}}</td>
               <td>
                 <div class="d-flex justify-content-center gap-1">
+                  <a href="/categories/{{this.category_id}}" class="btn btn-sm btn-info">Xem</a>
                   <a href="/categories/{{this.category_id}}/edit" class="btn btn-sm btn-warning">Sửa</a>
                   <form
                     action="/categories/{{this.category_id}}/delete"

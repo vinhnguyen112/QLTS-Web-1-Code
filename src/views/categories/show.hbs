@@ -1,0 +1,50 @@
+<div class="container-fluid">
+    <div class="mb-4">
+        <h3 class="mb-1">Chi tiết danh mục</h3>
+        <p class="text-secondary mb-0">
+            Thông tin chi tiết của danh mục tài sản
+        </p>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            Thông tin danh mục
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <strong>Mã danh mục:</strong>
+                    <div>{{category.category_code}}</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <strong>Tên danh mục:</strong>
+                    <div>{{category.category_name}}</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <strong>Số lượng tài sản:</strong>
+                    <div>{{category.asset_count}}</div>
+                </div>
+                <div class="col-12 mb-3">
+                    <strong>Mô tả:</strong>
+                    <div>{{#if category.description}}
+                            {{category.description}}
+                        {{else}}
+                            <span class="text-muted">Chưa có mô tả</span>
+                        {{/if}}
+                    </div>
+                </div>
+            </div>
+            <div class="mt-3">
+                <a href="/categories"
+                   class="btn btn-secondary">
+                    Quay lại
+                </a>
+                <a href="/categories/{{category.category_id}}/edit"
+                   class="btn btn-warning">
+                    Sửa danh mục
+                </a>
+            </div>
+            
+        </div>
+    </div>
+</div>

@@ -94,6 +94,53 @@ const employeeController = {
     }
   },
 
+  // Xem chi tiết nhân sự
+  async show(req, res) {
+    const id = req.params.id;
+
+    const sql = `
+      SELECT
+        e.employee_id,
+        e.employee_code,
+        e.full_name,
+        e.position,
+        e.phone,
+        e.email,
+        d.department_name,
+        COUNT(a.asset_id) AS asset_count
+      FROM employees e
+      LEFT JOIN departments d
+        ON e.department_id = d.department_id
+      LEFT JOIN assets a
+        ON e.employee_id = a.employee_id
+      WHERE e.employee_id = ?
+      GROUP BY
+        e.employee_id,
+        e.employee_code,
+        e.full_name,
+        e.position,
+        e.phone,
+        e.email,
+        d.department_name
+    `;
+
+    try {
+      const [rows] = await db.query(sql, [id]);
+
+      if (rows.length === 0) {
+        return res.status(404).send("Không tìm thấy nhân sự");
+      }
+
+      res.render("employees/show", {
+        title: "Chi tiết nhân sự",
+        employee: rows[0],
+      });
+    } catch (error) {
+      console.log("Lỗi xem chi tiết nhân sự:", error);
+      res.status(500).send("Lỗi cơ sở dữ liệu");
+    }
+  },
+
   async edit(req, res) {
     const id = req.params.id;
 

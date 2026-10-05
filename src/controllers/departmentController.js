@@ -65,6 +65,48 @@ const departmentController = {
     }
   },
 
+  // Xem chi tiết phòng ban
+  async show(req, res) {
+    const id = req.params.id;
+
+    const sql = `
+      SELECT
+        d.department_id,
+        d.department_code,
+        d.department_name,
+        d.description,
+        COUNT(DISTINCT e.employee_id) AS employee_count,
+        COUNT(DISTINCT a.asset_id) AS asset_count
+      FROM departments d
+      LEFT JOIN employees e
+        ON d.department_id = e.department_id
+      LEFT JOIN assets a
+        ON d.department_id = a.department_id
+      WHERE d.department_id = ?
+      GROUP BY
+        d.department_id,
+        d.department_code,
+        d.department_name,
+        d.description
+    `;
+
+    try {
+      const [rows] = await db.query(sql, [id]);
+
+      if (rows.length === 0) {
+        return res.status(404).send("Không tìm thấy phòng ban");
+      }
+
+      res.render("departments/show", {
+        title: "Chi tiết phòng ban",
+        department: rows[0],
+      });
+    } catch (error) {
+      console.log("Lỗi xem chi tiết phòng ban:", error);
+      res.status(500).send("Lỗi cơ sở dữ liệu");
+    }
+  },
+
   async edit(req, res) {
     const id = req.params.id;
 

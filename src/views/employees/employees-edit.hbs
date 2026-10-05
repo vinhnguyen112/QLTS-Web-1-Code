@@ -44,6 +44,25 @@
             />
           </div>
 
+          <!-- Phòng ban -->
+          <div class="col-md-6 mb-3">
+            <label for="department_id" class="form-label">
+              Phòng ban
+            </label>
+
+            <select class="form-select" id="department_id" name="department_id">
+              <option value="">-- Chọn phòng ban --</option>
+              {{#each departments}}
+                <option
+                  value="{{this.department_id}}"
+                  {{#if (eq this.department_id ../employee.department_id)}}selected{{/if}}
+                >
+                  {{this.department_name}}
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
           <!-- Chức vụ -->
           <div class="col-md-6 mb-3">
             <label for="position" class="form-label">

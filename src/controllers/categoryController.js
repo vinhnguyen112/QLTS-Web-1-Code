@@ -63,6 +63,45 @@ const categoryController = {
     }
   },
 
+  // Xem chi tiết danh mục
+  async show(req, res) {
+    const { id } = req.params;
+
+    const sql = `
+      SELECT
+        c.category_id,
+        c.category_code,
+        c.category_name,
+        c.description,
+        COUNT(a.asset_id) AS asset_count
+      FROM categories c
+      LEFT JOIN assets a
+        ON c.category_id = a.category_id
+      WHERE c.category_id = ?
+      GROUP BY
+        c.category_id,
+        c.category_code,
+        c.category_name,
+        c.description
+    `;
+
+    try {
+      const [rows] = await db.query(sql, [id]);
+
+      if (rows.length === 0) {
+        return res.status(404).send("Không tìm thấy danh mục");
+      }
+
+      res.render("categories/show", {
+        title: "Chi tiết danh mục tài sản",
+        category: rows[0],
+      });
+    } catch (err) {
+      console.log("Lỗi xem chi tiết danh mục:", err);
+      res.status(500).send("Lỗi cơ sở dữ liệu");
+    }
+  },
+
   async edit(req, res) {
   const { id } = req.params;
 

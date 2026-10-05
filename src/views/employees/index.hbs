@@ -55,6 +55,7 @@
               <td>{{this.asset_count}}</td>
               <td>
                 <div class="d-flex justify-content-center gap-1">
+                  <a href="/employees/{{this.employee_id}}" class="btn btn-sm btn-info">Xem</a>
                   <a href="/employees/{{this.employee_id}}/edit" class="btn btn-sm btn-warning">Sửa</a>
                   <form
                     action="/employees/{{this.employee_id}}/delete"
