@@ -33,23 +33,23 @@ const assetController = {
     const name = req.query.name || "";
 
     const sql = `
-    SELECT
-      a.asset_id,
-      a.asset_code,
-      a.asset_name,
-      c.category_name,
-      d.department_name,
-      a.original_cost,
-      a.status
-    FROM assets a
-    LEFT JOIN categories c
-      ON a.category_id = c.category_id
-    LEFT JOIN departments d
-      ON a.department_id = d.department_id
-    WHERE a.asset_name LIKE ?
-       OR a.asset_code LIKE ?
-    ORDER BY a.asset_id ASC
-  `;
+      SELECT
+        a.asset_id,
+        a.asset_code,
+        a.asset_name,
+        c.category_name,
+        d.department_name,
+        a.original_cost,
+        a.status
+      FROM assets a
+      LEFT JOIN categories c
+        ON a.category_id = c.category_id
+      LEFT JOIN departments d
+        ON a.department_id = d.department_id
+      WHERE a.asset_name LIKE ?
+         OR a.asset_code LIKE ?
+      ORDER BY a.asset_id ASC
+    `;
 
     try {
       const [assets] = await db.query(sql, [`%${name}%`, `%${name}%`]);
@@ -66,6 +66,7 @@ const assetController = {
       });
     } catch (err) {
       console.log("Lỗi lấy tài sản:", err);
+      res.status(500).send("Đã xảy ra lỗi khi lấy danh sách tài sản");
     }
   },
 
@@ -110,6 +111,7 @@ const assetController = {
       });
     } catch (err) {
       console.log("Lỗi lấy chi tiết tài sản:", err);
+      res.status(500).send("Đã xảy ra lỗi khi lấy chi tiết tài sản");
     }
   },
 
@@ -164,6 +166,7 @@ const assetController = {
       res.redirect("/assets");
     } catch (err) {
       console.log("Lỗi thêm tài sản:", err);
+      res.status(500).send("Đã xảy ra lỗi khi thêm tài sản");
     }
   },
 
@@ -205,6 +208,7 @@ const assetController = {
       });
     } catch (err) {
       console.log("Lỗi lấy tài sản:", err);
+      res.status(500).send("Đã xảy ra lỗi khi lấy thông tin tài sản");
     }
   },
 
@@ -262,6 +266,7 @@ const assetController = {
       res.redirect("/assets");
     } catch (err) {
       console.log("Lỗi cập nhật tài sản:", err);
+      res.status(500).send("Đã xảy ra lỗi khi cập nhật tài sản");
     }
   },
 
@@ -275,6 +280,7 @@ const assetController = {
       res.redirect("/assets");
     } catch (err) {
       console.log("Lỗi xóa tài sản:", err);
+      res.status(500).send("Đã xảy ra lỗi khi xóa tài sản");
     }
   },
 };

@@ -2,57 +2,57 @@
   <h5 class="modal-title">Thêm phòng ban</h5>
 </div>
 
-<form action="/departments/create" method="POST">
-<div class="modal-body">
-  <div class="mb-3">
-    <label class="form-label">
-      Mã phòng ban
-    </label>
+<form action="/departments" method="POST">
+  <div class="modal-body">
+    <div class="mb-3">
+      <label class="form-label">
+        Mã phòng ban
+      </label>
 
-    <input
-      type="text"
-      name="department_code"
-      class="form-control"
-      placeholder="VD: PB001"
-      required
-    />
+      <input
+        type="text"
+        name="department_code"
+        class="form-control"
+        placeholder="VD: PB001"
+        required
+      />
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">
+        Tên phòng ban
+      </label>
+
+      <input
+        type="text"
+        name="department_name"
+        class="form-control"
+        placeholder="VD: Phòng Công nghệ thông tin"
+        required
+      />
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">
+        Mô tả
+      </label>
+
+      <textarea
+        name="description"
+        class="form-control"
+        rows="3"
+        placeholder="Nhập mô tả..."
+      ></textarea>
+    </div>
   </div>
 
-  <div class="mb-3">
-    <label class="form-label">
-      Tên phòng ban
-    </label>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+      Hủy
+    </button>
 
-    <input
-      type="text"
-      name="department_name"
-      class="form-control"
-      placeholder="VD: Phòng Công nghệ thông tin"
-      required
-    />
+    <button type="submit" class="btn btn-primary">
+      Thêm phòng ban
+    </button>
   </div>
-
-  <div class="mb-3">
-    <label class="form-label">
-      Mô tả
-    </label>
-
-    <textarea
-      name="description"
-      class="form-control"
-      rows="3"
-      placeholder="Nhập mô tả..."
-    ></textarea>
-  </div>
-</div>
-
-<div class="modal-footer">
-  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-    Hủy
-  </button>
-
-  <button type="submit" class="btn btn-primary">
-    Thêm phòng ban
-  </button>
-</div>
 </form>

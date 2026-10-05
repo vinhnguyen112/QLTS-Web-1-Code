@@ -1,8 +1,11 @@
 const db = require("../config/db");
 
 const employeeController = {
+  // Danh sách nhân sự
   async index(req, res) {
-    let employeeSql = `
+    const name = req.query.name || "";
+
+    const sql = `
       SELECT
         e.employee_id,
         e.employee_code,
@@ -15,15 +18,8 @@ const employeeController = {
         ON e.department_id = d.department_id
       LEFT JOIN assets a
         ON e.employee_id = a.employee_id
-    `;
-
-    const name = req.query.name;
-
-    if (name) {
-      employeeSql += ` WHERE e.full_name LIKE ? OR e.employee_code LIKE ?`;
-    }
-
-    employeeSql += `
+      WHERE e.full_name LIKE ?
+         OR e.employee_code LIKE ?
       GROUP BY
         e.employee_id,
         e.employee_code,
@@ -42,31 +38,29 @@ const employeeController = {
     `;
 
     try {
-      const [employees] = await db.query(
-        employeeSql,
-        name ? [`%${name}%`, `%${name}%`] : []
-      );
+      const [employees] = await db.query(sql, [`%${name}%`, `%${name}%`]);
+
       const [departments] = await db.query(departmentSql);
 
       res.render("employees/index", {
         title: "Nhân sự",
         employees,
         departments,
-        searchName: name || "",
+        searchName: name,
       });
-    } catch (error) {
-      console.log(error);
-      res.redirect("/");
+    } catch (err) {
+      console.log("Lỗi lấy nhân sự:", err);
+      res.status(500).send("Đã xảy ra lỗi khi lấy danh sách nhân sự");
     }
   },
 
+  // Thêm nhân sự
   async create(req, res) {
     const { employee_code, full_name, department_id, position, phone, email } =
       req.body;
 
     const sql = `
-      INSERT INTO employees
-      (
+      INSERT INTO employees (
         employee_code,
         full_name,
         department_id,
@@ -90,13 +84,13 @@ const employeeController = {
       res.redirect("/employees");
     } catch (err) {
       console.log("Lỗi thêm nhân sự:", err);
-      res.status(500).send("Lỗi cơ sở dữ liệu");
+      res.status(500).send("Đã xảy ra lỗi khi thêm nhân sự");
     }
   },
 
   // Xem chi tiết nhân sự
   async show(req, res) {
-    const id = req.params.id;
+    const employee_id = req.params.id;
 
     const sql = `
       SELECT
@@ -125,24 +119,25 @@ const employeeController = {
     `;
 
     try {
-      const [rows] = await db.query(sql, [id]);
+      const [employees] = await db.query(sql, [employee_id]);
 
-      if (rows.length === 0) {
+      if (employees.length === 0) {
         return res.status(404).send("Không tìm thấy nhân sự");
       }
 
       res.render("employees/show", {
         title: "Chi tiết nhân sự",
-        employee: rows[0],
+        employee: employees[0],
       });
-    } catch (error) {
-      console.log("Lỗi xem chi tiết nhân sự:", error);
-      res.status(500).send("Lỗi cơ sở dữ liệu");
+    } catch (err) {
+      console.log("Lỗi lấy chi tiết nhân sự:", err);
+      res.status(500).send("Đã xảy ra lỗi khi lấy chi tiết nhân sự");
     }
   },
 
+  // Hiển thị form sửa nhân sự
   async edit(req, res) {
-    const id = req.params.id;
+    const employee_id = req.params.id;
 
     const employeeSql = `
       SELECT
@@ -167,27 +162,28 @@ const employeeController = {
     `;
 
     try {
-      const [rows] = await db.query(employeeSql, [id]);
+      const [employees] = await db.query(employeeSql, [employee_id]);
 
-      if (rows.length === 0) {
-        return res.redirect("/employees");
+      if (employees.length === 0) {
+        return res.status(404).send("Không tìm thấy nhân sự");
       }
 
       const [departments] = await db.query(departmentSql);
 
       res.render("employees/employees-edit", {
         title: "Chỉnh sửa nhân sự",
-        employee: rows[0],
+        employee: employees[0],
         departments,
       });
-    } catch (error) {
-      console.log(error);
-      res.redirect("/employees");
+    } catch (err) {
+      console.log("Lỗi lấy nhân sự:", err);
+      res.status(500).send("Đã xảy ra lỗi khi lấy thông tin nhân sự");
     }
   },
 
+  // Cập nhật nhân sự
   async update(req, res) {
-    const { id } = req.params;
+    const employee_id = req.params.id;
 
     const { employee_code, full_name, department_id, position, phone, email } =
       req.body;
@@ -212,18 +208,19 @@ const employeeController = {
         position,
         phone,
         email,
-        id,
+        employee_id,
       ]);
 
       res.redirect("/employees");
     } catch (err) {
       console.log("Lỗi cập nhật nhân sự:", err);
-      res.status(500).send("Lỗi cơ sở dữ liệu");
+      res.status(500).send("Đã xảy ra lỗi khi cập nhật nhân sự");
     }
   },
 
+  // Xóa nhân sự
   async delete(req, res) {
-    const id = req.params.id;
+    const employee_id = req.params.id;
 
     const sql = `
       DELETE FROM employees
@@ -231,12 +228,12 @@ const employeeController = {
     `;
 
     try {
-      await db.query(sql, [id]);
+      await db.query(sql, [employee_id]);
 
       res.redirect("/employees");
-    } catch (error) {
-      console.log(error);
-      res.redirect("/employees");
+    } catch (err) {
+      console.log("Lỗi xóa nhân sự:", err);
+      res.status(500).send("Đã xảy ra lỗi khi xóa nhân sự");
     }
   },
 };

@@ -1,8 +1,11 @@
 const db = require("../config/db");
 
 const departmentController = {
+  // Danh sách phòng ban
   async index(req, res) {
-    let sql = `
+    const name = req.query.name || "";
+
+    const sql = `
       SELECT
         d.department_id,
         d.department_code,
@@ -12,15 +15,8 @@ const departmentController = {
       FROM departments d
       LEFT JOIN employees e
         ON d.department_id = e.department_id
-    `;
-
-    const name = req.query.name;
-
-    if (name) {
-      sql += ` WHERE d.department_name LIKE ? OR d.department_code LIKE ?`;
-    }
-
-    sql += `
+      WHERE d.department_name LIKE ?
+         OR d.department_code LIKE ?
       GROUP BY
         d.department_id,
         d.department_code,
@@ -30,44 +26,45 @@ const departmentController = {
     `;
 
     try {
-      const [departments] = await db.query(
-        sql,
-        name ? [`%${name}%`, `%${name}%`] : []
-      );
+      const [departments] = await db.query(sql, [`%${name}%`, `%${name}%`]);
 
       res.render("departments/index", {
         title: "Phòng ban",
         departments,
-        searchName: name || "",
+        searchName: name,
       });
-    } catch (error) {
-      console.log(error);
-      res.redirect("/");
+    } catch (err) {
+      console.log("Lỗi lấy phòng ban:", err);
+      res.status(500).send("Đã xảy ra lỗi khi lấy danh sách phòng ban");
     }
   },
 
+  // Thêm phòng ban
   async create(req, res) {
     const { department_code, department_name, description } = req.body;
 
     const sql = `
-            INSERT INTO departments
-            (department_code, department_name, description)
-            VALUES (?, ?, ?)
-        `;
+      INSERT INTO departments (
+        department_code,
+        department_name,
+        description
+      )
+      VALUES (?, ?, ?)
+    `;
 
     try {
       await db.query(sql, [department_code, department_name, description]);
 
       res.redirect("/departments");
-    } catch (error) {
-      console.log(error);
-      res.redirect("/departments");
+    } catch (err) {
+      console.log("Lỗi thêm phòng ban:", err);
+      res.status(500).send("Đã xảy ra lỗi khi thêm phòng ban");
     }
   },
 
   // Xem chi tiết phòng ban
   async show(req, res) {
-    const id = req.params.id;
+    const department_id = req.params.id;
 
     const sql = `
       SELECT
@@ -91,91 +88,99 @@ const departmentController = {
     `;
 
     try {
-      const [rows] = await db.query(sql, [id]);
+      const [departments] = await db.query(sql, [department_id]);
 
-      if (rows.length === 0) {
+      if (departments.length === 0) {
         return res.status(404).send("Không tìm thấy phòng ban");
       }
 
       res.render("departments/show", {
         title: "Chi tiết phòng ban",
-        department: rows[0],
+        department: departments[0],
       });
-    } catch (error) {
-      console.log("Lỗi xem chi tiết phòng ban:", error);
-      res.status(500).send("Lỗi cơ sở dữ liệu");
+    } catch (err) {
+      console.log("Lỗi lấy chi tiết phòng ban:", err);
+      res.status(500).send("Đã xảy ra lỗi khi lấy chi tiết phòng ban");
     }
   },
 
+  // Hiển thị form sửa phòng ban
   async edit(req, res) {
-    const id = req.params.id;
+    const department_id = req.params.id;
 
     const sql = `
-            SELECT
-                department_id,
-                department_code,
-                department_name,
-                description
-            FROM departments
-            WHERE department_id = ?
-        `;
+      SELECT
+        department_id,
+        department_code,
+        department_name,
+        description
+      FROM departments
+      WHERE department_id = ?
+    `;
 
     try {
-      const [rows] = await db.query(sql, [id]);
+      const [departments] = await db.query(sql, [department_id]);
 
-      if (rows.length === 0) {
-        return res.redirect("/departments");
+      if (departments.length === 0) {
+        return res.status(404).send("Không tìm thấy phòng ban");
       }
 
       res.render("departments/departments-edit", {
         title: "Chỉnh sửa phòng ban",
-        department: rows[0],
+        department: departments[0],
       });
-    } catch (error) {
-      console.log(error);
-      res.redirect("/departments");
+    } catch (err) {
+      console.log("Lỗi lấy phòng ban:", err);
+      res.status(500).send("Đã xảy ra lỗi khi lấy thông tin phòng ban");
     }
   },
 
+  // Cập nhật phòng ban
   async update(req, res) {
-    const id = req.params.id;
+    const department_id = req.params.id;
 
     const { department_code, department_name, description } = req.body;
 
     const sql = `
-            UPDATE departments
-            SET
-                department_code = ?,
-                department_name = ?,
-                description = ?
-            WHERE department_id = ?
-        `;
+      UPDATE departments
+      SET
+        department_code = ?,
+        department_name = ?,
+        description = ?
+      WHERE department_id = ?
+    `;
 
     try {
-      await db.query(sql, [department_code, department_name, description, id]);
+      await db.query(sql, [
+        department_code,
+        department_name,
+        description,
+        department_id,
+      ]);
 
       res.redirect("/departments");
-    } catch (error) {
-      console.log(error);
-      res.redirect("/departments");
+    } catch (err) {
+      console.log("Lỗi cập nhật phòng ban:", err);
+      res.status(500).send("Đã xảy ra lỗi khi cập nhật phòng ban");
     }
   },
 
+  // Xóa phòng ban
   async delete(req, res) {
-    const id = req.params.id;
+    const department_id = req.params.id;
 
     const sql = `
-            DELETE FROM departments
-            WHERE department_id = ?
-        `;
+      DELETE FROM departments
+      WHERE department_id = ?
+    `;
 
     try {
-      await db.query(sql, [id]);
+      await db.query(sql, [department_id]);
 
       res.redirect("/departments");
-    } catch (error) {
-      console.log(error);
-      res.redirect("/departments");
+    } catch (err) {
+      console.log("Lỗi xóa phòng ban:", err);
+      res.status(500).send("Đã xảy ra lỗi khi xóa phòng ban");
     }
   },
 };
