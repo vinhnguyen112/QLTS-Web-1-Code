@@ -1,6 +1,5 @@
 <div class="container-fluid">
   <div class="card">
-
     <div class="card-header bg-white py-3">
       <div class="row align-items-center g-2">
         <div class="col">
@@ -9,7 +8,7 @@
         </div>
 
         <div class="col-auto d-flex align-items-center gap-2">
-          <form action="" method="get" class="m-0" role="search">
+          <form action="/employees" method="get" class="m-0" role="search">
             <div class="input-group">
               <input
                 type="text"
@@ -84,3 +83,20 @@
     </div>
   </div>
 </div>
+
+{{#if pages.length}}
+  <nav class="mt-3">
+    <ul class="pagination">
+      {{#each pages}}
+        <li class="page-item {{#if active}}active{{/if}}">
+          <a
+            class="page-link"
+            href="/employees?page={{number}}&name={{../searchName}}"
+          >
+            {{number}}
+          </a>
+        </li>
+      {{/each}}
+    </ul>
+  </nav>
+{{/if}}

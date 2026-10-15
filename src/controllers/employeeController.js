@@ -1,10 +1,22 @@
 const db = require("../config/db");
 
 const employeeController = {
-  // Danh sách nhân sự
+  // 1. Danh sách nhân sự (Tìm kiếm & Phân trang)
   async index(req, res) {
     const name = req.query.name || "";
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const start = (page - 1) * limit;
 
+    // Đếm tổng số nhân sự
+    const countSql = `
+      SELECT COUNT(*) AS total
+      FROM employees
+      WHERE full_name LIKE ?
+         OR employee_code LIKE ?
+    `;
+
+    // Lấy danh sách nhân sự
     const sql = `
       SELECT
         e.employee_id,
@@ -26,27 +38,47 @@ const employeeController = {
         e.full_name,
         e.position,
         d.department_name
-      ORDER BY e.employee_id ASC
+      ORDER BY e.employee_id DESC
+      LIMIT ${start}, ${limit}
     `;
 
+    // Lấy danh sách phòng ban cho form thêm nhân sự
     const departmentSql = `
       SELECT
         department_id,
         department_name
       FROM departments
-      ORDER BY department_id ASC
+      ORDER BY department_name ASC
     `;
 
     try {
-      const [employees] = await db.query(sql, [`%${name}%`, `%${name}%`]);
+      const [countResult] = await db.query(countSql, [
+        `%${name}%`,
+        `%${name}%`,
+      ]);
 
+      const totalRow = countResult[0].total;
+      const totalPages = Math.ceil(totalRow / limit);
+
+      const [employees] = await db.query(sql, [`%${name}%`, `%${name}%`]);
       const [departments] = await db.query(departmentSql);
+
+      // Tạo danh sách số trang
+      const pages = [];
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push({
+          number: i,
+          active: i == page,
+        });
+      }
 
       res.render("employees/index", {
         title: "Nhân sự",
         employees,
         departments,
         searchName: name,
+        totalPages,
+        pages,
       });
     } catch (err) {
       console.log("Lỗi lấy nhân sự:", err);
@@ -54,7 +86,7 @@ const employeeController = {
     }
   },
 
-  // Thêm nhân sự
+  // 2. Thêm nhân sự
   async create(req, res) {
     const { employee_code, full_name, department_id, position, phone, email } =
       req.body;
@@ -76,9 +108,9 @@ const employeeController = {
         employee_code,
         full_name,
         department_id || null,
-        position,
-        phone,
-        email,
+        position || null,
+        phone || null,
+        email || null,
       ]);
 
       res.redirect("/employees");
@@ -88,7 +120,7 @@ const employeeController = {
     }
   },
 
-  // Xem chi tiết nhân sự
+  // 3. Chi tiết nhân sự
   async show(req, res) {
     const employee_id = req.params.id;
 
@@ -122,7 +154,7 @@ const employeeController = {
       const [employees] = await db.query(sql, [employee_id]);
 
       if (employees.length === 0) {
-        return res.status(404).send("Không tìm thấy nhân sự");
+        return res.redirect("/employees");
       }
 
       res.render("employees/show", {
@@ -135,7 +167,7 @@ const employeeController = {
     }
   },
 
-  // Hiển thị form sửa nhân sự
+  // 4. Form sửa nhân sự
   async edit(req, res) {
     const employee_id = req.params.id;
 
@@ -147,8 +179,7 @@ const employeeController = {
         department_id,
         position,
         phone,
-        email,
-        description
+        email
       FROM employees
       WHERE employee_id = ?
     `;
@@ -158,14 +189,14 @@ const employeeController = {
         department_id,
         department_name
       FROM departments
-      ORDER BY department_id ASC
+      ORDER BY department_name ASC
     `;
 
     try {
       const [employees] = await db.query(employeeSql, [employee_id]);
 
       if (employees.length === 0) {
-        return res.status(404).send("Không tìm thấy nhân sự");
+        return res.redirect("/employees");
       }
 
       const [departments] = await db.query(departmentSql);
@@ -181,10 +212,9 @@ const employeeController = {
     }
   },
 
-  // Cập nhật nhân sự
+  // 5. Cập nhật nhân sự
   async update(req, res) {
     const employee_id = req.params.id;
-
     const { employee_code, full_name, department_id, position, phone, email } =
       req.body;
 
@@ -205,9 +235,9 @@ const employeeController = {
         employee_code,
         full_name,
         department_id || null,
-        position,
-        phone,
-        email,
+        position || null,
+        phone || null,
+        email || null,
         employee_id,
       ]);
 
@@ -218,18 +248,12 @@ const employeeController = {
     }
   },
 
-  // Xóa nhân sự
+  // 6. Xóa nhân sự
   async delete(req, res) {
     const employee_id = req.params.id;
 
-    const sql = `
-      DELETE FROM employees
-      WHERE employee_id = ?
-    `;
-
     try {
-      await db.query(sql, [employee_id]);
-
+      await db.query("DELETE FROM employees WHERE employee_id = ?", [employee_id]);
       res.redirect("/employees");
     } catch (err) {
       console.log("Lỗi xóa nhân sự:", err);

@@ -1,6 +1,7 @@
 const db = require("../config/db");
+const dayjs = require("dayjs");
 
-// Lấy dữ liệu dùng chung cho form tài sản
+// Lấy dữ liệu danh mục, phòng ban, nhân sự dùng chung cho các form
 async function getAssetFormData() {
   const [categories] = await db.query(`
     SELECT category_id, category_name
@@ -28,10 +29,22 @@ async function getAssetFormData() {
 }
 
 const assetController = {
-  // Danh sách tài sản
+  // 1. Danh sách tài sản (Tìm kiếm & Phân trang)
   async index(req, res) {
     const name = req.query.name || "";
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const start = (page - 1) * limit;
 
+    // Đếm tổng số tài sản theo từ khóa tìm kiếm
+    const countSql = `
+      SELECT COUNT(*) AS total
+      FROM assets
+      WHERE asset_name LIKE ?
+         OR asset_code LIKE ?
+    `;
+
+    // Lấy danh sách tài sản theo trang
     const sql = `
       SELECT
         a.asset_id,
@@ -48,11 +61,31 @@ const assetController = {
         ON a.department_id = d.department_id
       WHERE a.asset_name LIKE ?
          OR a.asset_code LIKE ?
-      ORDER BY a.asset_id ASC
+      ORDER BY a.asset_id DESC
+      LIMIT ${start}, ${limit}
     `;
 
     try {
+      // Tổng số tài sản
+      const [countResult] = await db.query(countSql, [
+        `%${name}%`,
+        `%${name}%`,
+      ]);
+
+      const totalRow = countResult[0].total;
+      const totalPages = Math.ceil(totalRow / limit);
+
+      // Danh sách tài sản của trang hiện tại
       const [assets] = await db.query(sql, [`%${name}%`, `%${name}%`]);
+
+      // Tạo danh sách số trang
+      const pages = [];
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push({
+          number: i,
+          active: i == page,
+        });
+      }
 
       const { categories, departments, employees } = await getAssetFormData();
 
@@ -63,43 +96,31 @@ const assetController = {
         categories,
         departments,
         employees,
+        totalPages,
+        pages,
       });
     } catch (err) {
-      console.log("Lỗi lấy tài sản:", err);
+      console.log("Lỗi lấy danh sách tài sản:", err);
       res.status(500).send("Đã xảy ra lỗi khi lấy danh sách tài sản");
     }
   },
 
-  // Xem chi tiết tài sản
+  // 2. Chi tiết tài sản
   async show(req, res) {
-    const asset_id = req.params.id;
-
     const sql = `
-      SELECT
-        a.asset_id,
-        a.asset_code,
-        a.asset_name,
-        a.serial_number,
-        a.purchase_date,
-        a.original_cost,
-        a.location,
-        a.status,
-        a.description,
-        c.category_name,
-        d.department_name,
-        e.full_name
+      SELECT a.*,
+             c.category_name,
+             d.department_name,
+             e.full_name
       FROM assets a
-      LEFT JOIN categories c
-        ON a.category_id = c.category_id
-      LEFT JOIN departments d
-        ON a.department_id = d.department_id
-      LEFT JOIN employees e
-        ON a.employee_id = e.employee_id
+      LEFT JOIN categories c ON a.category_id = c.category_id
+      LEFT JOIN departments d ON a.department_id = d.department_id
+      LEFT JOIN employees e ON a.employee_id = e.employee_id
       WHERE a.asset_id = ?
     `;
 
     try {
-      const [assets] = await db.query(sql, [asset_id]);
+      const [assets] = await db.query(sql, [req.params.id]);
 
       if (assets.length === 0) {
         return res.redirect("/assets");
@@ -115,7 +136,7 @@ const assetController = {
     }
   },
 
-  // Thêm tài sản
+  // 3. Thêm mới tài sản
   async create(req, res) {
     const {
       asset_code,
@@ -152,15 +173,15 @@ const assetController = {
       await db.query(sql, [
         asset_code,
         asset_name,
-        category_id,
-        serial_number,
-        purchase_date,
-        original_cost,
-        location,
-        department_id,
-        employee_id,
-        status,
-        description,
+        category_id || null,
+        serial_number || null,
+        purchase_date || null,
+        Number(original_cost) || 0,
+        location || null,
+        department_id || null,
+        employee_id || null,
+        status || "in_stock",
+        description || null,
       ]);
 
       res.redirect("/assets");
@@ -170,31 +191,23 @@ const assetController = {
     }
   },
 
-  // Hiển thị form sửa tài sản
+  // 4. Form sửa tài sản
   async edit(req, res) {
-    const asset_id = req.params.id;
-
     try {
       const [assets] = await db.query(
-        `
-          SELECT *
-          FROM assets
-          WHERE asset_id = ?
-        `,
-        [asset_id],
+        "SELECT * FROM assets WHERE asset_id = ?",
+        [req.params.id]
       );
 
       if (assets.length === 0) {
-        return res.status(404).send("Không tìm thấy tài sản");
+        return res.redirect("/assets");
       }
 
       const asset = assets[0];
 
-      // Định dạng ngày mua
+      // Định dạng ngày mua bằng thư viện Day.js chuẩn YYYY-MM-DD cho input date
       if (asset.purchase_date) {
-        asset.purchase_date = new Date(asset.purchase_date)
-          .toISOString()
-          .split("T")[0];
+        asset.purchase_date = dayjs(asset.purchase_date).format("YYYY-MM-DD");
       }
 
       const { categories, departments, employees } = await getAssetFormData();
@@ -207,15 +220,13 @@ const assetController = {
         employees,
       });
     } catch (err) {
-      console.log("Lỗi lấy tài sản:", err);
+      console.log("Lỗi lấy thông tin tài sản:", err);
       res.status(500).send("Đã xảy ra lỗi khi lấy thông tin tài sản");
     }
   },
 
-  // Cập nhật tài sản
+  // 5. Cập nhật tài sản
   async update(req, res) {
-    const asset_id = req.params.id;
-
     const {
       asset_code,
       asset_name,
@@ -251,16 +262,16 @@ const assetController = {
       await db.query(sql, [
         asset_code,
         asset_name,
-        category_id,
-        serial_number,
-        purchase_date,
-        original_cost,
-        location,
-        department_id,
-        employee_id,
-        status,
-        description,
-        asset_id,
+        category_id || null,
+        serial_number || null,
+        purchase_date || null,
+        Number(original_cost) || 0,
+        location || null,
+        department_id || null,
+        employee_id || null,
+        status || "in_stock",
+        description || null,
+        req.params.id,
       ]);
 
       res.redirect("/assets");
@@ -270,13 +281,10 @@ const assetController = {
     }
   },
 
-  // Xóa tài sản
+  // 6. Xóa tài sản
   async delete(req, res) {
-    const asset_id = req.params.id;
-
     try {
-      await db.query("DELETE FROM assets WHERE asset_id = ?", [asset_id]);
-
+      await db.query("DELETE FROM assets WHERE asset_id = ?", [req.params.id]);
       res.redirect("/assets");
     } catch (err) {
       console.log("Lỗi xóa tài sản:", err);
