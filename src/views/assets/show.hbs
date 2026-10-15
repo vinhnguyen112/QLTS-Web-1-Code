@@ -6,9 +6,10 @@
         </p>
     </div>
 
-    <div class="card">
-        <div class="card-header">
-            Thông tin tài sản
+    <!-- Thông tin chi tiết tài sản -->
+    <div class="card mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Thông tin tài sản</h5>
         </div>
         <div class="card-body">
             <div class="row">
@@ -26,46 +27,51 @@
                 </div>
                 <div class="col-md-6 mb-3">
                     <strong>Số serial:</strong>
-                    <div>{{asset.serial_number}}</div>
+                    <div>{{#if asset.serial_number}}{{asset.serial_number}}{{else}}<span class="text-muted">(Không có)</span>{{/if}}</div>
                 </div>
                 <div class="col-md-6 mb-3">
                     <strong>Ngày mua:</strong>
-                    <div>{{asset.purchase_date}}</div>
+                    <div>{{formatDate asset.purchase_date}}</div>
                 </div>
                 <div class="col-md-6 mb-3">
                     <strong>Giá trị:</strong>
-                    <div>{{asset.original_cost}}</div>
+                    <div>{{formatCurrency asset.original_cost}} VNĐ</div>
                 </div>
                 <div class="col-md-6 mb-3">
                     <strong>Vị trí:</strong>
-                    <div>{{asset.location}}</div>
+                    <div>{{#if asset.location}}{{asset.location}}{{else}}<span class="text-muted">(Chưa cập nhật)</span>{{/if}}</div>
                 </div>
                 <div class="col-md-6 mb-3">
                     <strong>Phòng ban:</strong>
-                    <div>{{asset.department_name}}</div>
+                    <div>{{#if asset.department_name}}{{asset.department_name}}{{else}}<span class="text-muted">(Chưa phân bổ)</span>{{/if}}</div>
                 </div>
                 <div class="col-md-6 mb-3">
                     <strong>Người sử dụng:</strong>
-                    <div>{{asset.full_name}}</div>
+                    <div>{{#if asset.full_name}}{{asset.full_name}}{{else}}<span class="text-muted">(Chưa bàn giao)</span>{{/if}}</div>
                 </div>
                 <div class="col-md-6 mb-3">
                     <strong>Trạng thái:</strong>
-                    <div>{{asset.status}}</div>
+                    <div>
+                        {{#if (eq asset.status "in_use")}}
+                            <span class="badge bg-success">Đang sử dụng</span>
+                        {{else if (eq asset.status "in_stock")}}
+                            <span class="badge bg-secondary">Trong kho</span>
+                        {{else if (eq asset.status "maintenance")}}
+                            <span class="badge bg-warning text-dark">Đang bảo trì</span>
+                        {{else}}
+                            <span class="badge bg-light text-dark">{{asset.status}}</span>
+                        {{/if}}
+                    </div>
                 </div>
                 <div class="col-12 mb-3">
                     <strong>Mô tả:</strong>
-                    <div>{{asset.description}}</div>
+                    <div>{{#if asset.description}}{{asset.description}}{{else}}<span class="text-muted">(Không có mô tả)</span>{{/if}}</div>
                 </div>
             </div>
-            <div class="mt-3">
-                <a href="/assets"
-                   class="btn btn-secondary">
-                    Quay lại
-                </a>
-                <a href="/assets/{{asset.asset_id}}/edit"
-                   class="btn btn-warning">
-                    Sửa tài sản
-                </a>
+
+            <div class="mt-3 d-flex gap-2">
+                <a href="/assets" class="btn btn-secondary">Quay lại danh sách</a>
+                <a href="/assets/{{asset.asset_id}}/edit" class="btn btn-warning">Chỉnh sửa</a>
             </div>
         </div>
     </div>

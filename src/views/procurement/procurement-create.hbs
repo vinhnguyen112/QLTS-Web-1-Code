@@ -1,0 +1,180 @@
+<form class="modal-content" action="/procurement" method="POST">
+  <div class="modal-header">
+    <h5 class="modal-title" id="createProcurementModalLabel">
+      Tạo đề nghị mua sắm
+    </h5>
+    <button
+      type="button"
+      class="btn-close"
+      data-bs-dismiss="modal"
+      aria-label="Đóng"
+    ></button>
+  </div>
+
+  <div class="modal-body">
+    <h6 class="text-primary mb-3">
+      <i class="fa-solid fa-file-invoice me-1"></i> 1. Thông tin đề nghị
+    </h6>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">
+          Mã đề nghị <span class="text-danger">*</span>
+        </label>
+        <input
+          type="text"
+          name="procurement_code"
+          class="form-control"
+          placeholder="VD: DN001"
+          required
+        />
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label">
+          Ngày đề nghị <span class="text-danger">*</span>
+        </label>
+        <input type="date" name="request_date" class="form-control" required />
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label">
+          Phòng ban <span class="text-danger">*</span>
+        </label>
+        <select name="department_id" class="form-select" required>
+          <option value="">-- Chọn phòng ban --</option>
+          {{#each departments}}
+            <option value="{{this.department_id}}">
+              {{this.department_name}}
+            </option>
+          {{/each}}
+        </select>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Người đề nghị</label>
+        <select name="requester_id" class="form-select">
+          <option value="">-- Chọn người đề nghị --</option>
+          {{#each employees}}
+            <option
+              value="{{this.employee_id}}"
+              data-department="{{this.department_id}}"
+            >
+              {{this.full_name}}
+            </option>
+          {{/each}}
+        </select>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Trạng thái</label>
+        <select name="status" class="form-select">
+          <option value="pending" selected>Chờ duyệt</option>
+          <option value="approved">Đã duyệt</option>
+          <option value="received">Đã nhập kho</option>
+          <option value="rejected">Từ chối</option>
+        </select>
+      </div>
+
+      <div class="col-12 mb-3">
+        <label class="form-label">Lý do mua sắm</label>
+        <textarea
+          name="reason"
+          class="form-control"
+          rows="2"
+          placeholder="Nhập lý do mua sắm..."
+        ></textarea>
+      </div>
+
+      <div class="col-12 mb-3">
+        <label class="form-label">Ghi chú</label>
+        <textarea
+          name="note"
+          class="form-control"
+          rows="2"
+          placeholder="Nhập ghi chú thêm..."
+        ></textarea>
+      </div>
+    </div>
+
+    <hr />
+
+    <h6 class="text-primary mb-3">
+      <i class="fa-solid fa-box-open me-1"></i> 2. Thông tin tài sản cần mua
+    </h6>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">
+          Tên tài sản <span class="text-danger">*</span>
+        </label>
+        <input
+          type="text"
+          name="asset_name"
+          class="form-control"
+          placeholder="Ví dụ: Laptop Dell XPS 15"
+          required
+        />
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label">
+          Danh mục tài sản <span class="text-danger">*</span>
+        </label>
+        <select name="category_id" class="form-select" required>
+          <option value="">-- Chọn danh mục --</option>
+          {{#each categories}}
+            <option value="{{this.category_id}}">
+              {{this.category_name}}
+            </option>
+          {{/each}}
+        </select>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label">
+          Số lượng <span class="text-danger">*</span>
+        </label>
+        <input
+          type="number"
+          name="quantity"
+          class="form-control"
+          min="1"
+          value="1"
+          required
+        />
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Đơn giá dự kiến (VNĐ)</label>
+        <input
+          type="number"
+          name="estimated_cost"
+          class="form-control"
+          min="0"
+          step="1"
+          placeholder="Ví dụ: 25000000"
+        />
+      </div>
+
+      <div class="col-12 mb-3">
+        <label class="form-label">Mô tả tài sản / Cấu hình</label>
+        <textarea
+          name="description"
+          class="form-control"
+          rows="2"
+          placeholder="Nhập mô tả quy cách hoặc cấu hình kỹ thuật..."
+        ></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+      Hủy
+    </button>
+    <button type="submit" class="btn btn-primary">
+      <i class="fa-solid fa-check me-1"></i> Tạo đề nghị
+    </button>
+  </div>
+</form>

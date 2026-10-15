@@ -1,6 +1,64 @@
+:root {
+  --app-bg: #f8fafc;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --accent-color: #2563eb;
+  --accent-hover: #1d4ed8;
+  --border-color: #e2e8f0;
+}
+
 body {
   margin: 0;
-  background-color: #fff;
+  background-color: var(--app-bg);
+  color: var(--text-main);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.btn {
+  box-shadow: none !important;
+  font-weight: 500;
+  border-radius: 6px;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-primary {
+  background-color: var(--accent-color) !important;
+  border-color: var(--accent-color) !important;
+  color: #ffffff !important;
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-hover) !important;
+  border-color: var(--accent-hover) !important;
+}
+
+.btn-secondary {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+.btn-secondary:hover {
+  background-color: #e2e8f0 !important;
+  color: #1e293b !important;
+}
+
+/* Thẻ Card mềm mại, tinh gọn */
+.card {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: #ffffff;
+}
+
+.card-header {
+  background-color: #ffffff;
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 600;
+}
+
+.table {
+  color: var(--text-main);
+  border-color: var(--border-color);
 }
 
 .header {
@@ -10,6 +68,8 @@ body {
   left: 0;
   right: 0;
   z-index: 1030;
+  background-color: #ffffff;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .sidebar {
@@ -19,8 +79,8 @@ body {
   bottom: 0;
   left: 0;
   overflow-y: auto;
-  background-color: #f8f9fa;
-  border-right: 1px solid #dee2e6;
+  background-color: #ffffff;
+  border-right: 1px solid var(--border-color);
 }
 
 .main-content {
@@ -50,7 +110,7 @@ body {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  color: #6c757d;
+  color: var(--text-muted);
   letter-spacing: 0.5px;
 }
 
@@ -58,7 +118,7 @@ body {
   display: flex;
   align-items: center;
   padding: 8px 12px;
-  color: #212529;
+  color: var(--text-main);
   text-decoration: none;
   border-radius: 6px;
   font-size: 14px;
@@ -67,13 +127,13 @@ body {
 }
 
 .sidebar .nav-link:hover {
-  background-color: #e9ecef;
-  color: #01409f;
+  background-color: #f1f5f9;
+  color: var(--accent-color);
 }
 
 .sidebar .nav-link.active {
-  background-color: #e7f1ff;
-  color: #0d6efd;
+  background-color: #eff6ff;
+  color: var(--accent-color);
   font-weight: 600;
 }
 
@@ -86,4 +146,8 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.pagination {
+  margin-left: 10px;
 }

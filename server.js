@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const { engine } = require("express-handlebars");
 const path = require("path");
+const dayjs = require("dayjs");
 const db = require("./src/config/db");
 
 const app = express();
@@ -19,14 +20,18 @@ app.engine(
       path.join(__dirname, "src/views/categories"),
       path.join(__dirname, "src/views/departments"),
       path.join(__dirname, "src/views/employees"),
+      path.join(__dirname, "src/views/procurement"),
     ],
 
     helpers: {
       eq: (a, b) => a === b,
       addOne: (index) => index + 1,
       formatCurrency: (value) => {
-      return Number(value).toLocaleString("vi-VN");
-      }
+        return Number(value).toLocaleString("vi-VN");
+      },
+      formatDate: (date) => {
+        return date ? dayjs(date).format("DD/MM/YYYY") : "";
+      },
     },
   }),
 );

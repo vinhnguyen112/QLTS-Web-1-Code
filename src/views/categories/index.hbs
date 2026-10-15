@@ -8,7 +8,7 @@
         </div>
 
         <div class="col-auto d-flex align-items-center gap-2">
-          <form action="" method="get" class="m-0" role="search">
+          <form action="/categories" method="get" class="m-0" role="search">
             <div class="input-group">
               <input
                 type="text"
@@ -78,3 +78,20 @@
     </div>
   </div>
 </div>
+
+{{#if pages.length}}
+  <nav>
+    <ul class="pagination mt-2">
+      {{#each pages}}
+        <li class="page-item {{#if active}}active{{/if}}">
+          <a
+            class="page-link"
+            href="/categories?page={{number}}&name={{../searchName}}"
+          >
+            {{number}}
+          </a>
+        </li>
+      {{/each}}
+    </ul>
+  </nav>
+{{/if}}
