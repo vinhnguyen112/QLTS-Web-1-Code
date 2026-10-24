@@ -29,7 +29,7 @@ const employeeController = {
       LEFT JOIN departments d
         ON e.department_id = d.department_id
       LEFT JOIN assets a
-        ON e.employee_id = a.employee_id
+        ON e.employee_id = a.current_employee_id
       WHERE e.full_name LIKE ?
          OR e.employee_code LIKE ?
       GROUP BY
@@ -103,11 +103,17 @@ const employeeController = {
       VALUES (?, ?, ?, ?, ?, ?)
     `;
 
+    let finalDeptId = department_id;
+    if (!finalDeptId) {
+      const [firstDept] = await db.query("SELECT department_id FROM departments LIMIT 1");
+      if (firstDept.length > 0) finalDeptId = firstDept[0].department_id;
+    }
+
     try {
       await db.query(sql, [
         employee_code,
         full_name,
-        department_id || null,
+        finalDeptId,
         position || null,
         phone || null,
         email || null,
@@ -138,7 +144,7 @@ const employeeController = {
       LEFT JOIN departments d
         ON e.department_id = d.department_id
       LEFT JOIN assets a
-        ON e.employee_id = a.employee_id
+        ON e.employee_id = a.current_employee_id
       WHERE e.employee_id = ?
       GROUP BY
         e.employee_id,
@@ -230,11 +236,17 @@ const employeeController = {
       WHERE employee_id = ?
     `;
 
+    let finalDeptId = department_id;
+    if (!finalDeptId) {
+      const [firstDept] = await db.query("SELECT department_id FROM departments LIMIT 1");
+      if (firstDept.length > 0) finalDeptId = firstDept[0].department_id;
+    }
+
     try {
       await db.query(sql, [
         employee_code,
         full_name,
-        department_id || null,
+        finalDeptId,
         position || null,
         phone || null,
         email || null,

@@ -1,15 +1,13 @@
 <div class="container-fluid">
-  <div class="card shadow-sm border-0">
-    <div class="card-header bg-white py-3">
-      <h5 class="mb-0 fw-semibold">Sửa đề nghị mua sắm</h5>
-      <small class="text-muted">Cập nhật thông tin đề nghị và mặt hàng dự kiến mua</small>
-    </div>
+  <div class="mb-4">
+    <h3 class="mb-1">Sửa đề nghị mua sắm</h3>
+    <p class="text-secondary mb-0">Cập nhật thông tin đề nghị và mặt hàng dự kiến mua</p>
+  </div>
 
+  <div class="card">
     <form action="/procurement/{{procurement.procurement_id}}/update" method="POST">
       <div class="card-body">
-        <h6 class="text-primary mb-3">
-          <i class="fa-solid fa-file-invoice me-1"></i> 1. Thông tin đề nghị
-        </h6>
+        <h6 class="mb-3">1. Thông tin đề nghị</h6>
 
         <div class="row">
           <div class="col-md-6 mb-3">
@@ -73,14 +71,17 @@
           <div class="col-md-6 mb-3">
             <label class="form-label">Trạng thái</label>
             <select name="status" class="form-select">
-              <option value="pending" {{#if (eq procurement.status "pending")}}selected{{/if}}>
-                Chờ duyệt
+              <option value="pending_manager" {{#if (eq procurement.status "pending_manager")}}selected{{/if}}>
+                Chờ Quản lý duyệt
+              </option>
+              <option value="pending_director" {{#if (eq procurement.status "pending_director")}}selected{{/if}}>
+                Chờ Giám đốc duyệt
               </option>
               <option value="approved" {{#if (eq procurement.status "approved")}}selected{{/if}}>
                 Đã duyệt
               </option>
-              <option value="received" {{#if (eq procurement.status "received")}}selected{{/if}}>
-                Đã nhập kho
+              <option value="completed" {{#if (eq procurement.status "completed")}}selected{{/if}}>
+                Hoàn thành
               </option>
               <option value="rejected" {{#if (eq procurement.status "rejected")}}selected{{/if}}>
                 Từ chối
@@ -109,9 +110,7 @@
 
         <hr />
 
-        <h6 class="text-primary mb-3">
-          <i class="fa-solid fa-box-open me-1"></i> 2. Thông tin tài sản cần mua
-        </h6>
+        <h6 class="mb-3">2. Thông tin tài sản cần mua</h6>
 
         <div class="row">
           <div class="col-md-6 mb-3">
@@ -181,13 +180,9 @@
         </div>
       </div>
 
-      <div class="card-footer bg-white border-top d-flex justify-content-end gap-2 py-3">
-        <a href="/procurement" class="btn btn-secondary">
-          Hủy
-        </a>
-        <button type="submit" class="btn btn-primary">
-          Lưu thay đổi
-        </button>
+      <div class="card-footer bg-light border-top d-flex gap-2 py-3">
+        <a href="/procurement" class="btn btn-secondary">Hủy</a>
+        <button type="submit" class="btn btn-secondary">Lưu thay đổi</button>
       </div>
     </form>
   </div>

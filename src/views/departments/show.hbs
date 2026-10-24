@@ -34,15 +34,77 @@
                 </div>
             </div>
             <div class="mt-3">
-                <a href="/departments"
-                   class="btn btn-secondary">
-                    Quay lại
-                </a>
-                <a href="/departments/{{department.department_id}}/edit"
-                   class="btn btn-warning">
-                    Sửa phòng ban
-                </a>
+                <a href="/departments" class="btn btn-sm btn-outline-secondary">Quay lại</a>
+                <a href="/departments/{{department.department_id}}/edit" class="btn btn-sm btn-warning">Sửa phòng ban</a>
             </div>
+        </div>
+    </div>
+
+    <!-- Bảng con: Danh sách Vị trí / Kho trực thuộc -->
+    <div class="card mt-3 border">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 fw-bold">Vị trí / Phòng làm việc / Kho trực thuộc</h6>
+            <button class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#addLocationModal">
+                + Thêm vị trí mới
+            </button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 50px;" class="text-center">STT</th>
+                        <th>Tên vị trí / Phòng / Kho</th>
+                        <th>Mô tả</th>
+                        <th class="text-center" style="width: 100px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each locations}}
+                    <tr>
+                        <td>{{addOne @index}}</td>
+                        <td><strong>{{this.location_name}}</strong></td>
+                        <td>{{#if this.description}}{{this.description}}{{else}}<span class="text-muted">-</span>{{/if}}</td>
+                        <td class="text-center">
+                            <form action="/departments/{{../department.department_id}}/locations/{{this.location_id}}/delete" method="POST" class="m-0" onsubmit="return confirm('Bạn có chắc muốn xóa vị trí này?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {{else}}
+                    <tr>
+                        <td colspan="4" class="text-center py-3 text-muted">Chưa có vị trí cụ thể nào cho phòng ban này. Hãy thêm mới!</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Thêm vị trí -->
+<div class="modal fade" id="addLocationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="/departments/{{department.department_id}}/locations" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title">Thêm vị trí trực thuộc: {{department.department_name}}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Tên vị trí / Phòng / Kho <span class="text-danger">*</span></label>
+                        <input type="text" name="location_name" class="form-control" placeholder="Ví dụ: Phòng 301 Tòa A, Kho Tổng Tầng 1..." required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mô tả thêm</label>
+                        <textarea name="description" class="form-control" rows="2" placeholder="Chi tiết vị trí, người phụ trách kho..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-secondary">Lưu vị trí</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

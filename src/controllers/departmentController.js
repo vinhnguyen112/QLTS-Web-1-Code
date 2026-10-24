@@ -108,8 +108,10 @@ const departmentController = {
       FROM departments d
       LEFT JOIN employees e
         ON d.department_id = e.department_id
+      LEFT JOIN locations loc
+        ON loc.department_id = d.department_id
       LEFT JOIN assets a
-        ON d.department_id = a.department_id
+        ON (a.location_id = loc.location_id OR a.current_employee_id = e.employee_id)
       WHERE d.department_id = ?
       GROUP BY
         d.department_id,
@@ -125,13 +127,48 @@ const departmentController = {
         return res.redirect("/departments");
       }
 
+      // Lấy danh sách vị trí cụ thể thuộc phòng ban này
+      const [locations] = await db.query(
+        "SELECT * FROM locations WHERE department_id = ? ORDER BY location_id DESC",
+        [department_id]
+      );
+
       res.render("departments/show", {
         title: "Chi tiết phòng ban",
         department: departments[0],
+        locations,
       });
     } catch (err) {
       console.log("Lỗi lấy chi tiết phòng ban:", err);
       res.status(500).send("Đã xảy ra lỗi khi lấy chi tiết phòng ban");
+    }
+  },
+
+  // 3b. Thêm vị trí/kho trực thuộc phòng ban
+  async addLocation(req, res) {
+    const department_id = req.params.id;
+    const { location_name, description } = req.body;
+    try {
+      await db.query(
+        "INSERT INTO locations (department_id, location_name, description) VALUES (?, ?, ?)",
+        [department_id, location_name, description || null]
+      );
+      res.redirect(`/departments/${department_id}`);
+    } catch (err) {
+      console.log("Lỗi thêm vị trí:", err);
+      res.status(500).send("Đã xảy ra lỗi khi thêm vị trí");
+    }
+  },
+
+  // 3c. Xóa vị trí
+  async deleteLocation(req, res) {
+    const { id, locationId } = req.params;
+    try {
+      await db.query("DELETE FROM locations WHERE location_id = ? AND department_id = ?", [locationId, id]);
+      res.redirect(`/departments/${id}`);
+    } catch (err) {
+      console.log("Lỗi xóa vị trí:", err);
+      res.status(500).send("Đã xảy ra lỗi khi xóa vị trí");
     }
   },
 

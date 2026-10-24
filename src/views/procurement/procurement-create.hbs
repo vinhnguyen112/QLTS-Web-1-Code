@@ -12,9 +12,7 @@
   </div>
 
   <div class="modal-body">
-    <h6 class="text-primary mb-3">
-      <i class="fa-solid fa-file-invoice me-1"></i> 1. Thông tin đề nghị
-    </h6>
+    <h6 class="mb-3">1. Thông tin đề nghị</h6>
 
     <div class="row">
       <div class="col-md-6 mb-3">
@@ -69,9 +67,10 @@
       <div class="col-md-6 mb-3">
         <label class="form-label">Trạng thái</label>
         <select name="status" class="form-select">
-          <option value="pending" selected>Chờ duyệt</option>
+          <option value="pending_manager" selected>Chờ Quản lý duyệt</option>
+          <option value="pending_director">Chờ Giám đốc duyệt</option>
           <option value="approved">Đã duyệt</option>
-          <option value="received">Đã nhập kho</option>
+          <option value="completed">Hoàn thành</option>
           <option value="rejected">Từ chối</option>
         </select>
       </div>
@@ -99,9 +98,7 @@
 
     <hr />
 
-    <h6 class="text-primary mb-3">
-      <i class="fa-solid fa-box-open me-1"></i> 2. Thông tin tài sản cần mua
-    </h6>
+    <h6 class="mb-3">2. Thông tin tài sản cần mua</h6>
 
     <div class="row">
       <div class="col-md-6 mb-3">
@@ -173,8 +170,8 @@
     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
       Hủy
     </button>
-    <button type="submit" class="btn btn-primary">
-      <i class="fa-solid fa-check me-1"></i> Tạo đề nghị
+    <button type="submit" class="btn btn-secondary">
+      Tạo đề nghị
     </button>
   </div>
 </form>

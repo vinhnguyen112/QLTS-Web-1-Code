@@ -1,78 +1,206 @@
 <div class="container-fluid">
-    <div class="mb-4">
-        <h3 class="mb-1">Chi tiết tài sản</h3>
-        <p class="text-secondary mb-0">
-            Thông tin chi tiết của tài sản
-        </p>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-1 text-dark">Hồ sơ tài sản: <span class="fw-bold">{{asset.asset_code}}</span></h4>
+            <p class="text-secondary mb-0 small">
+                Thông tin chi tiết và nhật ký vòng đời tài sản
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="/assets" class="btn btn-secondary btn-sm">
+                Quay lại
+            </a>
+            <a href="/assets/{{asset.asset_id}}/edit" class="btn btn-warning btn-sm">
+                Sửa
+            </a>
+            {{#if (eq asset.status "in_stock")}}
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#handoverModal">
+                    Bàn giao tài sản
+                </button>
+            {{else if (eq asset.status "in_use")}}
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#handoverModal">
+                    Điều chuyển
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#recallModal">
+                    Thu hồi về kho
+                </button>
+            {{/if}}
+        </div>
     </div>
 
-    <!-- Thông tin chi tiết tài sản -->
-    <div class="card mb-4">
-        <div class="card-header bg-white py-3">
-            <h5 class="mb-0">Thông tin tài sản</h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <strong>Mã tài sản:</strong>
-                    <div>{{asset.asset_code}}</div>
+    <div class="row g-4 mb-3">
+        <!-- Thông tin chi tiết tài sản -->
+        <div class="col-12">
+            <div class="card border">
+                <div class="card-header">
+                    Thông số & Hiện trạng tài sản
                 </div>
-                <div class="col-md-6 mb-3">
-                    <strong>Tên tài sản:</strong>
-                    <div>{{asset.asset_name}}</div>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <strong>Danh mục:</strong>
-                    <div>{{asset.category_name}}</div>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <strong>Số serial:</strong>
-                    <div>{{#if asset.serial_number}}{{asset.serial_number}}{{else}}<span class="text-muted">(Không có)</span>{{/if}}</div>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <strong>Ngày mua:</strong>
-                    <div>{{formatDate asset.purchase_date}}</div>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <strong>Giá trị:</strong>
-                    <div>{{formatCurrency asset.original_cost}} VNĐ</div>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <strong>Vị trí:</strong>
-                    <div>{{#if asset.location}}{{asset.location}}{{else}}<span class="text-muted">(Chưa cập nhật)</span>{{/if}}</div>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <strong>Phòng ban:</strong>
-                    <div>{{#if asset.department_name}}{{asset.department_name}}{{else}}<span class="text-muted">(Chưa phân bổ)</span>{{/if}}</div>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <strong>Người sử dụng:</strong>
-                    <div>{{#if asset.full_name}}{{asset.full_name}}{{else}}<span class="text-muted">(Chưa bàn giao)</span>{{/if}}</div>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <strong>Trạng thái:</strong>
-                    <div>
-                        {{#if (eq asset.status "in_use")}}
-                            <span class="badge bg-success">Đang sử dụng</span>
-                        {{else if (eq asset.status "in_stock")}}
-                            <span class="badge bg-secondary">Trong kho</span>
-                        {{else if (eq asset.status "maintenance")}}
-                            <span class="badge bg-warning text-dark">Đang bảo trì</span>
-                        {{else}}
-                            <span class="badge bg-light text-dark">{{asset.status}}</span>
-                        {{/if}}
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <span class="text-muted d-block small">Tên tài sản:</span>
+                            <strong class="fs-6">{{asset.asset_name}}</strong>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <span class="text-muted d-block small">Loại tài sản:</span>
+                            <strong>{{asset.category_name}}</strong>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <span class="text-muted d-block small">Nguyên giá:</span>
+                            <span class="fw-bold">{{formatCurrency asset.original_cost}} đ</span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <span class="text-muted d-block small">Thời gian khấu hao:</span>
+                            <strong>{{asset.useful_life_months}} tháng</strong> ({{formatDate asset.purchase_date}})
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <span class="text-muted d-block small">Vị trí hiện tại:</span>
+                            {{#if asset.location_name}}
+                                <strong>{{asset.location_name}}</strong>
+                                {{#if asset.department_name}}<span class="text-muted">({{asset.department_name}})</span>{{/if}}
+                            {{else}}
+                                <span class="text-muted">Chưa xác định</span>
+                            {{/if}}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <span class="text-muted d-block small">Người đang sử dụng:</span>
+                            {{#if asset.current_employee_name}}
+                                <span class="badge bg-light text-dark border px-2 py-1">
+                                    {{asset.current_employee_name}}
+                                    {{#if asset.employee_phone}}<small>({{asset.employee_phone}})</small>{{/if}}
+                                </span>
+                            {{else}}
+                                <span class="badge bg-light text-dark border">Trong kho - Chưa bàn giao</span>
+                            {{/if}}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <span class="text-muted d-block small">Nhà cung cấp:</span>
+                            <div>{{#if asset.supplier_name}}<strong>{{asset.supplier_name}}</strong>{{else}}<span class="text-muted">-</span>{{/if}}</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <span class="text-muted d-block small">Trạng thái:</span>
+                            <div>
+                                {{#if (eq asset.status "in_use")}}
+                                    <span class="badge bg-light text-dark border">Đang sử dụng</span>
+                                {{else if (eq asset.status "in_stock")}}
+                                    <span class="badge bg-light text-dark border">Trong kho</span>
+                                {{else if (eq asset.status "maintenance")}}
+                                    <span class="badge bg-light text-dark border">Đang bảo trì</span>
+                                {{else if (eq asset.status "disposed")}}
+                                    <span class="badge bg-light text-dark border">Đã thanh lý</span>
+                                {{/if}}
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <span class="text-muted d-block small">Thông số kỹ thuật / Cấu hình:</span>
+                            <div class="p-2 bg-light rounded small border">{{#if asset.specifications}}{{asset.specifications}}{{else}}Chưa có thông số chi tiết{{/if}}</div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-12 mb-3">
-                    <strong>Mô tả:</strong>
-                    <div>{{#if asset.description}}{{asset.description}}{{else}}<span class="text-muted">(Không có mô tả)</span>{{/if}}</div>
-                </div>
-            </div>
-
-            <div class="mt-3 d-flex gap-2">
-                <a href="/assets" class="btn btn-secondary">Quay lại danh sách</a>
-                <a href="/assets/{{asset.asset_id}}/edit" class="btn btn-warning">Chỉnh sửa</a>
             </div>
         </div>
     </div>
+</div>
+
+<!-- Modal 1: Bàn giao tài sản -->
+<div class="modal fade" id="handoverModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="/assets/{{asset.asset_id}}/handover" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title fw-semibold">
+            Bàn giao / Điều chuyển tài sản
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted small mb-3">
+            Giao tài sản <strong>{{asset.asset_name}} ({{asset.asset_code}})</strong> cho nhân sự sử dụng.
+          </p>
+
+          <div class="mb-3">
+            <label class="form-label">Nhân sự tiếp nhận <span class="text-danger">*</span></label>
+            <select name="employee_id" class="form-select" required>
+              <option value="">-- Chọn nhân viên tiếp nhận --</option>
+              {{#each employees}}
+                <option value="{{this.employee_id}}">
+                  {{this.full_name}} ({{this.employee_code}})
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Vị trí bàn giao / Bàn làm việc</label>
+            <select name="location_id" class="form-select">
+              <option value="">-- Chọn vị trí đặt tài sản --</option>
+              {{#each locations}}
+                <option value="{{this.location_id}}">
+                  {{this.location_name}} - {{this.department_name}}
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Ghi chú bàn giao</label>
+            <textarea name="note" class="form-control" rows="2" placeholder="Ví dụ: Bàn giao kèm sạc, chuột, máy hoạt động bình thường..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-secondary">
+            Xác nhận bàn giao
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal 2: Thu hồi tài sản về kho -->
+<div class="modal fade" id="recallModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="/assets/{{asset.asset_id}}/recall" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title">Thu hồi tài sản về kho</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-warning py-2 small mb-3">
+            Xác nhận thu hồi tài sản <strong>{{asset.asset_name}}</strong> về kho lưu trữ.
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Kho nhận lại</label>
+            <select name="location_id" class="form-select">
+              <option value="">-- Chọn kho lưu trữ --</option>
+              {{#each locations}}
+                <option value="{{this.location_id}}">
+                  {{this.location_name}}
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Lý do thu hồi / Tình trạng máy</label>
+            <textarea name="note" class="form-control" rows="2" placeholder="Ví dụ: Nhân viên chuyển công tác, máy còn mới 95%..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-secondary">
+            Xác nhận thu hồi
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>

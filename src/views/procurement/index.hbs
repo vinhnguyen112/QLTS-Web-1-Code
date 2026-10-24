@@ -1,6 +1,6 @@
-<div class="container-fluid">
-  <div class="card shadow-sm border-0">
-    <div class="card-header bg-white py-3">
+<div class="container-fluid p-0">
+  <div class="card border">
+    <div class="card-header">
       <div class="row align-items-center g-2">
         <div class="col">
           <h5 class="mb-0 fw-semibold">Mua sắm tài sản</h5>
@@ -11,7 +11,7 @@
 
         <div class="col-auto d-flex align-items-center gap-2">
           <form action="/procurement" method="GET" class="m-0">
-            <div class="input-group">
+            <div class="input-group input-group-sm">
               <input
                 type="text"
                 name="name"
@@ -19,67 +19,72 @@
                 value="{{searchName}}"
                 placeholder="Tìm mã đề nghị..."
               />
-
               <button class="btn btn-secondary" type="submit">
-                <i class="fa-solid fa-magnifying-glass me-1"></i> Tìm
+                Tìm
               </button>
             </div>
           </form>
 
           <button
             type="button"
-            class="btn btn-primary"
+            class="btn btn-sm btn-secondary"
             data-bs-toggle="modal"
             data-bs-target="#createProcurementModal"
           >
-            <i class="fa-solid fa-plus me-1"></i> Tạo đề nghị
+            + Tạo đề nghị
           </button>
         </div>
       </div>
     </div>
 
     <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
+      <table class="table table-bordered table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th>STT</th>
+            <th style="width: 50px;" class="text-center">STT</th>
             <th>Mã đề nghị</th>
             <th>Ngày đề nghị</th>
             <th>Người đề nghị</th>
             <th>Phòng ban</th>
             <th>Lý do</th>
             <th>Trạng thái</th>
-            <th class="text-center">Thao tác</th>
+            <th class="text-center" style="width: 160px;">Thao tác</th>
           </tr>
         </thead>
 
         <tbody>
           {{#each procurements}}
             <tr>
-              <td>{{addOne @index}}</td>
-              <td class="fw-medium text-primary">{{this.procurement_code}}</td>
+              <td class="text-center">{{addOne @index}}</td>
+              <td><span class="badge bg-light text-dark border">{{this.procurement_code}}</span></td>
               <td>{{formatDate this.request_date}}</td>
               <td>{{#if this.requester_name}}{{this.requester_name}}{{else}}<span class="text-muted">-</span>{{/if}}</td>
               <td>{{#if this.department_name}}{{this.department_name}}{{else}}<span class="text-muted">-</span>{{/if}}</td>
               <td>{{#if this.reason}}{{this.reason}}{{else}}<span class="text-muted">-</span>{{/if}}</td>
               <td>
-                {{#if (eq this.status "pending")}}
-                  <span class="badge bg-warning text-dark">Chờ duyệt</span>
+                {{#if (eq this.status "pending_manager")}}
+                  <span class="badge bg-light text-dark border">Chờ QL duyệt</span>
+                {{else if (eq this.status "pending_director")}}
+                  <span class="badge bg-light text-dark border">Chờ GĐ duyệt</span>
+                {{else if (eq this.status "pending")}}
+                  <span class="badge bg-light text-dark border">Chờ duyệt</span>
                 {{else if (eq this.status "approved")}}
-                  <span class="badge bg-success">Đã duyệt</span>
+                  <span class="badge bg-light text-dark border">Đã duyệt</span>
+                {{else if (eq this.status "completed")}}
+                  <span class="badge bg-light text-dark border">Hoàn thành</span>
                 {{else if (eq this.status "received")}}
-                  <span class="badge bg-info">Đã nhập kho</span>
+                  <span class="badge bg-light text-dark border">Đã nhập kho</span>
                 {{else if (eq this.status "rejected")}}
-                  <span class="badge bg-danger">Từ chối</span>
+                  <span class="badge bg-light text-dark border">Từ chối</span>
                 {{else}}
-                  <span class="badge bg-secondary">{{this.status}}</span>
+                  <span class="badge bg-light text-dark border">{{this.status}}</span>
                 {{/if}}
               </td>
               <td>
                 <div class="d-flex justify-content-center gap-1">
                   <a
                     href="/procurement/{{this.procurement_id}}"
-                    class="btn btn-sm btn-info text-white"
+                    class="btn btn-sm btn-success"
                   >
                     Xem
                   </a>
