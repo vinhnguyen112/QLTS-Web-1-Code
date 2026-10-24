@@ -1,16 +1,22 @@
 const db = require("../config/db");
 const dayjs = require("dayjs");
 
-// Lấy danh sách phòng ban, nhân sự, danh mục 
+// Dữ liệu nền cho form
 async function getFormData() {
-  const [departments] = await db.query("SELECT * FROM departments");
-  const [employees] = await db.query("SELECT * FROM employees");
-  const [categories] = await db.query("SELECT * FROM categories");
+  const [departments] = await db.query(
+    "SELECT department_id, department_name FROM departments ORDER BY department_name ASC"
+  );
+  const [employees] = await db.query(
+    "SELECT employee_id, full_name, department_id FROM employees ORDER BY full_name ASC"
+  );
+  const [categories] = await db.query(
+    "SELECT category_id, category_name FROM categories ORDER BY category_name ASC"
+  );
   return { departments, employees, categories };
 }
 
 const procurementController = {
-  // 1. Danh sách đề nghị mua sắm (Tìm kiếm & Phân trang)
+  // 1. Danh sách đề nghị mua sắm
   async index(req, res) {
     const name = req.query.name || "";
     const page = parseInt(req.query.page) || 1;
@@ -18,30 +24,33 @@ const procurementController = {
     const start = (page - 1) * limit;
 
     try {
-      // Đếm tổng số bản ghi để tính số trang
-      const countSql = "SELECT COUNT(*) AS total FROM procurements WHERE procurement_code LIKE ?";
+      const countSql =
+        "SELECT COUNT(*) AS total FROM requests WHERE request_code LIKE ? AND request_type = 'purchase'";
       const [countResult] = await db.query(countSql, [`%${name}%`]);
-      const totalPages = Math.ceil(countResult[0].total / limit);
+      const totalPages = Math.ceil((countResult[0]?.total || 0) / limit);
 
-      // Lấy danh sách đề nghị kèm tên phòng ban và người đề nghị
       const sql = `
-        SELECT p.*, d.department_name, e.full_name AS requester_name
-        FROM procurements p
-        LEFT JOIN departments d ON p.department_id = d.department_id
-        LEFT JOIN employees e ON p.requester_id = e.employee_id
-        WHERE p.procurement_code LIKE ?
-        ORDER BY p.procurement_id DESC
+        SELECT 
+          r.*,
+          r.request_id AS procurement_id,
+          r.request_code AS procurement_code,
+          r.created_at AS request_date,
+          d.department_name,
+          e.full_name AS requester_name
+        FROM requests r
+        LEFT JOIN departments d ON r.department_id = d.department_id
+        LEFT JOIN employees e ON r.requester_id = e.employee_id
+        WHERE r.request_code LIKE ? AND r.request_type = 'purchase'
+        ORDER BY r.request_id DESC
         LIMIT ${start}, ${limit}
       `;
       const [procurements] = await db.query(sql, [`%${name}%`]);
 
-      // Tạo mảng số trang
       const pages = [];
       for (let i = 1; i <= totalPages; i++) {
         pages.push({ number: i, active: i == page });
       }
 
-      // Dữ liệu cho modal thêm mới
       const { departments, employees, categories } = await getFormData();
 
       res.render("procurement/index", {
@@ -63,13 +72,18 @@ const procurementController = {
   // 2. Chi tiết đề nghị mua sắm
   async show(req, res) {
     try {
-      // Lấy thông tin đề nghị
       const sql = `
-        SELECT p.*, d.department_name, e.full_name AS requester_name
-        FROM procurements p
-        LEFT JOIN departments d ON p.department_id = d.department_id
-        LEFT JOIN employees e ON p.requester_id = e.employee_id
-        WHERE p.procurement_id = ?
+        SELECT 
+          r.*,
+          r.request_id AS procurement_id,
+          r.request_code AS procurement_code,
+          r.created_at AS request_date,
+          d.department_name,
+          e.full_name AS requester_name
+        FROM requests r
+        LEFT JOIN departments d ON r.department_id = d.department_id
+        LEFT JOIN employees e ON r.requester_id = e.employee_id
+        WHERE r.request_id = ?
       `;
       const [procurements] = await db.query(sql, [req.params.id]);
 
@@ -77,16 +91,19 @@ const procurementController = {
         return res.redirect("/procurement");
       }
 
-      // Lấy danh sách mặt hàng của đề nghị này
+      // Lấy danh sách mặt hàng cần mua
       const detailSql = `
-        SELECT pd.*, c.category_name
-        FROM procurement_details pd
-        LEFT JOIN categories c ON pd.category_id = c.category_id
-        WHERE pd.procurement_id = ?
+        SELECT 
+          rl.*,
+          rl.item_name AS asset_name,
+          rl.note AS description,
+          c.category_name
+        FROM request_lines rl
+        LEFT JOIN categories c ON rl.category_id = c.category_id
+        WHERE rl.request_id = ?
       `;
       const [details] = await db.query(detailSql, [req.params.id]);
 
-      // Tính tổng tiền dự kiến
       let totalCost = 0;
       details.forEach((item) => {
         item.lineTotal = Number(item.quantity) * Number(item.estimated_cost || 0);
@@ -111,10 +128,8 @@ const procurementController = {
       procurement_code,
       requester_id,
       department_id,
-      request_date,
       reason,
       status,
-      note,
       asset_name,
       category_id,
       quantity,
@@ -122,34 +137,37 @@ const procurementController = {
       description,
     } = req.body;
 
+    const finalCode =
+      procurement_code && procurement_code.trim() !== ""
+        ? procurement_code.trim()
+        : `DX-${dayjs().format("YYYY")}-${Math.floor(1000 + Math.random() * 9000)}`;
+
     try {
-      // Lưu vào bảng procurements
-      const sqlProcurement = `
-        INSERT INTO procurements (procurement_code, requester_id, department_id, request_date, reason, status, note)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+      // 1. Lưu phiếu đề xuất
+      const sqlRequest = `
+        INSERT INTO requests (request_code, request_type, requester_id, department_id, status, reason)
+        VALUES (?, 'purchase', ?, ?, ?, ?)
       `;
-      const [result] = await db.query(sqlProcurement, [
-        procurement_code,
-        requester_id || null,
+      const [result] = await db.query(sqlRequest, [
+        finalCode,
+        requester_id,
         department_id,
-        request_date,
-        reason || null,
-        status || "pending",
-        note || null,
+        status || "pending_manager",
+        reason || "Đề xuất mua sắm tài sản",
       ]);
 
-      // Lưu mặt hàng vào bảng procurement_details
-      if (asset_name) {
+      // 2. Lưu mặt hàng chi tiết
+      if (asset_name && asset_name.trim() !== "") {
         const sqlDetail = `
-          INSERT INTO procurement_details (procurement_id, asset_name, category_id, quantity, estimated_cost, description)
+          INSERT INTO request_lines (request_id, item_name, category_id, quantity, estimated_cost, note)
           VALUES (?, ?, ?, ?, ?, ?)
         `;
         await db.query(sqlDetail, [
           result.insertId,
-          asset_name,
+          asset_name.trim(),
           category_id || null,
-          quantity || 1,
-          estimated_cost || 0,
+          parseInt(quantity) || 1,
+          parseFloat(estimated_cost) || 0,
           description || null,
         ]);
       }
@@ -165,7 +183,7 @@ const procurementController = {
   async edit(req, res) {
     try {
       const [procurements] = await db.query(
-        "SELECT * FROM procurements WHERE procurement_id = ?",
+        "SELECT *, request_id AS procurement_id, request_code AS procurement_code FROM requests WHERE request_id = ?",
         [req.params.id]
       );
 
@@ -174,13 +192,12 @@ const procurementController = {
       }
 
       const procurement = procurements[0];
-      if (procurement.request_date) {
-        procurement.request_date = dayjs(procurement.request_date).format("YYYY-MM-DD");
+      if (procurement.created_at) {
+        procurement.request_date = dayjs(procurement.created_at).format("YYYY-MM-DD");
       }
 
-      // Lấy thông tin mặt hàng cần mua
       const [details] = await db.query(
-        "SELECT * FROM procurement_details WHERE procurement_id = ?",
+        "SELECT *, item_name AS asset_name, note AS description FROM request_lines WHERE request_id = ? LIMIT 1",
         [req.params.id]
       );
 
@@ -206,10 +223,8 @@ const procurementController = {
       procurement_code,
       requester_id,
       department_id,
-      request_date,
       reason,
       status,
-      note,
       asset_name,
       category_id,
       quantity,
@@ -218,37 +233,35 @@ const procurementController = {
     } = req.body;
 
     try {
-      // Cập nhật thông tin chung
-      const sqlProcurement = `
-        UPDATE procurements
-        SET procurement_code = ?, requester_id = ?, department_id = ?, request_date = ?, reason = ?, status = ?, note = ?
-        WHERE procurement_id = ?
-      `;
-      await db.query(sqlProcurement, [
-        procurement_code,
-        requester_id || null,
-        department_id,
-        request_date,
-        reason || null,
-        status || "pending",
-        note || null,
-        req.params.id,
-      ]);
+      // 1. Cập nhật phiếu đề xuất
+      await db.query(
+        `UPDATE requests
+         SET request_code = ?, requester_id = ?, department_id = ?, status = ?, reason = ?
+         WHERE request_id = ?`,
+        [
+          procurement_code,
+          requester_id,
+          department_id,
+          status || "pending_manager",
+          reason || "Đề xuất mua sắm tài sản",
+          req.params.id,
+        ]
+      );
 
-      // Cập nhật chi tiết mặt hàng
-      const sqlDetail = `
-        UPDATE procurement_details
-        SET asset_name = ?, category_id = ?, quantity = ?, estimated_cost = ?, description = ?
-        WHERE procurement_id = ?
-      `;
-      await db.query(sqlDetail, [
-        asset_name,
-        category_id || null,
-        quantity || 1,
-        estimated_cost || 0,
-        description || null,
-        req.params.id,
-      ]);
+      // 2. Cập nhật mặt hàng chi tiết
+      await db.query(
+        `UPDATE request_lines
+         SET item_name = ?, category_id = ?, quantity = ?, estimated_cost = ?, note = ?
+         WHERE request_id = ?`,
+        [
+          asset_name,
+          category_id || null,
+          parseInt(quantity) || 1,
+          parseFloat(estimated_cost) || 0,
+          description || null,
+          req.params.id,
+        ]
+      );
 
       res.redirect("/procurement");
     } catch (err) {
@@ -260,8 +273,8 @@ const procurementController = {
   // 6. Xóa đề nghị mua sắm
   async delete(req, res) {
     try {
-      await db.query("DELETE FROM procurement_details WHERE procurement_id = ?", [req.params.id]);
-      await db.query("DELETE FROM procurements WHERE procurement_id = ?", [req.params.id]);
+      await db.query("DELETE FROM request_lines WHERE request_id = ?", [req.params.id]);
+      await db.query("DELETE FROM requests WHERE request_id = ?", [req.params.id]);
       res.redirect("/procurement");
     } catch (err) {
       console.log("Lỗi xóa đề nghị:", err);

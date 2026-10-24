@@ -1,98 +1,87 @@
 <div class="container-fluid p-0">
-  <div class="mb-4">
-    <h3 class="mb-1">Tổng quan hệ thống</h3>
-    <p class="text-muted mb-0">Báo cáo tổng quan số lượng và giá trị tài sản trong doanh nghiệp</p>
-  </div>
-
-  <!-- 4 thẻ thống kê số lượng (dữ liệu thật từ MySQL) -->
-  <div class="row g-3">
-    <div class="col-md-3">
-      <div class="card p-3">
-        <div class="text-muted small">Tổng tài sản</div>
-        <h3 class="mt-2 mb-0 fw-bold">{{totalAssets}}</h3>
-        <small class="text-muted">tài sản</small>
-      </div>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h4 class="mb-1 text-dark">Tổng quan hệ thống</h4>
+      <p class="text-muted mb-0 small">Báo cáo số lượng và giá trị tài sản đang quản lý</p>
     </div>
-
-    <div class="col-md-3">
-      <div class="card p-3">
-        <div class="text-muted small">Đang sử dụng</div>
-        <h3 class="mt-2 mb-0 text-success fw-bold">{{inUse}}</h3>
-        <small class="text-muted">tài sản</small>
-      </div>
-    </div>
-
-    <div class="col-md-3">
-      <div class="card p-3">
-        <div class="text-muted small">Trong kho</div>
-        <h3 class="mt-2 mb-0 text-secondary fw-bold">{{inStock}}</h3>
-        <small class="text-muted">tài sản</small>
-      </div>
-    </div>
-
-    <div class="col-md-3">
-      <div class="card p-3">
-        <div class="text-muted small">Đang bảo trì</div>
-        <h3 class="mt-2 mb-0 text-warning fw-bold">{{maintenance}}</h3>
-        <small class="text-muted">tài sản</small>
-      </div>
+    <div>
+      <a href="/reports" class="btn btn-outline-secondary btn-sm">Xem chi tiết báo cáo</a>
     </div>
   </div>
 
-  <!-- Thống kê giá trị -->
-  <div class="row g-3 mt-1">
-    <div class="col-md-6">
-      <div class="card p-4 h-100">
-        <h5 class="mb-3">Tổng giá trị tài sản</h5>
-        <h2 class="text-primary fw-bold">{{formatCurrency totalCost}} VNĐ</h2>
-        <small class="text-muted mt-2">Dựa trên nguyên giá tài sản đã ghi nhận trong cơ sở dữ liệu</small>
-      </div>
-    </div>
-
-    <div class="col-md-6">
-      <div class="card p-4 h-100">
-        <h5 class="mb-3">Phân loại theo trạng thái</h5>
-        <div class="mt-2">
-          <p class="mb-2 d-flex justify-content-between">
-            <span>Đang sử dụng:</span>
-            <strong class="text-success">{{inUse}} tài sản ({{inUsePercent}}%)</strong>
-          </p>
-          <p class="mb-2 d-flex justify-content-between">
-            <span>Trong kho:</span>
-            <strong class="text-secondary">{{inStock}} tài sản ({{inStockPercent}}%)</strong>
-          </p>
-          <p class="mb-0 d-flex justify-content-between">
-            <span>Đang bảo trì:</span>
-            <strong class="text-warning">{{maintenance}} tài sản ({{maintenancePercent}}%)</strong>
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Bảng tài sản theo phòng ban -->
-  <div class="card mt-4">
-    <div class="card-header py-3 d-flex justify-content-between align-items-center">
-      <span class="fw-semibold">Tài sản phân bổ theo phòng ban</span>
-      <a href="/reports" class="btn btn-sm btn-outline-primary">Xem báo cáo chi tiết</a>
+  <!-- Bảng 1: Bảng tổng hợp hiện trạng tài sản -->
+  <div class="card mb-3">
+    <div class="card-header">
+      1. Bảng tổng hợp hiện trạng tài sản toàn công ty
     </div>
     <div class="table-responsive">
-      <table class="table table-bordered align-middle mb-0">
+      <table class="table table-bordered table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th style="width: 60px;" class="text-center">STT</th>
+            <th style="width: 50px;" class="text-center">STT</th>
+            <th>Trạng thái tài sản</th>
+            <th class="text-center" style="width: 160px;">Số lượng</th>
+            <th class="text-center" style="width: 140px;">Tỷ trọng</th>
+            <th>Mô tả hiện trạng</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-center">1</td>
+            <td><strong>Đang sử dụng</strong></td>
+            <td class="text-center fw-semibold">{{inUse}}</td>
+            <td class="text-center">{{inUsePercent}}%</td>
+            <td class="text-muted small">Đã bàn giao cụ thể cho nhân viên hoặc phòng ban sử dụng</td>
+          </tr>
+          <tr>
+            <td class="text-center">2</td>
+            <td><strong>Trong kho</strong></td>
+            <td class="text-center fw-semibold">{{inStock}}</td>
+            <td class="text-center">{{inStockPercent}}%</td>
+            <td class="text-muted small">Lưu trữ tại các kho, sẵn sàng để cấp phát hoặc điều chuyển</td>
+          </tr>
+          <tr>
+            <td class="text-center">3</td>
+            <td><strong>Đang bảo trì</strong></td>
+            <td class="text-center fw-semibold">{{maintenance}}</td>
+            <td class="text-center">{{maintenancePercent}}%</td>
+            <td class="text-muted small">Thiết bị đang gửi đi bảo hành, sửa chữa kỹ thuật</td>
+          </tr>
+        </tbody>
+        <tfoot class="table-light">
+          <tr class="fw-bold">
+            <td colspan="2" class="text-end">TỔNG CỘNG:</td>
+            <td class="text-center">{{totalAssets}} tài sản</td>
+            <td class="text-center">100%</td>
+            <td>Tổng giá trị nguyên giá: <strong>{{formatCurrency totalCost}}</strong> đ</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- Bảng 2: Bảng phân bổ tài sản theo phòng ban -->
+  <div class="card">
+    <div class="card-header">
+      2. Bảng phân bổ tài sản theo phòng ban
+    </div>
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 50px;" class="text-center">STT</th>
             <th>Phòng ban</th>
             <th class="text-center" style="width: 180px;">Số lượng tài sản</th>
-            <th class="text-end" style="width: 220px;">Tổng giá trị</th>
+            <th class="text-end" style="width: 220px;">Tổng nguyên giá (VNĐ)</th>
           </tr>
         </thead>
         <tbody>
           {{#each byDepartment}}
             <tr>
               <td class="text-center">{{addOne @index}}</td>
-              <td class="fw-medium">{{this.department_name}}</td>
+              <td>{{this.department_name}}</td>
               <td class="text-center">{{this.total_assets}}</td>
-              <td class="text-end fw-semibold">{{formatCurrency this.total_cost}} VNĐ</td>
+              <td class="text-end">{{formatCurrency this.total_cost}} đ</td>
             </tr>
           {{else}}
             <tr>

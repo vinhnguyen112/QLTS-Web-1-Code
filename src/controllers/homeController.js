@@ -1,7 +1,7 @@
 const db = require("../config/db");
 
 const homeController = {
-  // Hiển thị trang tổng quan (kết nối dữ liệu thật từ MySQL)
+  // Hiển thị trang tổng quan (kết nối dữ liệu thật từ MySQL qlts-new-01)
   async index(req, res) {
     try {
       // 1. Thống kê tổng số lượng và giá trị tài sản
@@ -15,18 +15,18 @@ const homeController = {
         FROM assets
       `);
 
-      const totalAssets = totals.total || 0;
-      const inUse = Number(totals.in_use) || 0;
-      const inStock = Number(totals.in_stock) || 0;
-      const maintenance = Number(totals.maintenance) || 0;
-      const totalCost = Number(totals.total_cost) || 0;
+      const totalAssets = totals ? Number(totals.total) || 0 : 0;
+      const inUse = totals ? Number(totals.in_use) || 0 : 0;
+      const inStock = totals ? Number(totals.in_stock) || 0 : 0;
+      const maintenance = totals ? Number(totals.maintenance) || 0 : 0;
+      const totalCost = totals ? Number(totals.total_cost) || 0 : 0;
 
       // Tính tỷ lệ phần trăm (tránh chia cho 0)
       const inUsePercent = totalAssets > 0 ? ((inUse / totalAssets) * 100).toFixed(1) : "0.0";
       const inStockPercent = totalAssets > 0 ? ((inStock / totalAssets) * 100).toFixed(1) : "0.0";
       const maintenancePercent = totalAssets > 0 ? ((maintenance / totalAssets) * 100).toFixed(1) : "0.0";
 
-      // 2. Thống kê tài sản phân bổ theo phòng ban (Top 10 phòng nhiều tài sản nhất)
+      // 2. Thống kê tài sản phân bổ theo phòng ban (qua locations)
       const [byDepartment] = await db.query(`
         SELECT 
           d.department_id, 
@@ -34,7 +34,8 @@ const homeController = {
           COUNT(a.asset_id) AS total_assets, 
           IFNULL(SUM(a.original_cost), 0) AS total_cost 
         FROM departments d 
-        LEFT JOIN assets a ON d.department_id = a.department_id 
+        LEFT JOIN locations l ON d.department_id = l.department_id
+        LEFT JOIN assets a ON l.location_id = a.location_id
         GROUP BY d.department_id, d.department_name 
         ORDER BY total_assets DESC, d.department_name ASC
         LIMIT 10
@@ -60,4 +61,3 @@ const homeController = {
 };
 
 module.exports = homeController;
-

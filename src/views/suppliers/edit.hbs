@@ -1,0 +1,40 @@
+<div class="container-fluid">
+  <div class="mb-4">
+    <h3 class="mb-1">Sửa nhà cung cấp</h3>
+    <p class="text-secondary mb-0">Cập nhật thông tin nhà cung cấp</p>
+  </div>
+
+  <div class="card">
+    <div class="card-header">Thông tin nhà cung cấp</div>
+    <div class="card-body">
+      <form action="/suppliers/{{supplier.supplier_id}}/update" method="POST">
+        <div class="mb-3">
+          <label class="form-label">Tên nhà cung cấp <span class="text-danger">*</span></label>
+          <input type="text" name="supplier_name" class="form-control" value="{{supplier.supplier_name}}" required />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Mã số thuế</label>
+          <input type="text" name="tax_code" class="form-control" value="{{supplier.tax_code}}" />
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Điện thoại</label>
+            <input type="text" name="contact_phone" class="form-control" value="{{supplier.contact_phone}}" />
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" name="contact_email" class="form-control" value="{{supplier.contact_email}}" />
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Địa chỉ</label>
+          <textarea name="address" class="form-control" rows="3">{{supplier.address}}</textarea>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+          <a href="/suppliers" class="btn btn-secondary">Hủy</a>
+          <button type="submit" class="btn btn-secondary">Lưu thay đổi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

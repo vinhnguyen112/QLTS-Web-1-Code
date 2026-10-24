@@ -1,66 +1,45 @@
-<header class="header border-bottom bg-white">
-  <div class="container-fluid h-100 px-4">
-    <div class="d-flex justify-content-between align-items-center h-100">
+<header class="navbar-top d-flex align-items-center">
+  <div class="container-fluid px-3">
+    <div class="d-flex justify-content-between align-items-center">
       <div class="d-flex align-items-center">
-        <div class="header-logo me-3">
-          <i class="fa-solid fa-boxes-stacked"></i>
-        </div>
+        <!-- Nút mở offcanvas sidebar với body scrolling -->
+        <button
+          class="btn btn-sm btn-outline-secondary me-3"
+          type="button"
+          data-bs-toggle="offcanvas"
+          data-bs-target="#offcanvasScrolling"
+          aria-controls="offcanvasScrolling"
+        >
+          Menu
+        </button>
+
         <div>
-          <h5 class="mb-0">
-            Hệ thống quản lý tài sản
-          </h5>
-          <small class="text-secondary">
-            Quản lý tài sản doanh nghiệp
-          </small>
+          <span class="fs-6 fw-bold text-dark text-uppercase">
+            Quản Lý Tài Sản
+          </span>
+          <span class="text-muted small ms-2 d-none d-sm-inline">
+            | Hệ thống quản lý tài sản doanh nghiệp
+          </span>
         </div>
       </div>
 
       <div class="d-flex align-items-center">
-        <button type="button" class="btn btn-light me-2" title="Thông báo">
-          <i class="fa-regular fa-bell"></i>
-        </button>
         <div class="dropdown">
           <button
-            class="btn btn-light dropdown-toggle"
+            class="btn btn-outline-secondary dropdown-toggle btn-sm"
             type="button"
             data-bs-toggle="dropdown"
             aria-expanded="false"
           >
-            <i class="fa-regular fa-user me-2"></i>
-            Nguyễn Thành Vinh
+            Quản trị viên
           </button>
 
           <ul class="dropdown-menu dropdown-menu-end">
-            <li>
-              <h6 class="dropdown-header">
-                Tài khoản
-              </h6>
-            </li>
-
-            <li>
-              <a class="dropdown-item" href="#">
-                <i class="fa-regular fa-user me-2"></i>
-                Thông tin cá nhân
-              </a>
-            </li>
-
-            <li>
-              <a class="dropdown-item" href="#">
-                <i class="fa-solid fa-key me-2"></i>
-                Đổi mật khẩu
-              </a>
-            </li>
-
-            <li>
-              <hr class="dropdown-divider" />
-            </li>
-
-            <li>
-              <a class="dropdown-item" href="#">
-                <i class="fa-solid fa-right-from-bracket me-2"></i>
-                Đăng xuất
-              </a>
-            </li>
+            <li><h6 class="dropdown-header">Tài khoản</h6></li>
+            <li><a class="dropdown-item" href="#">Thông tin cá nhân</a></li>
+            <li><a class="dropdown-item" href="#">Đổi mật khẩu</a></li>
+            <li><hr class="dropdown-divider" /></li>
+            <li><a class="dropdown-item" href="#">Đăng xuất</a></li>
           </ul>
         </div>
       </div>

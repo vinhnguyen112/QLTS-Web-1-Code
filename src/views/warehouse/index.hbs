@@ -1,0 +1,216 @@
+<div class="container-fluid p-0">
+  <!-- Danh sách tài sản trong kho & Bộ lọc -->
+  <div class="card border">
+    <div class="card-header">
+      <div class="row align-items-center g-2">
+        <div class="col">
+          <h5 class="mb-0">Kho tài sản</h5>
+          <small class="text-muted">Theo dõi và quản lý tài sản lưu trữ trước khi cấp phát cho nhân sự</small>
+        </div>
+
+        <div class="col-auto">
+          <form action="/warehouse" method="get" class="row g-2 align-items-center m-0">
+            <!-- Lọc theo kho -->
+            <div class="col-auto">
+              <select name="location_id" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">-- Tất cả kho --</option>
+                {{#each locations}}
+                  <option value="{{this.location_id}}" {{#if (eq ../filterLocation (lookup . 'location_id'))}}selected{{/if}}>
+                    {{this.location_name}}
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+
+            <!-- Lọc theo loại tài sản -->
+            <div class="col-auto">
+              <select name="category_id" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">-- Tất cả loại tài sản --</option>
+                {{#each categories}}
+                  <option value="{{this.category_id}}" {{#if (eq ../filterCategory (lookup . 'category_id'))}}selected{{/if}}>
+                    {{this.category_name}}
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+
+            <!-- Tìm kiếm -->
+            <div class="col-auto">
+              <div class="input-group input-group-sm">
+                <input
+                  type="text"
+                  name="name"
+                  class="form-control"
+                  value="{{searchName}}"
+                  placeholder="Mã hoặc tên tài sản..."
+                />
+                <button class="btn btn-secondary" type="submit">Tìm</button>
+              </div>
+            </div>
+
+            <div class="col-auto">
+              <a href="/assets" class="btn btn-sm btn-outline-secondary">+ Nhập tài sản mới</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 50px;">STT</th>
+            <th>Mã tài sản</th>
+            <th>Tên tài sản</th>
+            <th>Loại tài sản</th>
+            <th>Kho lưu trữ</th>
+            <th>Nhà cung cấp</th>
+            <th>Nguyên giá</th>
+            <th>Ngày nhập kho</th>
+            <th class="text-center" style="width: 170px;">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each assets}}
+            <tr>
+              <td>{{addOne @index}}</td>
+              <td>
+                <a href="/assets/{{this.asset_id}}" class="fw-bold text-decoration-none">
+                  <span class="badge bg-light text-dark border">{{this.asset_code}}</span>
+                </a>
+              </td>
+              <td>
+                <strong>{{this.asset_name}}</strong>
+              </td>
+              <td>{{this.category_name}}</td>
+              <td>
+                {{#if this.location_name}}
+                  <span class="badge bg-light text-dark border">{{this.location_name}}</span>
+                {{else}}
+                  <span class="text-muted">Chưa gán kho</span>
+                {{/if}}
+              </td>
+              <td>
+                {{#if this.supplier_name}}
+                  {{this.supplier_name}}
+                {{else}}
+                  <span class="text-muted">-</span>
+                {{/if}}
+              </td>
+              <td><strong>{{formatCurrency this.original_cost}}</strong> đ</td>
+              <td>{{formatDate this.purchase_date}}</td>
+              <td>
+                <div class="d-flex justify-content-center gap-1">
+                  <a href="/assets/{{this.asset_id}}" class="btn btn-sm btn-success">
+                    Xem
+                  </a>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-secondary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#handoverQuickModal"
+                    data-id="{{this.asset_id}}"
+                    data-code="{{this.asset_code}}"
+                    data-name="{{this.asset_name}}"
+                  >
+                    Bàn giao
+                  </button>
+                </div>
+              </td>
+            </tr>
+          {{else}}
+            <tr>
+              <td colspan="9" class="text-center py-4 text-muted">
+                Hiện tại không có tài sản nào đang lưu trong kho phù hợp với điều kiện tìm kiếm.
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Bàn giao nhanh tài sản từ kho -->
+<div class="modal fade" id="handoverQuickModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="handoverQuickForm" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title">Bàn giao tài sản từ kho</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-light border py-2 mb-3">
+            <div><strong>Tài sản:</strong> <span id="quickAssetInfo">-</span></div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Nhân sự tiếp nhận <span class="text-danger">*</span></label>
+            <select name="employee_id" class="form-select" required>
+              <option value="">-- Chọn nhân viên tiếp nhận --</option>
+              {{#each employees}}
+                <option value="{{this.employee_id}}">
+                  {{this.full_name}} ({{this.employee_code}})
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Vị trí bàn giao / Bàn làm việc</label>
+            <select name="location_id" class="form-select">
+              <option value="">-- Chọn vị trí đặt tài sản --</option>
+              {{#each locations}}
+                <option value="{{this.location_id}}">
+                  {{this.location_name}} - {{this.department_name}}
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Ghi chú bàn giao</label>
+            <textarea name="note" class="form-control" rows="2" placeholder="Ví dụ: Cấp phát làm việc chính thức, máy hoạt động tốt..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-secondary">Xác nhận bàn giao</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{{#if pages.length}}
+  <nav class="mt-3">
+    <ul class="pagination">
+      {{#each pages}}
+        <li class="page-item {{#if active}}active{{/if}}">
+          <a class="page-link" href="/warehouse?page={{number}}&name={{../searchName}}&category_id={{../filterCategory}}&location_id={{../filterLocation}}">
+            {{number}}
+          </a>
+        </li>
+      {{/each}}
+    </ul>
+  </nav>
+{{/if}}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const handoverModal = document.getElementById('handoverQuickModal');
+  if (handoverModal) {
+    handoverModal.addEventListener('show.bs.modal', function(event) {
+      const button = event.relatedTarget;
+      const id = button.getAttribute('data-id');
+      const code = button.getAttribute('data-code');
+      const name = button.getAttribute('data-name');
+
+      document.getElementById('handoverQuickForm').action = '/assets/' + id + '/handover';
+      document.getElementById('quickAssetInfo').textContent = name + ' (' + code + ')';
+    });
+  }
+});
+</script>
