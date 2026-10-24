@@ -54,8 +54,7 @@ router.get("/assets/:id/edit", assetController.edit);
 router.get("/assets/:id", assetController.show);
 router.post("/assets/:id/update", assetController.update);
 router.post("/assets/:id/delete", assetController.delete);
-router.post("/assets/:id/handover", assetController.handover);
-router.post("/assets/:id/recall", assetController.recall);
+
 
 // 5b. Kho tài sản lưu trữ
 router.get("/warehouse", warehouseController.index);

@@ -236,37 +236,11 @@ const assetController = {
   async delete(req, res) {
     const assetId = req.params.id;
 
-    await db.query("DELETE FROM depreciation_details WHERE asset_id = ?", [assetId]);
     await db.query("DELETE FROM assets WHERE asset_id = ?", [assetId]);
 
     res.redirect("/assets");
   },
 
-  // 7. Bàn giao tài sản cho nhân viên
-  async handover(req, res) {
-    const assetId = req.params.id;
-    const { employee_id, location_id } = req.body;
-
-    await db.query(
-      "UPDATE assets SET current_employee_id = ?, location_id = ?, status = 'in_use' WHERE asset_id = ?",
-      [employee_id, location_id || null, assetId]
-    );
-
-    res.redirect(`/assets/${assetId}`);
-  },
-
-  // 8. Thu hồi tài sản về kho 
-  async recall(req, res) {
-    const assetId = req.params.id;
-    const { location_id } = req.body;
-
-    await db.query(
-      "UPDATE assets SET current_employee_id = NULL, location_id = ?, status = 'in_stock' WHERE asset_id = ?",
-      [location_id || null, assetId]
-    );
-
-    res.redirect(`/assets/${assetId}`);
-  },
 };
 
 module.exports = assetController;
