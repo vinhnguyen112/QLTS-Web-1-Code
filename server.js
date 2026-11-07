@@ -46,7 +46,6 @@ app.engine(
       formatDateTime: (date) => {
         return date ? dayjs(date).format("DD/MM/YYYY HH:mm") : "";
       },
-      // Sử dụng class chuẩn của Bootstrap 5, tinh giản màu sắc
       assetStatusBadge: (status) => {
         const map = {
           in_stock: '<span class="badge text-bg-light border">Trong kho</span>',
@@ -107,13 +106,25 @@ app.use(
   })
 );
 
-// Nạp thông tin người dùng vào mọi View
+// Nạp thông tin người dùng & quyền hạn vào mọi View
 app.use((req, res, next) => {
-  res.locals.currentUser = req.session.user || null;
-  res.locals.isSysAdmin = req.session.user?.role_code === "SYS_ADMIN";
-  res.locals.isDirector = req.session.user?.role_code === "DIRECTOR";
-  res.locals.isAssetManager = req.session.user?.role_code === "ASSET_MANAGER";
-  res.locals.isAccountant = ["CHIEF_ACCOUNTANT", "ASSET_ACCOUNTANT"].includes(req.session.user?.role_code);
+  const user = req.session.user || null;
+  const role = user?.role_code || "";
+
+  res.locals.currentUser = user;
+  res.locals.isSysAdmin = role === "SYS_ADMIN";
+  res.locals.isDirector = role === "DIRECTOR";
+  res.locals.isAssetManager = role === "ASSET_MANAGER";
+  res.locals.isTechnician = role === "TECHNICIAN";
+  res.locals.isAccountant = ["CHIEF_ACCOUNTANT", "ASSET_ACCOUNTANT"].includes(role);
+  
+  // Quyền quản lý tài sản chung (Admin hoặc Quản lý CSVC hoặc Giám đốc)
+  res.locals.canManageAssets = ["SYS_ADMIN", "ASSET_MANAGER", "DIRECTOR"].includes(role);
+  // Quyền thao tác kỹ thuật / bảo trì
+  res.locals.canMaintain = ["SYS_ADMIN", "ASSET_MANAGER", "TECHNICIAN"].includes(role);
+  // Quyền duyệt đề xuất
+  res.locals.canApproveRequests = ["SYS_ADMIN", "DIRECTOR", "CHIEF_ACCOUNTANT", "ASSET_MANAGER", "DEPT_HEAD"].includes(role);
+
   res.locals.currentPath = req.path;
   next();
 });

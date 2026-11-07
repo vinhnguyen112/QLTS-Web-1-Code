@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { requireAuth } = require("../middlewares/authMiddleware");
+const { requireAuth, requireRole } = require("../middlewares/authMiddleware");
 
 // 1. Phân hệ Xác thực (Công khai - không cần đăng nhập)
 router.use("/auth", require("./authRoutes"));
@@ -8,7 +8,7 @@ router.use("/auth", require("./authRoutes"));
 // Áp dụng middleware kiểm tra đăng nhập cho tất cả các chức năng bên dưới
 router.use(requireAuth);
 
-// 2. Phân hệ Trang chủ & Dashboard
+// 2. Phân hệ Trang chủ & Dashboard (Ai đã đăng nhập cũng xem được)
 router.use("/", require("./homeRoutes"));
 
 // 3. Phân hệ Quản lý Tài sản & Vòng đời
@@ -20,8 +20,11 @@ router.use("/stocktakes", require("./stocktakeRoutes"));
 router.use("/maintenance", require("./maintenanceRoutes"));
 
 // 4. Phân hệ Danh mục & Cơ cấu tổ chức
+// Quản lý Nhân sự & Người dùng: CHỈ SYS_ADMIN mới được truy cập
+router.use("/employees", requireRole("SYS_ADMIN"), require("./employeeRoutes"));
+
+// Các danh mục dùng chung (Phòng ban, Loại tài sản, Vị trí, Nhà cung cấp)
 router.use("/departments", require("./departmentRoutes"));
-router.use("/employees", require("./employeeRoutes"));
 router.use("/categories", require("./categoryRoutes"));
 router.use("/locations", require("./locationRoutes"));
 router.use("/suppliers", require("./supplierRoutes"));

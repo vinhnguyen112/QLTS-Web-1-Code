@@ -34,10 +34,12 @@
   <div class="sidebar-heading">
     Hệ thống & Cơ cấu
   </div>
+  {{#if isSysAdmin}}
   <a class="nav-link d-flex align-items-center" href="/employees">
     <i class="bi bi-person me-2 text-secondary"></i>
     <span>Người dùng & Vai trò</span>
   </a>
+  {{/if}}
   <a class="nav-link d-flex align-items-center" href="/departments">
     <i class="bi bi-diagram-3 me-2 text-secondary"></i>
     <span>Cơ cấu tổ chức</span>
