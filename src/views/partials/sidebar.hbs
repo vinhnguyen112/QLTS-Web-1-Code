@@ -1,5 +1,5 @@
 <nav class="sidebar-menu p-2">
-  <!-- 1. TỔNG QUAN -->
+  <!-- 1. TỔNG QUAN (Ai cũng xem được) -->
   <a class="nav-link d-flex align-items-center" href="/">
     <i class="bi bi-speedometer2 me-2 text-secondary"></i>
     <span>Tổng quan (Dashboard)</span>
@@ -13,24 +13,35 @@
     <i class="bi bi-laptop me-2 text-secondary"></i>
     <span>Hồ sơ tài sản</span>
   </a>
+
+  <!-- Kho tài sản: Chỉ Quản lý tài sản hoặc Admin -->
+  {{#if canManageAssets}}
   <a class="nav-link d-flex align-items-center" href="/warehouse">
     <i class="bi bi-box-seam me-2 text-secondary"></i>
     <span>Kho tài sản</span>
   </a>
+  {{/if}}
+
   <a class="nav-link d-flex align-items-center" href="/requests">
     <i class="bi bi-file-earmark-check me-2 text-secondary"></i>
     <span>Hộp phiếu & Duyệt</span>
   </a>
+
+  <!-- Kiểm kê tài sản: Chỉ cấp quản lý trở lên -->
+  {{#if canApproveRequests}}
   <a class="nav-link d-flex align-items-center" href="/stocktakes">
     <i class="bi bi-qr-code-scan me-2 text-secondary"></i>
     <span>Kiểm kê tài sản</span>
   </a>
+  {{/if}}
+
   <a class="nav-link d-flex align-items-center" href="/maintenance">
     <i class="bi bi-wrench-adjustable me-2 text-secondary"></i>
     <span>Bảo trì & Báo hỏng</span>
   </a>
 
-  <!-- 3. HỆ THỐNG & CƠ CẤU TỔ CHỨC -->
+  <!-- 3. HỆ THỐNG & CƠ CẤU (Ẩn hoàn toàn với nhân viên thường) -->
+  {{#if canManageMasterData}}
   <div class="sidebar-heading">
     Hệ thống & Cơ cấu
   </div>
@@ -56,8 +67,10 @@
     <i class="bi bi-truck me-2 text-secondary"></i>
     <span>Nhà cung cấp</span>
   </a>
+  {{/if}}
 
-  <!-- 4. BÁO CÁO -->
+  <!-- 4. BÁO CÁO (Chỉ cấp quản lý hoặc kế toán) -->
+  {{#if (or canManageMasterData isAccountant)}}
   <div class="sidebar-heading">
     Báo cáo
   </div>
@@ -65,4 +78,5 @@
     <i class="bi bi-bar-chart me-2 text-secondary"></i>
     <span>Báo cáo thống kê</span>
   </a>
+  {{/if}}
 </nav>

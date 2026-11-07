@@ -106,23 +106,36 @@ app.use(
   })
 );
 
-// Nạp thông tin người dùng & quyền hạn vào mọi View
+// Nạp thông tin người dùng & quyền hạn rõ ràng vào mọi View
 app.use((req, res, next) => {
   const user = req.session.user || null;
   const role = user?.role_code || "";
 
   res.locals.currentUser = user;
+
+  // 1. Nhóm quản trị tối cao
   res.locals.isSysAdmin = role === "SYS_ADMIN";
-  res.locals.isDirector = role === "DIRECTOR";
+
+  // 2. Nhóm nghiệp vụ Quản lý tài sản (Cơ sở vật chất)
   res.locals.isAssetManager = role === "ASSET_MANAGER";
-  res.locals.isTechnician = role === "TECHNICIAN";
-  res.locals.isAccountant = ["CHIEF_ACCOUNTANT", "ASSET_ACCOUNTANT"].includes(role);
   
-  // Quyền quản lý tài sản chung (Admin hoặc Quản lý CSVC hoặc Giám đốc)
-  res.locals.canManageAssets = ["SYS_ADMIN", "ASSET_MANAGER", "DIRECTOR"].includes(role);
-  // Quyền thao tác kỹ thuật / bảo trì
+  // 3. Nhóm Kỹ thuật viên bảo trì
+  res.locals.isTechnician = role === "TECHNICIAN";
+
+  // 4. Nhóm Ban Giám đốc & Kế toán
+  res.locals.isDirector = role === "DIRECTOR";
+  res.locals.isAccountant = ["CHIEF_ACCOUNTANT", "ASSET_ACCOUNTANT"].includes(role);
+
+  // 5. Quyền Quản lý Tài sản (Thêm, Sửa, Thu hồi tài sản & Kho)
+  res.locals.canManageAssets = ["SYS_ADMIN", "ASSET_MANAGER"].includes(role);
+
+  // 6. Quyền Quản lý danh mục chung (Phòng ban, Vị trí, Danh mục, Nhà cung cấp)
+  res.locals.canManageMasterData = ["SYS_ADMIN", "ASSET_MANAGER", "DIRECTOR"].includes(role);
+
+  // 7. Quyền Thao tác kỹ thuật / Nghiệm thu bảo trì
   res.locals.canMaintain = ["SYS_ADMIN", "ASSET_MANAGER", "TECHNICIAN"].includes(role);
-  // Quyền duyệt đề xuất
+
+  // 8. Quyền Phê duyệt đề xuất
   res.locals.canApproveRequests = ["SYS_ADMIN", "DIRECTOR", "CHIEF_ACCOUNTANT", "ASSET_MANAGER", "DEPT_HEAD"].includes(role);
 
   res.locals.currentPath = req.path;

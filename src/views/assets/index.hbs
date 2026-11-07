@@ -30,9 +30,12 @@
             </div>
           </form>
 
+          <!-- Chỉ Quản lý tài sản hoặc Admin mới có nút Nhập mới tài sản -->
+          {{#if canManageAssets}}
           <a href="/warehouse" class="btn btn-sm btn-success">
             <i class="bi bi-plus-lg me-1"></i> Thêm tài sản mới
           </a>
+          {{/if}}
         </div>
       </div>
     </div>
@@ -74,9 +77,12 @@
                   <a href="/assets/{{this.id}}" class="btn btn-primary" title="Chi tiết">
                     Chi tiết
                   </a>
+                  <!-- Chỉ Admin hoặc Quản lý tài sản mới có nút Sửa -->
+                  {{#if ../canManageAssets}}
                   <a href="/assets/{{this.id}}/edit" class="btn btn-warning text-dark" title="Sửa">
                     Sửa
                   </a>
+                  {{/if}}
                 </div>
               </td>
             </tr>

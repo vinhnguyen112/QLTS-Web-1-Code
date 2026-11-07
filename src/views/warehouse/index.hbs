@@ -20,6 +20,9 @@
               <button class="btn btn-primary" type="submit">Tìm</button>
             </div>
           </form>
+
+          <!-- Chỉ Quản lý tài sản hoặc Admin mới có nút Nhập kho -->
+          {{#if canManageAssets}}
           <button
             type="button"
             class="btn btn-sm btn-primary"
@@ -28,6 +31,7 @@
           >
             Nhập tài sản vào kho
           </button>
+          {{/if}}
         </div>
       </div>
     </div>
@@ -57,20 +61,25 @@
               <td>{{#if this.location_name}}{{this.location_name}}{{else}}<span class="text-muted">Kho tổng</span>{{/if}}</td>
               <td class="text-dark">{{formatCurrency this.original_cost}}</td>
               <td class="text-end pe-3">
-                <button
-                  type="button"
-                  class="btn btn-sm btn-primary"
-                  data-bs-toggle="modal"
-                  data-bs-target="#assignModal"
-                  data-id="{{this.id}}"
-                  data-name="{{this.name}}"
-                  data-code="{{this.code}}"
-                >
-                  Cấp phát
-                </button>
-                <a href="/assets/{{this.id}}" class="btn btn-sm btn-secondary">
-                  Chi tiết
-                </a>
+                <div class="btn-group btn-group-sm" role="group">
+                  <!-- Chỉ Quản lý tài sản hoặc Admin mới có nút Cấp phát -->
+                  {{#if ../canManageAssets}}
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#assignModal"
+                    data-id="{{this.id}}"
+                    data-name="{{this.name}}"
+                    data-code="{{this.code}}"
+                  >
+                    Cấp phát
+                  </button>
+                  {{/if}}
+                  <a href="/assets/{{this.id}}" class="btn btn-secondary">
+                    Chi tiết
+                  </a>
+                </div>
               </td>
             </tr>
           {{else}}
