@@ -1,0 +1,131 @@
+<div class="container-fluid p-0">
+  <div class="card" style="max-width: 950px; margin: auto;">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-2">
+        <a href="/requests" class="btn btn-secondary btn-sm">Quay lại</a>
+        <div>
+          <h5 class="mb-0 fw-bold text-dark">
+            Phiếu: {{request.code}}
+          </h5>
+          <small class="text-muted">Đề xuất bởi: {{request.requester_name}} ({{request.org_unit_name}})</small>
+        </div>
+      </div>
+      <div>
+        {{{requestStatusBadge request.status}}}
+      </div>
+    </div>
+
+    <div class="card-body">
+      <!-- Thông tin tổng quan phiếu -->
+      <div class="bg-light p-3 rounded border mb-4">
+        <div class="row g-3">
+          <div class="col-sm-6">
+            <span class="text-muted small d-block">Loại đề xuất:</span>
+            <div class="mt-1">{{{requestTypeBadge request.type}}}</div>
+          </div>
+          <div class="col-sm-6">
+            <span class="text-muted small d-block">Ngày lập phiếu:</span>
+            <span class="text-dark">{{formatDateTime request.created_at}}</span>
+          </div>
+          <div class="col-12">
+            <span class="text-muted small d-block">Tiêu đề:</span>
+            <span class="fs-6 fw-bold text-dark">{{request.title}}</span>
+          </div>
+          <div class="col-12">
+            <span class="text-muted small d-block">Lý do & Căn cứ đề xuất:</span>
+            <div class="p-2 bg-white rounded border small mt-1 text-dark">{{request.reason}}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bảng danh mục thiết bị / Dòng chi tiết -->
+      <h6 class="fw-bold text-dark mb-3">Danh mục thiết bị trong đề xuất</h6>
+      <div class="table-responsive mb-4">
+        <table class="table table-bordered align-middle">
+          <thead class="table-light">
+            <tr>
+              <th scope="col" style="width: 50px;">#</th>
+              <th scope="col">Tên thiết bị / Tài sản</th>
+              <th scope="col">Danh mục</th>
+              <th scope="col" class="text-center" style="width: 80px;">Số lượng</th>
+              <th scope="col" class="text-end" style="width: 140px;">Đơn giá ước tính</th>
+              <th scope="col" class="text-end" style="width: 160px;">Thành tiền</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each lines}}
+              <tr>
+                <td class="text-center text-muted">{{addOne @index}}</td>
+                <td>
+                  <div class="text-dark">
+                    {{#if this.asset_code}}
+                      <span>[{{this.asset_code}}]</span>
+                    {{/if}}
+                    {{this.item_name}}
+                  </div>
+                  {{#if this.notes}}<small class="text-muted">{{this.notes}}</small>{{/if}}
+                </td>
+                <td>{{#if this.category_name}}<span class="badge text-bg-light border">{{this.category_name}}</span>{{else}}—{{/if}}</td>
+                <td class="text-center">{{this.quantity}}</td>
+                <td class="text-end text-dark">{{formatCurrency this.estimated_cost}}</td>
+                <td class="text-end fw-semibold text-dark">{{formatCurrency (or ../request.total_estimated_cost this.estimated_cost)}}</td>
+              </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Hành động Phê duyệt (Dành cho cấp quản lý) -->
+      {{#if canApprove}}
+      <div class="card p-3 mb-3 bg-light">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <div>
+            <h6 class="fw-bold text-dark mb-1">Xét duyệt đề xuất</h6>
+            <small class="text-muted">Bạn có thẩm quyền xem xét duyệt hoặc từ chối phiếu này</small>
+          </div>
+          <div class="d-flex gap-2">
+            <!-- Nút Từ chối -->
+            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal">
+              Từ chối
+            </button>
+
+            <!-- Nút Duyệt -->
+            <form action="/requests/{{request.id}}/approve" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn phê duyệt phiếu này?');">
+              <button type="submit" class="btn btn-success btn-sm px-3">
+                Phê duyệt
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+      {{/if}}
+
+      <div class="d-flex justify-content-between align-items-center border-top pt-3">
+        <a href="/requests" class="btn btn-secondary btn-sm">Danh sách phiếu</a>
+        <button onclick="window.print()" class="btn btn-secondary btn-sm">In phiếu</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Từ Chối -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="/requests/{{request.id}}/reject" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title fs-6 fw-bold text-dark">Từ chối đề xuất</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <label class="form-label small fw-semibold">Lý do từ chối <span class="text-danger">*</span></label>
+          <textarea name="reason" class="form-control" rows="3" placeholder="Nhập lý do không phê duyệt..." required></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-danger btn-sm">Xác nhận từ chối</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

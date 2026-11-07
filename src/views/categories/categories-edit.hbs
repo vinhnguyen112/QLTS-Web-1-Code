@@ -1,76 +1,32 @@
-<div class="container-fluid p-0">
-  <div class="card border" style="max-width: 650px; margin: 0 auto;">
-    <div class="card-header">
-      <h6 class="mb-0 fw-bold">Sửa danh mục tài sản: {{category.category_name}}</h6>
+﻿<div class="container-fluid p-0" style="max-width: 650px; margin: auto;">
+  <div class="card border shadow-none">
+    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="mb-0 fw-bold text-dark">Sửa danh mục: {{category.name}}</h5>
+        <small class="text-muted">Mã: {{category.code}}</small>
+      </div>
+      <a href="/categories" class="btn btn-secondary btn-sm">Quay lại</a>
     </div>
 
-    <form action="/categories/{{category.category_id}}/update" method="POST">
+    <form action="/categories/{{category.id}}/update" method="POST">
       <div class="card-body">
         <div class="mb-3">
-          <label for="category_code" class="form-label">
-            Mã danh mục <span class="text-danger">*</span>
-          </label>
-          <input
-            type="text"
-            class="form-control"
-            id="category_code"
-            name="category_code"
-            value="{{category.category_code}}"
-            required
-          />
+          <label class="form-label small fw-semibold">Mã danh mục <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" name="code" value="{{category.code}}" required />
         </div>
-
         <div class="mb-3">
-          <label for="category_name" class="form-label">
-            Tên danh mục <span class="text-danger">*</span>
-          </label>
-          <input
-            type="text"
-            class="form-control"
-            id="category_name"
-            name="category_name"
-            value="{{category.category_name}}"
-            required
-          />
+          <label class="form-label small fw-semibold">Tên danh mục <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" name="name" value="{{category.name}}" required />
         </div>
-
         <div class="mb-3">
-          <label for="default_useful_months" class="form-label">
-            Số tháng khấu hao chuẩn (tháng) <span class="text-danger">*</span>
-          </label>
-          <input
-            type="number"
-            class="form-control"
-            id="default_useful_months"
-            name="default_useful_months"
-            value="{{category.default_useful_months}}"
-            min="1"
-            max="600"
-            required
-          />
-          <small class="text-muted">Áp dụng làm thời gian khấu hao mặc định khi nhập mới tài sản thuộc danh mục này</small>
-        </div>
-
-        <div class="mb-3">
-          <label for="description" class="form-label">
-            Mô tả
-          </label>
-          <textarea
-            class="form-control"
-            id="description"
-            name="description"
-            rows="3"
-          >{{category.description}}</textarea>
+          <label class="form-label small fw-semibold">Thời hạn khấu hao chuẩn (Tháng) <span class="text-danger">*</span></label>
+          <input type="number" class="form-control" name="default_life_months" value="{{category.default_life_months}}" min="1" required />
         </div>
       </div>
 
-      <div class="card-footer d-flex justify-content-end gap-2 py-3">
-        <a href="/categories" class="btn btn-sm btn-outline-secondary">
-          Hủy
-        </a>
-        <button type="submit" class="btn btn-sm btn-secondary">
-          Cập nhật danh mục
-        </button>
+      <div class="card-footer bg-white border-top d-flex justify-content-end gap-2 py-3">
+        <a href="/categories" class="btn btn-secondary btn-sm px-3">Hủy</a>
+        <button type="submit" class="btn btn-primary btn-sm px-4 fw-semibold">Lưu thay đổi</button>
       </div>
     </form>
   </div>

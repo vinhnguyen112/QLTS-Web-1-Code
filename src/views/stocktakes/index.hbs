@@ -1,0 +1,137 @@
+﻿<div class="container-fluid p-0">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h4 class="mb-1 text-dark fw-bold">Kiểm kê tài sản & Quét mã QR</h4>
+      <p class="text-muted mb-0 small">Tổ chức các đợt kiểm kê tài sản định kỳ, đối chiếu thực tế qua Camera điện thoại</p>
+    </div>
+    <div>
+      <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createStocktakeModal">
+        Tạo đợt kiểm kê mới
+      </button>
+    </div>
+  </div>
+
+  <div class="card border shadow-none">
+    <div class="card-header bg-white py-3 border-0">
+      <h6 class="fw-bold text-dark mb-0">Danh sách các đợt kiểm kê</h6>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th scope="col" class="ps-3">#</th>
+            <th scope="col">Mã đợt</th>
+            <th scope="col">Tên đợt kiểm kê</th>
+            <th scope="col">Phạm vi đơn vị</th>
+            <th scope="col">Tổng tài sản</th>
+            <th scope="col">Đã quét khớp</th>
+            <th scope="col">Chưa quét / Thiếu</th>
+            <th scope="col">Ngày tạo</th>
+            <th scope="col">Trạng thái</th>
+            <th scope="col" class="text-center" style="width: 140px;">Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each stocktakes}}
+            <tr>
+              <th scope="row" class="ps-3 text-muted">{{addOne @index}}</th>
+              <td>
+                <a href="/stocktakes/{{this.id}}" class="fw-bold text-primary font-monospace text-decoration-none">
+                  {{this.code}}
+                </a>
+              </td>
+              <td>
+                <div class="fw-bold text-dark">{{this.name}}</div>
+                <small class="text-muted">{{this.notes}}</small>
+              </td>
+              <td>{{#if this.org_unit_name}}{{this.org_unit_name}}{{else}}<span class="badge bg-light text-dark border">Toàn công ty</span>{{/if}}</td>
+              <td class="fw-semibold text-dark">{{this.total_items}}</td>
+              <td><span class="badge bg-success-subtle text-success border border-success-subtle">{{this.matched_count}} khớp</span></td>
+              <td><span class="badge bg-danger-subtle text-danger border border-danger-subtle">{{this.missing_count}} thiếu</span></td>
+              <td class="text-muted small">{{formatDate this.started_at}}</td>
+              <td>
+                {{#if (eq this.status "in_progress")}}
+                  <span class="badge bg-warning text-dark">Đang kiểm kê</span>
+                {{else if (eq this.status "closed")}}
+                  <span class="badge bg-success">Đã chốt kết quả</span>
+                {{else}}
+                  <span class="badge bg-secondary">{{this.status}}</span>
+                {{/if}}
+              </td>
+              <td class="text-center">
+                <div class="d-inline-flex gap-1">
+                  {{#if (eq this.status "in_progress")}}
+                  <a href="/stocktakes/{{this.id}}/scan" class="btn btn-sm btn-danger" title="Mở camera quét QR">
+                    Quét
+                  </a>
+                  {{/if}}
+                  <a href="/stocktakes/{{this.id}}" class="btn btn-sm btn-primary" title="Xem bảng đối chiếu">
+                    </a>
+                </div>
+              </td>
+            </tr>
+          {{else}}
+            <tr>
+              <td colspan="10" class="text-center py-5 text-muted">
+                Chưa có đợt kiểm kê nào. Hãy bấm <b>"Tạo đợt kiểm kê mới"</b> để bắt đầu đối chiếu tài sản!
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Tạo Đợt Kiểm Kê Mới -->
+<div class="modal fade" id="createStocktakeModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="/stocktakes/create" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold text-dark">Tạo đợt kiểm kê mới</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Tên đợt kiểm kê <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="name" placeholder="Ví dụ: Kiểm kê thiết bị CNTT Quý 4/2026" required />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Phạm vi phòng ban / Đơn vị</label>
+            <select class="form-select" name="scope_org_unit_id">
+              <option value="">-- Toàn công ty (Kiểm kê tất cả) --</option>
+              {{#each formData.orgUnits}}
+                <option value="{{this.id}}">{{this.name}}</option>
+              {{/each}}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Phạm vi vị trí / Phòng máy (nếu có)</label>
+            <select class="form-select" name="scope_location_id">
+              <option value="">-- Tất cả vị trí --</option>
+              {{#each formData.locations}}
+                <option value="{{this.id}}">{{this.name}}</option>
+              {{/each}}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Ghi chú mục tiêu</label>
+            <textarea class="form-control" name="notes" rows="2" placeholder="Ghi chú kế hoạch kiểm kê..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-primary btn-sm px-4 fw-semibold">
+            Khởi tạo đợt kiểm kê
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+

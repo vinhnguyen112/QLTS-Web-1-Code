@@ -1,135 +1,109 @@
 const db = require("../config/db");
 
-// Tạo danh sách số trang cho phân trang
-function buildPageList(totalRows, limit, currentPage) {
-  const totalPages = Math.ceil(totalRows / limit);
-  const pages = [];
-  for (let i = 1; i <= totalPages; i++) {
-    pages.push({ number: i, active: i == currentPage });
-  }
-  return { totalPages, pages };
-}
-
 const categoryController = {
-  // 1. Danh sách danh mục — có tìm kiếm và phân trang
+  // 1. Danh sách danh mục tài sản
   async index(req, res) {
-    const searchName  = req.query.name;
-    const currentPage = parseInt(req.query.page) || 1;
-    const limit       = 10;
-    const offset      = (currentPage - 1) * limit;
+    try {
+      const searchName = req.query.name || "";
+      const page = parseInt(req.query.page) || 1;
+      const limit = 10;
+      const offset = (page - 1) * limit;
 
-    const searchParam = `%${searchName}%`;
+      const [[{ total }]] = await db.query(
+        "SELECT COUNT(*) AS total FROM asset_categories WHERE active = 1 AND (name LIKE ? OR code LIKE ?)",
+        [`%${searchName}%`, `%${searchName}%`]
+      );
 
-    // Đếm tổng để tính số trang
-    const [[{ total }]] = await db.query(
-      `SELECT COUNT(*) AS total
-       FROM categories
-       WHERE category_name LIKE ? OR category_code LIKE ?`,
-      [searchParam, searchParam]
-    );
+      const totalPages = Math.ceil(total / limit) || 1;
+      const pages = [];
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push({ number: i, active: i === page });
+      }
 
-    const { totalPages, pages } = buildPageList(total, limit, currentPage);
+      const [categories] = await db.query(
+        `
+        SELECT c.*,
+               COUNT(a.id) AS asset_count
+        FROM asset_categories c
+        LEFT JOIN assets a ON c.id = a.category_id AND a.deleted_at IS NULL
+        WHERE c.active = 1 AND (c.name LIKE ? OR c.code LIKE ?)
+        GROUP BY c.id, c.code, c.name, c.default_life_months
+        ORDER BY c.id ASC
+        LIMIT ${offset}, ${limit}
+      `,
+        [`%${searchName}%`, `%${searchName}%`]
+      );
 
-    const [categories] = await db.query(
-      `SELECT category_id, category_code, category_name, default_useful_months, description
-       FROM categories
-       WHERE category_name LIKE ? OR category_code LIKE ?
-       ORDER BY category_id DESC
-       LIMIT ${offset}, ${limit}`,
-      [searchParam, searchParam]
-    );
-
-    res.render("categories/index", {
-      title: "Danh mục tài sản",
-      categories,
-      searchName,
-      totalPages,
-      pages,
-    });
+      res.render("categories/index", {
+        title: "Danh mục tài sản",
+        categories,
+        searchName,
+        totalPages,
+        pages,
+      });
+    } catch (err) {
+      console.error("Lỗi danh mục:", err);
+      res.status(500).send("Lỗi: " + err.message);
+    }
   },
 
-  // 2. Chi tiết danh mục — kèm số lượng tài sản thuộc danh mục
-  async show(req, res) {
-    const [rows] = await db.query(
-      `SELECT
-         c.category_id, c.category_code, c.category_name,
-         c.default_useful_months, c.description,
-         COUNT(a.asset_id) AS asset_count
-       FROM categories c
-       LEFT JOIN assets a ON c.category_id = a.category_id
-       WHERE c.category_id = ?
-       GROUP BY c.category_id, c.category_code, c.category_name, c.default_useful_months, c.description`,
-      [req.params.id]
-    );
-
-    if (rows.length === 0) return res.redirect("/categories");
-
-    res.render("categories/show", {
-      title: "Chi tiết danh mục tài sản",
-      category: rows[0],
-    });
-  },
-
-  // 3. Thêm danh mục mới (nhận dữ liệu từ form POST)
+  // 2. Thêm danh mục mới
   async create(req, res) {
-    const { category_code, category_name, default_useful_months, description } = req.body;
+    try {
+      const { code, name, default_life_months } = req.body;
 
-    await db.query(
-      `INSERT INTO categories (category_code, category_name, default_useful_months, description)
-       VALUES (?, ?, ?, ?)`,
-      [
-        category_code,
-        category_name,
-        parseInt(default_useful_months) || 36,
-        description || null,
-      ]
-    );
+      await db.query(
+        "INSERT INTO asset_categories (code, name, default_life_months, active, created_at, updated_at) VALUES (?, ?, ?, 1, NOW(), NOW())",
+        [code, name, default_life_months || 36]
+      );
 
-    res.redirect("/categories");
+      res.redirect("/categories");
+    } catch (err) {
+      console.error("Lỗi thêm danh mục:", err);
+      res.redirect("/categories");
+    }
   },
 
-  // 4. Hiển thị form sửa danh mục
+  // 3. Form sửa danh mục
   async edit(req, res) {
-    const [rows] = await db.query(
-      `SELECT category_id, category_code, category_name, default_useful_months, description
-       FROM categories
-       WHERE category_id = ?`,
-      [req.params.id]
-    );
+    try {
+      const [rows] = await db.query("SELECT * FROM asset_categories WHERE id = ?", [req.params.id]);
+      if (rows.length === 0) return res.redirect("/categories");
 
-    if (rows.length === 0) return res.redirect("/categories");
-
-    res.render("categories/categories-edit", {
-      title: "Sửa danh mục tài sản",
-      category: rows[0],
-    });
+      res.render("categories/categories-edit", {
+        title: `Sửa danh mục - ${rows[0].name}`,
+        category: rows[0],
+      });
+    } catch (err) {
+      res.redirect("/categories");
+    }
   },
 
-  // 5. Cập nhật thông tin danh mục 
+  // 4. Cập nhật danh mục
   async update(req, res) {
-    const { category_code, category_name, default_useful_months, description } = req.body;
+    try {
+      const { code, name, default_life_months } = req.body;
 
-    await db.query(
-      `UPDATE categories
-       SET category_code = ?, category_name = ?, default_useful_months = ?, description = ?
-       WHERE category_id = ?`,
-      [
-        category_code,
-        category_name,
-        parseInt(default_useful_months) || 36,
-        description || null,
-        req.params.id,
-      ]
-    );
+      await db.query(
+        "UPDATE asset_categories SET code = ?, name = ?, default_life_months = ?, updated_at = NOW() WHERE id = ?",
+        [code, name, default_life_months || 36, req.params.id]
+      );
 
-    res.redirect("/categories");
+      res.redirect("/categories");
+    } catch (err) {
+      console.error("Lỗi cập nhật danh mục:", err);
+      res.redirect("/categories");
+    }
   },
 
-  // 6. Xóa danh mục
+  // 5. Xóa danh mục
   async delete(req, res) {
-    await db.query("DELETE FROM categories WHERE category_id = ?", [req.params.id]);
-
-    res.redirect("/categories");
+    try {
+      await db.query("UPDATE asset_categories SET active = 0, updated_at = NOW() WHERE id = ?", [req.params.id]);
+      res.redirect("/categories");
+    } catch (err) {
+      res.status(500).send("Không thể xóa danh mục: " + err.message);
+    }
   },
 };
 

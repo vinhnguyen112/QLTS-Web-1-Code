@@ -1,104 +1,147 @@
-<div class="container-fluid">
+<div class="container-fluid p-0">
   <div class="card">
-    <div class="card-header">
+    <div class="card-header bg-white py-3">
       <div class="row align-items-center g-2">
-        <div class="col">
-          <h5 class="mb-0">Phòng ban</h5>
-          <small class="text-muted">Quản lý các phòng ban trong hệ thống</small>
+        <div class="col-md-6">
+          <h5 class="mb-0 fw-bold text-dark">Cơ cấu phòng ban & Đơn vị</h5>
+          <small class="text-muted">Danh mục cơ cấu tổ chức viện đào tạo CNTT Devmaster</small>
         </div>
 
-        <div class="col-auto d-flex align-items-center gap-2">
+        <div class="col-md-6 d-flex flex-wrap justify-content-md-end align-items-center gap-2">
           <form action="/departments" method="get" class="m-0" role="search">
-            <div class="input-group">
+            <div class="input-group input-group-sm" style="width: 220px;">
               <input
                 type="text"
                 name="name"
                 class="form-control"
                 value="{{searchName}}"
-                placeholder="Tìm phòng ban..."
+                placeholder="Tìm mã hoặc tên..."
               />
-              <button class="btn btn-secondary" type="submit">Lọc</button>
+              <button class="btn btn-primary" type="submit">Tìm</button>
             </div>
           </form>
           <button
             type="button"
-            class="btn btn-sm btn-secondary"
+            class="btn btn-sm btn-success"
             data-bs-toggle="modal"
             data-bs-target="#addDepartmentModal"
-          >+ Thêm phòng ban</button>
+          >
+            Thêm phòng ban
+          </button>
         </div>
       </div>
     </div>
 
     <div class="table-responsive">
-      <table class="table table-bordered table-hover align-middle mb-0">
+      <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th style="width: 50px;" class="text-center">STT</th>
-            <th>Mã phòng ban</th>
-            <th>Tên phòng ban</th>
-            <th class="text-center" style="width: 120px;">Số nhân sự</th>
-            <th>Mô tả</th>
-            <th class="text-center" style="width: 160px;">Thao tác</th>
+            <th scope="col" class="ps-3">#</th>
+            <th scope="col">Mã đơn vị</th>
+            <th scope="col">Tên phòng ban / Khối</th>
+            <th scope="col">Phân loại</th>
+            <th scope="col">Số nhân sự</th>
+            <th scope="col">Tài sản sở hữu</th>
+            <th scope="col" class="text-end pe-3" style="width: 140px;">Thao tác</th>
           </tr>
         </thead>
         <tbody>
           {{#each departments}}
             <tr>
-              <td class="text-center">{{addOne @index}}</td>
-              <td><span class="badge bg-light text-dark border">{{this.department_code}}</span></td>
-              <td>{{this.department_name}}</td>
-              <td class="text-center">{{this.employee_count}}</td>
-              <td>{{this.description}}</td>
+              <th scope="row" class="ps-3 text-muted">{{addOne @index}}</th>
+              <td class="fw-bold text-dark">{{this.code}}</td>
+              <td class="text-dark">{{this.name}}</td>
               <td>
-                <div class="d-flex justify-content-center gap-1">
-                  <a href="/departments/{{this.department_id}}" class="btn btn-sm btn-success">Xem</a>
-                  <a href="/departments/{{this.department_id}}/edit" class="btn btn-sm btn-warning">Sửa</a>
+                {{#if (eq this.type "BRANCH")}}
+                  <span class="badge text-bg-light border">Trụ sở / Chi nhánh</span>
+                {{else}}
+                  <span class="badge text-bg-light border">Phòng ban</span>
+                {{/if}}
+              </td>
+              <td>{{this.employee_count}} người</td>
+              <td><span class="badge text-bg-light border">{{this.asset_count}} tài sản</span></td>
+              <td class="text-end pe-3">
+                <div class="btn-group btn-group-sm" role="group">
+                  <a href="/departments/{{this.id}}/edit" class="btn btn-warning text-dark">
+                    Sửa
+                  </a>
                   <form
-                    action="/departments/{{this.department_id}}/delete"
+                    action="/departments/{{this.id}}/delete"
                     method="POST"
-                    class="m-0"
-                    onsubmit="return confirm('Bạn có chắc chắn muốn xóa phòng ban này không?');"
+                    class="d-inline m-0"
+                    onsubmit="return confirm('Bạn có chắc chắn muốn ngưng hoạt động phòng ban này?');"
                   >
-                    <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+                    <button type="submit" class="btn btn-danger">
+                      Xóa
+                    </button>
                   </form>
                 </div>
               </td>
             </tr>
           {{else}}
             <tr>
-              <td colspan="6" class="text-center py-4 text-muted">Chưa có phòng ban nào.</td>
+              <td colspan="7" class="text-center py-4 text-muted">Không tìm thấy phòng ban nào.</td>
             </tr>
           {{/each}}
         </tbody>
       </table>
     </div>
 
+    <!-- Phân trang -->
+    {{#if (gt totalPages 1)}}
+    <div class="card-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+      <small class="text-muted">Trang {{pages.[0].number}} / {{totalPages}}</small>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          {{#each pages}}
+            <li class="page-item {{#if this.active}}active{{/if}}">
+              <a class="page-link" href="/departments?page={{this.number}}&name={{../searchName}}">
+                {{this.number}}
+              </a>
+            </li>
+          {{/each}}
+        </ul>
+      </nav>
+    </div>
+    {{/if}}
   </div>
 </div>
 
-<!-- Modal thêm phòng ban -->
+<!-- Modal Thêm Phòng Ban -->
 <div class="modal fade" id="addDepartmentModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
-      {{> departments-create}}
+      <form action="/departments" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold text-dark">Thêm phòng ban mới</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Mã phòng ban <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="code" placeholder="Ví dụ: IT, KT, CSVC" required />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Tên phòng ban <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="name" placeholder="Ví dụ: Phòng Quản trị Cơ sở vật chất" required />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Loại hình</label>
+            <select class="form-select" name="type">
+              <option value="DEPARTMENT">Phòng ban</option>
+              <option value="BRANCH">Trụ sở / Chi nhánh</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-success btn-sm px-3">
+            Lưu phòng ban
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
-
-{{#if pages.length}}
-  <nav class="mt-3">
-    <ul class="pagination">
-      {{#each pages}}
-        <li class="page-item {{#if active}}active{{/if}}">
-          <a
-            class="page-link"
-            href="/departments?page={{number}}&name={{../searchName}}"
-          >
-            {{number}}
-          </a>
-        </li>
-      {{/each}}
-    </ul>
-  </nav>
-{{/if}}

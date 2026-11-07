@@ -1,247 +1,110 @@
 const db = require("../config/db");
 
 const departmentController = {
-  // 1. Danh sách phòng ban (Tìm kiếm & Phân trang)
+  // 1. Danh sách cơ cấu phòng ban / đơn vị
   async index(req, res) {
-    const name = req.query.name || "";
-    const page = parseInt(req.query.page) || 1;
-    const limit = 10;
-    const start = (page - 1) * limit;
-
-    // Đếm tổng số phòng ban
-    const countSql = `
-      SELECT COUNT(*) AS total
-      FROM departments
-      WHERE department_name LIKE ?
-         OR department_code LIKE ?
-    `;
-
-    // Lấy danh sách phòng ban
-    const sql = `
-      SELECT
-        d.department_id,
-        d.department_code,
-        d.department_name,
-        d.description,
-        COUNT(e.employee_id) AS employee_count
-      FROM departments d
-      LEFT JOIN employees e
-        ON d.department_id = e.department_id
-      WHERE d.department_name LIKE ?
-         OR d.department_code LIKE ?
-      GROUP BY
-        d.department_id,
-        d.department_code,
-        d.department_name,
-        d.description
-      ORDER BY d.department_id DESC
-      LIMIT ${start}, ${limit}
-    `;
-
     try {
-      const [countResult] = await db.query(countSql, [
-        `%${name}%`,
-        `%${name}%`,
-      ]);
+      const searchName = req.query.name || "";
+      const page = parseInt(req.query.page) || 1;
+      const limit = 10;
+      const offset = (page - 1) * limit;
 
-      const totalRow = countResult[0].total;
-      const totalPages = Math.ceil(totalRow / limit);
+      const [[{ total }]] = await db.query(
+        "SELECT COUNT(*) AS total FROM org_units WHERE active = 1 AND (name LIKE ? OR code LIKE ?)",
+        [`%${searchName}%`, `%${searchName}%`]
+      );
 
-      const [departments] = await db.query(sql, [`%${name}%`, `%${name}%`]);
-
-      // Tạo danh sách số trang
+      const totalPages = Math.ceil(total / limit) || 1;
       const pages = [];
       for (let i = 1; i <= totalPages; i++) {
-        pages.push({
-          number: i,
-          active: i == page,
-        });
+        pages.push({ number: i, active: i === page });
       }
 
+      const [departments] = await db.query(
+        `
+        SELECT ou.id, ou.code, ou.name, ou.type,
+               COUNT(DISTINCT u.id) AS employee_count,
+               COUNT(DISTINCT a.id) AS asset_count
+        FROM org_units ou
+        LEFT JOIN users  u ON ou.id = u.org_unit_id AND u.status = 'ACTIVE'
+        LEFT JOIN assets a ON ou.id = a.org_unit_id AND a.deleted_at IS NULL
+        WHERE ou.active = 1 AND (ou.name LIKE ? OR ou.code LIKE ?)
+        GROUP BY ou.id, ou.code, ou.name, ou.type
+        ORDER BY ou.id ASC
+        LIMIT ${offset}, ${limit}
+      `,
+        [`%${searchName}%`, `%${searchName}%`]
+      );
+
       res.render("departments/index", {
-        title: "Phòng ban",
+        title: "Cơ cấu phòng ban & Đơn vị",
         departments,
-        searchName: name,
+        searchName,
         totalPages,
         pages,
       });
     } catch (err) {
-      console.log("Lỗi lấy phòng ban:", err);
-      res.status(500).send("Đã xảy ra lỗi khi lấy danh sách phòng ban");
+      console.error("Lỗi phòng ban:", err);
+      res.status(500).send("Lỗi: " + err.message);
     }
   },
 
-  // 2. Thêm phòng ban
+  // 2. Thêm phòng ban mới
   async create(req, res) {
-    const { department_code, department_name, description } = req.body;
-
-    const sql = `
-      INSERT INTO departments (
-        department_code,
-        department_name,
-        description
-      )
-      VALUES (?, ?, ?)
-    `;
-
     try {
-      await db.query(sql, [department_code, department_name, description || null]);
+      const { code, name, type } = req.body;
+
+      await db.query(
+        "INSERT INTO org_units (code, name, type, parent_id, active, created_at, updated_at) VALUES (?, ?, ?, 227, 1, NOW(), NOW())",
+        [code, name, type || "DEPARTMENT"]
+      );
+
       res.redirect("/departments");
     } catch (err) {
-      console.log("Lỗi thêm phòng ban:", err);
-      res.status(500).send("Đã xảy ra lỗi khi thêm phòng ban");
+      console.error("Lỗi thêm phòng ban:", err);
+      res.redirect("/departments");
     }
   },
 
-  // 3. Chi tiết phòng ban
-  async show(req, res) {
-    const department_id = req.params.id;
-
-    const sql = `
-      SELECT
-        d.department_id,
-        d.department_code,
-        d.department_name,
-        d.description,
-        COUNT(DISTINCT e.employee_id) AS employee_count,
-        COUNT(DISTINCT a.asset_id) AS asset_count
-      FROM departments d
-      LEFT JOIN employees e
-        ON d.department_id = e.department_id
-      LEFT JOIN locations loc
-        ON loc.department_id = d.department_id
-      LEFT JOIN assets a
-        ON (a.location_id = loc.location_id OR a.current_employee_id = e.employee_id)
-      WHERE d.department_id = ?
-      GROUP BY
-        d.department_id,
-        d.department_code,
-        d.department_name,
-        d.description
-    `;
-
-    try {
-      const [departments] = await db.query(sql, [department_id]);
-
-      if (departments.length === 0) {
-        return res.redirect("/departments");
-      }
-
-      // Lấy danh sách vị trí cụ thể thuộc phòng ban này
-      const [locations] = await db.query(
-        "SELECT * FROM locations WHERE department_id = ? ORDER BY location_id DESC",
-        [department_id]
-      );
-
-      res.render("departments/show", {
-        title: "Chi tiết phòng ban",
-        department: departments[0],
-        locations,
-      });
-    } catch (err) {
-      console.log("Lỗi lấy chi tiết phòng ban:", err);
-      res.status(500).send("Đã xảy ra lỗi khi lấy chi tiết phòng ban");
-    }
-  },
-
-  // 3b. Thêm vị trí/kho trực thuộc phòng ban
-  async addLocation(req, res) {
-    const department_id = req.params.id;
-    const { location_name, description } = req.body;
-    try {
-      await db.query(
-        "INSERT INTO locations (department_id, location_name, description) VALUES (?, ?, ?)",
-        [department_id, location_name, description || null]
-      );
-      res.redirect(`/departments/${department_id}`);
-    } catch (err) {
-      console.log("Lỗi thêm vị trí:", err);
-      res.status(500).send("Đã xảy ra lỗi khi thêm vị trí");
-    }
-  },
-
-  // 3c. Xóa vị trí
-  async deleteLocation(req, res) {
-    const { id, locationId } = req.params;
-    try {
-      await db.query("DELETE FROM locations WHERE location_id = ? AND department_id = ?", [locationId, id]);
-      res.redirect(`/departments/${id}`);
-    } catch (err) {
-      console.log("Lỗi xóa vị trí:", err);
-      res.status(500).send("Đã xảy ra lỗi khi xóa vị trí");
-    }
-  },
-
-  // 4. Form sửa phòng ban
+  // 3. Form sửa phòng ban
   async edit(req, res) {
-    const department_id = req.params.id;
-
-    const sql = `
-      SELECT
-        department_id,
-        department_code,
-        department_name,
-        description
-      FROM departments
-      WHERE department_id = ?
-    `;
-
     try {
-      const [departments] = await db.query(sql, [department_id]);
-
-      if (departments.length === 0) {
-        return res.redirect("/departments");
-      }
+      const [rows] = await db.query("SELECT * FROM org_units WHERE id = ?", [req.params.id]);
+      if (rows.length === 0) return res.redirect("/departments");
 
       res.render("departments/departments-edit", {
-        title: "Chỉnh sửa phòng ban",
-        department: departments[0],
+        title: `Sửa phòng ban - ${rows[0].name}`,
+        department: rows[0],
       });
     } catch (err) {
-      console.log("Lỗi lấy phòng ban:", err);
-      res.status(500).send("Đã xảy ra lỗi khi lấy thông tin phòng ban");
+      res.redirect("/departments");
     }
   },
 
-  // 5. Cập nhật phòng ban
+  // 4. Cập nhật phòng ban
   async update(req, res) {
-    const department_id = req.params.id;
-    const { department_code, department_name, description } = req.body;
-
-    const sql = `
-      UPDATE departments
-      SET
-        department_code = ?,
-        department_name = ?,
-        description = ?
-      WHERE department_id = ?
-    `;
-
     try {
-      await db.query(sql, [
-        department_code,
-        department_name,
-        description || null,
-        department_id,
-      ]);
+      const { code, name, type } = req.body;
+
+      await db.query(
+        "UPDATE org_units SET code = ?, name = ?, type = ?, updated_at = NOW() WHERE id = ?",
+        [code, name, type || "DEPARTMENT", req.params.id]
+      );
 
       res.redirect("/departments");
     } catch (err) {
-      console.log("Lỗi cập nhật phòng ban:", err);
-      res.status(500).send("Đã xảy ra lỗi khi cập nhật phòng ban");
+      console.error("Lỗi cập nhật phòng ban:", err);
+      res.redirect("/departments");
     }
   },
 
-  // 6. Xóa phòng ban
+  // 5. Xóa phòng ban (Soft delete)
   async delete(req, res) {
-    const department_id = req.params.id;
-
     try {
-      await db.query("DELETE FROM departments WHERE department_id = ?", [department_id]);
+      await db.query("UPDATE org_units SET active = 0, updated_at = NOW() WHERE id = ?", [req.params.id]);
       res.redirect("/departments");
     } catch (err) {
-      console.log("Lỗi xóa phòng ban:", err);
-      res.status(500).send("Đã xảy ra lỗi khi xóa phòng ban");
+      res.status(500).send("Không thể xóa: " + err.message);
     }
   },
 };

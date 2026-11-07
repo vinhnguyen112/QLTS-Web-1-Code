@@ -1,156 +1,124 @@
-<div class="container-fluid p-0">
-  <div class="card border" style="max-width: 900px; margin: 0 auto;">
-    <div class="card-header">
-      <h6 class="mb-0 fw-bold">Chỉnh sửa thông tin tài sản: {{asset.asset_code}}</h6>
+﻿<div class="container-fluid p-0">
+  <div class="card border shadow-none">
+    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="mb-0 fw-bold text-dark">Chỉnh sửa hồ sơ tài sản: <span class="text-primary">{{asset.code}}</span></h5>
+        <small class="text-muted">{{asset.name}}</small>
+      </div>
+      <a href="/assets/{{asset.id}}" class="btn btn-secondary btn-sm">
+        Quay lại
+      </a>
     </div>
 
-    <form action="/assets/{{asset.asset_id}}/update" method="POST">
+    <form action="/assets/{{asset.id}}/update" method="POST">
       <div class="card-body">
-        <h6 class="mb-3 text-dark fw-bold">1. Thông tin cơ bản</h6>
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label for="asset_code" class="form-label">Mã tài sản <span class="text-danger">*</span></label>
-            <input
-              type="text"
-              class="form-control"
-              id="asset_code"
-              name="asset_code"
-              value="{{asset.asset_code}}"
-              required
-            />
+        <h6 class="mb-3 text-primary fw-bold">1. Thông tin định danh</h6>
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">Mã tài sản <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="code" value="{{asset.code}}" required />
           </div>
 
-          <div class="col-md-6 mb-3">
-            <label for="asset_name" class="form-label">Tên tài sản <span class="text-danger">*</span></label>
-            <input
-              type="text"
-              class="form-control"
-              id="asset_name"
-              name="asset_name"
-              value="{{asset.asset_name}}"
-              required
-            />
+          <div class="col-md-5">
+            <label class="form-label small fw-semibold">Tên tài sản <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="name" value="{{asset.name}}" required />
           </div>
 
-          <div class="col-md-6 mb-3">
-            <label for="category_id" class="form-label">Loại tài sản <span class="text-danger">*</span></label>
-            <select class="form-select" id="category_id" name="category_id" required>
-              <option value="">-- Chọn loại tài sản --</option>
-              {{#each categories}}
-                <option value="{{this.category_id}}" {{#if (eq this.category_id ../asset.category_id)}}selected{{/if}}>
-                  {{this.category_name}}
-                </option>
+          <div class="col-md-3">
+            <label class="form-label small fw-semibold">Số Serial / Service Tag</label>
+            <input type="text" class="form-control font-monospace" name="serial_no" value="{{asset.serial_no}}" />
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">Danh mục phân loại <span class="text-danger">*</span></label>
+            <select class="form-select" name="category_id" required>
+              <option value="">-- Chọn danh mục --</option>
+              {{#each formData.categories}}
+                <option value="{{this.id}}" {{#if (eq this.id ../asset.category_id)}}selected{{/if}}>{{this.name}}</option>
               {{/each}}
             </select>
           </div>
 
-          <div class="col-md-6 mb-3">
-            <label for="supplier_id" class="form-label">Nhà cung cấp</label>
-            <select class="form-select" id="supplier_id" name="supplier_id">
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">Đơn vị quản lý (Phòng ban) <span class="text-danger">*</span></label>
+            <select class="form-select" name="org_unit_id" required>
+              <option value="">-- Chọn phòng ban --</option>
+              {{#each formData.orgUnits}}
+                <option value="{{this.id}}" {{#if (eq this.id ../asset.org_unit_id)}}selected{{/if}}>{{this.name}}</option>
+              {{/each}}
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">Vị trí lắp đặt</label>
+            <select class="form-select" name="location_id">
+              <option value="">-- Chọn vị trí / Kho --</option>
+              {{#each formData.locations}}
+                <option value="{{this.id}}" {{#if (eq this.id ../asset.location_id)}}selected{{/if}}>{{this.name}}</option>
+              {{/each}}
+            </select>
+          </div>
+        </div>
+
+        <h6 class="mb-3 text-primary fw-bold">2. Phân bổ & Trạng thái</h6>
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">Người đang giữ / Sử dụng</label>
+            <select class="form-select" name="assignee_id">
+              <option value="">-- Trong kho (Chưa cấp phát) --</option>
+              {{#each formData.users}}
+                <option value="{{this.id}}" {{#if (eq this.id ../asset.assignee_id)}}selected{{/if}}>{{this.full_name}} ({{this.email}})</option>
+              {{/each}}
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">Trạng thái vòng đời <span class="text-danger">*</span></label>
+            <select class="form-select" name="status" required>
+              <option value="in_stock" {{#if (eq asset.status "in_stock")}}selected{{/if}}>Trong kho (in_stock)</option>
+              <option value="in_use" {{#if (eq asset.status "in_use")}}selected{{/if}}>Đang sử dụng (in_use)</option>
+              <option value="maintenance" {{#if (eq asset.status "maintenance")}}selected{{/if}}>Đang bảo trì (maintenance)</option>
+              <option value="transferring" {{#if (eq asset.status "transferring")}}selected{{/if}}>Đang điều chuyển (transferring)</option>
+              <option value="disposed" {{#if (eq asset.status "disposed")}}selected{{/if}}>Đã thanh lý (disposed)</option>
+              <option value="lost" {{#if (eq asset.status "lost")}}selected{{/if}}>Đã mất (lost)</option>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">Nhà cung cấp</label>
+            <select class="form-select" name="supplier_id">
               <option value="">-- Chọn nhà cung cấp --</option>
-              {{#each suppliers}}
-                <option value="{{this.supplier_id}}" {{#if (eq this.supplier_id ../asset.supplier_id)}}selected{{/if}}>
-                  {{this.supplier_name}}
-                </option>
+              {{#each formData.suppliers}}
+                <option value="{{this.id}}" {{#if (eq this.id ../asset.supplier_id)}}selected{{/if}}>{{this.name}}</option>
               {{/each}}
             </select>
           </div>
         </div>
 
-        <hr class="my-2" />
-        <h6 class="mb-3 text-dark fw-bold">2. Giá trị & Khấu hao</h6>
-        <div class="row">
-          <div class="col-md-4 mb-3">
-            <label for="original_cost" class="form-label">Nguyên giá (VNĐ) <span class="text-danger">*</span></label>
-            <input
-              type="number"
-              class="form-control"
-              id="original_cost"
-              name="original_cost"
-              value="{{asset.original_cost}}"
-              min="0"
-              required
-            />
+        <h6 class="mb-3 text-primary fw-bold">3. Giá trị & Khấu hao</h6>
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">Nguyên giá (VNĐ) <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" name="original_cost" value="{{asset.original_cost}}" min="0" required />
           </div>
 
-          <div class="col-md-4 mb-3">
-            <label for="purchase_date" class="form-label">Ngày mua / Đưa vào sử dụng <span class="text-danger">*</span></label>
-            <input
-              type="date"
-              class="form-control"
-              id="purchase_date"
-              name="purchase_date"
-              value="{{asset.purchase_date}}"
-              required
-            />
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">Ngày mua / Bắt đầu sử dụng <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" name="purchase_date" value="{{asset.purchase_date}}" required />
           </div>
 
-          <div class="col-md-4 mb-3">
-            <label for="useful_life_months" class="form-label">Thời gian khấu hao (tháng) <span class="text-danger">*</span></label>
-            <input
-              type="number"
-              class="form-control"
-              id="useful_life_months"
-              name="useful_life_months"
-              value="{{asset.useful_life_months}}"
-              min="1"
-              required
-            />
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">Thời gian sử dụng / Khấu hao (Tháng) <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" name="useful_life_months" value="{{asset.useful_life_months}}" min="1" required />
           </div>
         </div>
 
-        <hr class="my-2" />
-        <h6 class="mb-3 text-dark fw-bold">3. Vị trí & Trạng thái</h6>
-        <div class="row">
-          <div class="col-md-4 mb-3">
-            <label for="location_id" class="form-label">Vị trí / Kho</label>
-            <select class="form-select" id="location_id" name="location_id">
-              <option value="">-- Chọn vị trí --</option>
-              {{#each locations}}
-                <option value="{{this.location_id}}" {{#if (eq this.location_id ../asset.location_id)}}selected{{/if}}>
-                  {{this.location_name}}
-                </option>
-              {{/each}}
-            </select>
-          </div>
-
-          <div class="col-md-4 mb-3">
-            <label for="current_employee_id" class="form-label">Người đang sử dụng</label>
-            <select class="form-select" id="current_employee_id" name="current_employee_id">
-              <option value="">-- Trong kho (Chưa giao ai) --</option>
-              {{#each employees}}
-                <option value="{{this.employee_id}}" {{#if (eq this.employee_id ../asset.current_employee_id)}}selected{{/if}}>
-                  {{this.full_name}} ({{this.employee_code}})
-                </option>
-              {{/each}}
-            </select>
-          </div>
-
-          <div class="col-md-4 mb-3">
-            <label for="status" class="form-label">Trạng thái <span class="text-danger">*</span></label>
-            <select class="form-select" id="status" name="status" required>
-              <option value="in_stock" {{#if (eq asset.status "in_stock")}}selected{{/if}}>Trong kho</option>
-              <option value="in_use" {{#if (eq asset.status "in_use")}}selected{{/if}}>Đang sử dụng</option>
-              <option value="maintenance" {{#if (eq asset.status "maintenance")}}selected{{/if}}>Đang bảo trì</option>
-              <option value="disposed" {{#if (eq asset.status "disposed")}}selected{{/if}}>Đã thanh lý</option>
-            </select>
-          </div>
-
-          <div class="col-12 mb-2">
-            <label for="specifications" class="form-label">Thông số kỹ thuật / Cấu hình</label>
-            <textarea
-              class="form-control"
-              id="specifications"
-              name="specifications"
-              rows="3"
-            >{{asset.specifications}}</textarea>
-          </div>
+        <div class="d-flex justify-content-end gap-2 border-top pt-3">
+          <a href="/assets/{{asset.id}}" class="btn btn-secondary px-3">Hủy bỏ</a>
+          <button type="submit" class="btn btn-primary px-4 fw-semibold">
+            Lưu thay đổi
+          </button>
         </div>
-      </div>
-
-      <div class="card-footer d-flex justify-content-end gap-2 py-3">
-        <a href="/assets/{{asset.asset_id}}" class="btn btn-sm btn-outline-secondary">Hủy</a>
-        <button type="submit" class="btn btn-sm btn-secondary">Lưu thay đổi</button>
       </div>
     </form>
   </div>

@@ -1,275 +1,144 @@
 const db = require("../config/db");
+const argon2 = require("argon2");
 
 const employeeController = {
-  // 1. Danh sách nhân sự (Tìm kiếm & Phân trang)
+  // 1. Danh sách nhân sự & Người dùng
   async index(req, res) {
-    const name = req.query.name || "";
-    const page = parseInt(req.query.page) || 1;
-    const limit = 10;
-    const start = (page - 1) * limit;
-
-    // Đếm tổng số nhân sự
-    const countSql = `
-      SELECT COUNT(*) AS total
-      FROM employees
-      WHERE full_name LIKE ?
-         OR employee_code LIKE ?
-    `;
-
-    // Lấy danh sách nhân sự
-    const sql = `
-      SELECT
-        e.employee_id,
-        e.employee_code,
-        e.full_name,
-        e.position,
-        d.department_name,
-        COUNT(a.asset_id) AS asset_count
-      FROM employees e
-      LEFT JOIN departments d
-        ON e.department_id = d.department_id
-      LEFT JOIN assets a
-        ON e.employee_id = a.current_employee_id
-      WHERE e.full_name LIKE ?
-         OR e.employee_code LIKE ?
-      GROUP BY
-        e.employee_id,
-        e.employee_code,
-        e.full_name,
-        e.position,
-        d.department_name
-      ORDER BY e.employee_id DESC
-      LIMIT ${start}, ${limit}
-    `;
-
-    // Lấy danh sách phòng ban cho form thêm nhân sự
-    const departmentSql = `
-      SELECT
-        department_id,
-        department_name
-      FROM departments
-      ORDER BY department_name ASC
-    `;
-
     try {
-      const [countResult] = await db.query(countSql, [
-        `%${name}%`,
-        `%${name}%`,
-      ]);
+      const searchName = req.query.name || "";
+      const page = parseInt(req.query.page) || 1;
+      const limit = 10;
+      const offset = (page - 1) * limit;
 
-      const totalRow = countResult[0].total;
-      const totalPages = Math.ceil(totalRow / limit);
+      const [[{ total }]] = await db.query(
+        "SELECT COUNT(*) AS total FROM users WHERE (full_name LIKE ? OR username LIKE ? OR email LIKE ?)",
+        [`%${searchName}%`, `%${searchName}%`, `%${searchName}%`]
+      );
 
-      const [employees] = await db.query(sql, [`%${name}%`, `%${name}%`]);
-      const [departments] = await db.query(departmentSql);
-
-      // Tạo danh sách số trang
+      const totalPages = Math.ceil(total / limit) || 1;
       const pages = [];
       for (let i = 1; i <= totalPages; i++) {
-        pages.push({
-          number: i,
-          active: i == page,
-        });
+        pages.push({ number: i, active: i === page });
       }
+
+      const [employees] = await db.query(
+        `
+        SELECT u.id, u.username, u.full_name, u.email, u.status, u.last_login_at,
+               ou.name AS department_name,
+               r.name  AS role_name,
+               (SELECT COUNT(*) FROM assets a WHERE a.assignee_id = u.id AND a.deleted_at IS NULL) AS asset_count
+        FROM users u
+        LEFT JOIN org_units  ou ON u.org_unit_id = ou.id
+        LEFT JOIN user_roles ur ON u.id          = ur.user_id
+        LEFT JOIN roles      r  ON ur.role_id    = r.id
+        WHERE (u.full_name LIKE ? OR u.username LIKE ? OR u.email LIKE ?)
+        ORDER BY u.id ASC
+        LIMIT ${offset}, ${limit}
+      `,
+        [`%${searchName}%`, `%${searchName}%`, `%${searchName}%`]
+      );
+
+      const [departments] = await db.query("SELECT id, name FROM org_units WHERE active = 1 ORDER BY name");
+      const [roles] = await db.query("SELECT id, name FROM roles ORDER BY id ASC");
 
       res.render("employees/index", {
-        title: "Nhân sự",
+        title: "Nhân sự & Người dùng",
         employees,
-        departments,
-        searchName: name,
+        searchName,
         totalPages,
         pages,
+        formData: { departments, roles },
       });
     } catch (err) {
-      console.log("Lỗi lấy nhân sự:", err);
-      res.status(500).send("Đã xảy ra lỗi khi lấy danh sách nhân sự");
+      console.error("Lỗi danh sách nhân sự:", err);
+      res.status(500).send("Lỗi: " + err.message);
     }
   },
 
-  // 2. Thêm nhân sự
+  // 2. Thêm nhân sự / người dùng mới
   async create(req, res) {
-    const { employee_code, full_name, department_id, position, phone, email } =
-      req.body;
-
-    const sql = `
-      INSERT INTO employees (
-        employee_code,
-        full_name,
-        department_id,
-        position,
-        phone,
-        email
-      )
-      VALUES (?, ?, ?, ?, ?, ?)
-    `;
-
-    let finalDeptId = department_id;
-    if (!finalDeptId) {
-      const [firstDept] = await db.query("SELECT department_id FROM departments LIMIT 1");
-      if (firstDept.length > 0) finalDeptId = firstDept[0].department_id;
-    }
-
     try {
-      await db.query(sql, [
-        employee_code,
-        full_name,
-        finalDeptId,
-        position || null,
-        phone || null,
-        email || null,
-      ]);
+      const { username, full_name, email, org_unit_id, role_id, password } = req.body;
+      const defaultPass = password || "Devmaster@2026!";
+      const hash = await argon2.hash(defaultPass);
+
+      const [result] = await db.query(
+        `
+        INSERT INTO users (username, password_hash, full_name, email, org_unit_id, status, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, 'ACTIVE', NOW(), NOW())
+      `,
+        [username.trim(), hash, full_name.trim(), email.trim(), org_unit_id || 227]
+      );
+
+      // Gán vai trò
+      if (role_id) {
+        await db.query("INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)", [
+          result.insertId,
+          role_id,
+        ]);
+      }
 
       res.redirect("/employees");
     } catch (err) {
-      console.log("Lỗi thêm nhân sự:", err);
-      res.status(500).send("Đã xảy ra lỗi khi thêm nhân sự");
+      console.error("Lỗi thêm nhân sự:", err);
+      res.redirect("/employees");
     }
   },
 
-  // 3. Chi tiết nhân sự
-  async show(req, res) {
-    const employee_id = req.params.id;
-
-    const sql = `
-      SELECT
-        e.employee_id,
-        e.employee_code,
-        e.full_name,
-        e.position,
-        e.phone,
-        e.email,
-        d.department_name,
-        COUNT(a.asset_id) AS asset_count
-      FROM employees e
-      LEFT JOIN departments d
-        ON e.department_id = d.department_id
-      LEFT JOIN assets a
-        ON e.employee_id = a.current_employee_id
-      WHERE e.employee_id = ?
-      GROUP BY
-        e.employee_id,
-        e.employee_code,
-        e.full_name,
-        e.position,
-        e.phone,
-        e.email,
-        d.department_name
-    `;
-
-    try {
-      const [employees] = await db.query(sql, [employee_id]);
-
-      if (employees.length === 0) {
-        return res.redirect("/employees");
-      }
-
-      res.render("employees/show", {
-        title: "Chi tiết nhân sự",
-        employee: employees[0],
-      });
-    } catch (err) {
-      console.log("Lỗi lấy chi tiết nhân sự:", err);
-      res.status(500).send("Đã xảy ra lỗi khi lấy chi tiết nhân sự");
-    }
-  },
-
-  // 4. Form sửa nhân sự
+  // 3. Form sửa thông tin
   async edit(req, res) {
-    const employee_id = req.params.id;
-
-    const employeeSql = `
-      SELECT
-        employee_id,
-        employee_code,
-        full_name,
-        department_id,
-        position,
-        phone,
-        email
-      FROM employees
-      WHERE employee_id = ?
-    `;
-
-    const departmentSql = `
-      SELECT
-        department_id,
-        department_name
-      FROM departments
-      ORDER BY department_name ASC
-    `;
-
     try {
-      const [employees] = await db.query(employeeSql, [employee_id]);
+      const [rows] = await db.query(
+        `
+        SELECT u.*, ur.role_id
+        FROM users u
+        LEFT JOIN user_roles ur ON u.id = ur.user_id
+        WHERE u.id = ?
+      `,
+        [req.params.id]
+      );
 
-      if (employees.length === 0) {
-        return res.redirect("/employees");
-      }
+      if (rows.length === 0) return res.redirect("/employees");
 
-      const [departments] = await db.query(departmentSql);
+      const [departments] = await db.query("SELECT id, name FROM org_units WHERE active = 1 ORDER BY name");
+      const [roles] = await db.query("SELECT id, name FROM roles ORDER BY id ASC");
 
       res.render("employees/employees-edit", {
-        title: "Chỉnh sửa nhân sự",
-        employee: employees[0],
-        departments,
+        title: `Sửa nhân sự - ${rows[0].full_name}`,
+        employee: rows[0],
+        formData: { departments, roles },
       });
     } catch (err) {
-      console.log("Lỗi lấy nhân sự:", err);
-      res.status(500).send("Đã xảy ra lỗi khi lấy thông tin nhân sự");
+      res.redirect("/employees");
     }
   },
 
-  // 5. Cập nhật nhân sự
+  // 4. Cập nhật thông tin
   async update(req, res) {
-    const employee_id = req.params.id;
-    const { employee_code, full_name, department_id, position, phone, email } =
-      req.body;
-
-    const sql = `
-      UPDATE employees
-      SET
-        employee_code = ?,
-        full_name = ?,
-        department_id = ?,
-        position = ?,
-        phone = ?,
-        email = ?
-      WHERE employee_id = ?
-    `;
-
-    let finalDeptId = department_id;
-    if (!finalDeptId) {
-      const [firstDept] = await db.query("SELECT department_id FROM departments LIMIT 1");
-      if (firstDept.length > 0) finalDeptId = firstDept[0].department_id;
-    }
-
     try {
-      await db.query(sql, [
-        employee_code,
-        full_name,
-        finalDeptId,
-        position || null,
-        phone || null,
-        email || null,
-        employee_id,
-      ]);
+      const { full_name, email, org_unit_id, role_id, status } = req.body;
+
+      await db.query(
+        `
+        UPDATE users
+        SET full_name = ?, email = ?, org_unit_id = ?, status = ?, updated_at = NOW()
+        WHERE id = ?
+      `,
+        [full_name, email, org_unit_id, status || "ACTIVE", req.params.id]
+      );
+
+      if (role_id) {
+        await db.query("DELETE FROM user_roles WHERE user_id = ?", [req.params.id]);
+        await db.query("INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)", [
+          req.params.id,
+          role_id,
+        ]);
+      }
 
       res.redirect("/employees");
     } catch (err) {
-      console.log("Lỗi cập nhật nhân sự:", err);
-      res.status(500).send("Đã xảy ra lỗi khi cập nhật nhân sự");
-    }
-  },
-
-  // 6. Xóa nhân sự
-  async delete(req, res) {
-    const employee_id = req.params.id;
-
-    try {
-      await db.query("DELETE FROM employees WHERE employee_id = ?", [employee_id]);
+      console.error("Lỗi cập nhật nhân sự:", err);
       res.redirect("/employees");
-    } catch (err) {
-      console.log("Lỗi xóa nhân sự:", err);
-      res.status(500).send("Đã xảy ra lỗi khi xóa nhân sự");
     }
   },
 };

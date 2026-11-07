@@ -1,246 +1,243 @@
 const db = require("../config/db");
 const dayjs = require("dayjs");
+const QRCode = require("qrcode");
 
-async function getFormData() {
-  const [categories] = await db.query(
-    "SELECT category_id, category_name, default_useful_months FROM categories ORDER BY category_name ASC"
-  );
-  const [suppliers] = await db.query(
-    "SELECT supplier_id, supplier_name FROM suppliers ORDER BY supplier_name ASC"
-  );
-  const [departments] = await db.query(
-    "SELECT department_id, department_name FROM departments ORDER BY department_name ASC"
-  );
-  const [locations] = await db.query(`
-    SELECT l.location_id, l.location_name, d.department_name
-    FROM locations l
-    JOIN departments d ON l.department_id = d.department_id
-    ORDER BY d.department_name ASC, l.location_name ASC
-  `);
-  const [employees] = await db.query(
-    "SELECT employee_id, employee_code, full_name, department_id FROM employees ORDER BY full_name ASC"
-  );
-
-  return { categories, suppliers, departments, locations, employees };
-}
-
-// Tạo danh sách số trang cho phân trang
-function buildPageList(totalRows, limit, currentPage) {
-  const totalPages = Math.ceil(totalRows / limit);
-  const pages = [];
-  for (let i = 1; i <= totalPages; i++) {
-    pages.push({ number: i, active: i == currentPage });
-  }
-  return { totalPages, pages };
-}
-
+// Câu SQL chuẩn để lấy chi tiết tài sản kèm phòng ban, người dùng, vị trí, danh mục
+const ASSET_SELECT_SQL = `
+  SELECT a.*,
+         c.name  AS category_name,
+         s.name  AS supplier_name,
+         ou.name AS org_unit_name,
+         l.name  AS location_name,
+         u.full_name AS current_employee_name,
+         u.email     AS employee_email
+  FROM assets a
+  LEFT JOIN asset_categories c  ON a.category_id = c.id
+  LEFT JOIN suppliers        s  ON a.supplier_id  = s.id
+  LEFT JOIN org_units        ou ON a.org_unit_id  = ou.id
+  LEFT JOIN locations        l  ON a.location_id  = l.id
+  LEFT JOIN users            u  ON a.assignee_id  = u.id
+`;
 
 const assetController = {
-  // 1. Danh sách tài sản — có tìm kiếm, lọc, phân trang
+  // 1. Danh sách tài sản (tìm kiếm + phân trang)
   async index(req, res) {
-    const searchName     = req.query.name  ;
-    const filterStatus   = req.query.status   ;
-    const filterCategory = req.query.category_id   ;
-    const currentPage    = parseInt(req.query.page) || 1;
-    const limit          = 10;
-    const offset         = (currentPage - 1) * limit;
+    try {
+      const search = req.query.name || "";
+      const status = req.query.status || "";
+      const page = parseInt(req.query.page) || 1;
+      const limit = 10;
+      const offset = (page - 1) * limit;
 
-    const searchParam = `%${searchName}%`;
+      let whereClause = "WHERE a.deleted_at IS NULL";
+      const params = [];
 
-    let where  = "WHERE (a.asset_name LIKE ? OR a.asset_code LIKE ?)";
-    const params = [searchParam, searchParam];
+      if (search) {
+        whereClause += " AND (a.name LIKE ? OR a.code LIKE ? OR a.serial_no LIKE ?)";
+        params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+      }
+      if (status) {
+        whereClause += " AND a.status = ?";
+        params.push(status);
+      }
 
-    if (filterStatus)   { where += " AND a.status = ?";      params.push(filterStatus);   }
-    if (filterCategory) { where += " AND a.category_id = ?"; params.push(filterCategory); }
+      // Đếm tổng số bản ghi
+      const countSql = `SELECT COUNT(*) AS total FROM assets a ${whereClause}`;
+      const [[{ total }]] = await db.query(countSql, params);
+      const totalPages = Math.ceil(total / limit) || 1;
 
-    // Đếm tổng để tính số trang
-    const [[{ total }]] = await db.query(
-      `SELECT COUNT(*) AS total FROM assets a ${where}`,
-      params
-    );
+      const pages = [];
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push({ number: i, active: i === page });
+      }
 
-    const { totalPages, pages } = buildPageList(total, limit, currentPage);
+      // Lấy danh sách tài sản
+      const listSql = `
+        ${ASSET_SELECT_SQL}
+        ${whereClause}
+        ORDER BY a.id DESC
+        LIMIT ${offset}, ${limit}
+      `;
+      const [assets] = await db.query(listSql, params);
 
-    // Lấy danh sách tài sản của trang hiện tại
-    const [assets] = await db.query(
-      `SELECT
-         a.asset_id, a.asset_code, a.asset_name,
-         a.original_cost, a.status, a.purchase_date, a.useful_life_months,
-         c.category_name,
-         s.supplier_name,
-         l.location_name,
-         d.department_name,
-         e.full_name AS current_employee_name
-       FROM assets a
-       LEFT JOIN categories c  ON a.category_id        = c.category_id
-       LEFT JOIN suppliers  s  ON a.supplier_id         = s.supplier_id
-       LEFT JOIN locations  l  ON a.location_id         = l.location_id
-       LEFT JOIN departments d ON l.department_id       = d.department_id
-       LEFT JOIN employees   e ON a.current_employee_id = e.employee_id
-       ${where}
-       ORDER BY a.asset_id DESC
-       LIMIT ${offset}, ${limit}`,
-      params
-    );
+      // Lấy danh mục để lọc
+      const [categories] = await db.query("SELECT id, name FROM asset_categories ORDER BY name");
 
-    const { categories, suppliers, locations, employees } = await getFormData();
-
-    res.render("assets/index", {
-      title: "Danh sách tài sản",
-      assets,
-      searchName,
-      filterStatus,
-      filterCategory,
-      categories,
-      suppliers,
-      locations,
-      employees,
-      totalPages,
-      pages,
-    });
-  },
-
-  // 2. Chi tiết một tài sản
-  async show(req, res) {
-    const assetId = req.params.id;
-
-    const [rows] = await db.query(
-      `SELECT a.*,
-              c.category_name, c.default_useful_months,
-              s.supplier_name, s.contact_phone AS supplier_phone,
-              l.location_name,
-              d.department_name, d.department_id,
-              e.full_name   AS current_employee_name,
-              e.employee_code AS current_employee_code,
-              e.phone       AS employee_phone
-       FROM assets a
-       LEFT JOIN categories c  ON a.category_id        = c.category_id
-       LEFT JOIN suppliers  s  ON a.supplier_id         = s.supplier_id
-       LEFT JOIN locations  l  ON a.location_id         = l.location_id
-       LEFT JOIN departments d ON l.department_id       = d.department_id
-       LEFT JOIN employees   e ON a.current_employee_id = e.employee_id
-       WHERE a.asset_id = ?`,
-      [assetId]
-    );
-
-    // Không tìm thấy → về danh sách
-    if (rows.length === 0) return res.redirect("/assets");
-
-    const asset = rows[0];
-    const { locations, employees } = await getFormData();
-    const today = dayjs().format("YYYY-MM-DD");
-
-    res.render("assets/show", {
-      title: `Tài sản: ${asset.asset_name}`,
-      asset,
-      locations,
-      employees,
-      today,
-    });
-  },
-
-  // 3. Thêm tài sản mới (nhận dữ liệu từ form POST)
-  async create(req, res) {
-    const {
-      asset_code, asset_name, category_id, supplier_id, location_id,
-      original_cost, purchase_date, useful_life_months, specifications,
-    } = req.body;
-
-    const [result] = await db.query(
-      `INSERT INTO assets
-         (asset_code, asset_name, category_id, supplier_id, location_id,
-          current_employee_id, original_cost, residual_value,
-          purchase_date, useful_life_months, status, specifications)
-       VALUES (?, ?, ?, ?, ?, NULL, ?, 0, ?, ?, 'in_stock', ?)`,
-      [
-        asset_code,
-        asset_name,
-        category_id,
-        supplier_id        || null,
-        location_id        || null,
-        Number(original_cost)      || 0,
-        purchase_date              || dayjs().format("YYYY-MM-DD"),
-        Number(useful_life_months) || 36,
-        specifications     || null,
-      ]
-    );
-
-    // Sau khi thêm → chuyển thẳng vào trang chi tiết
-    res.redirect(`/assets/${result.insertId}`);
-  },
-
-  // 4. Hiển thị form sửa tài sản
-  async edit(req, res) {
-    const [rows] = await db.query(
-      "SELECT * FROM assets WHERE asset_id = ?",
-      [req.params.id]
-    );
-
-    if (rows.length === 0) return res.redirect("/assets");
-
-    const asset = rows[0];
-
-    // Định dạng ngày để input[type=date] hiển thị đúng
-    if (asset.purchase_date) {
-      asset.purchase_date = dayjs(asset.purchase_date).format("YYYY-MM-DD");
+      res.render("assets/index", {
+        title: "Hồ sơ tài sản",
+        assets,
+        searchName: search,
+        status,
+        totalPages,
+        pages,
+        categories,
+      });
+    } catch (err) {
+      console.error("Lỗi danh sách tài sản:", err);
+      res.status(500).send("Lỗi: " + err.message);
     }
-
-    const { categories, suppliers, locations, employees } = await getFormData();
-
-    res.render("assets/asset-edit", {
-      title: "Sửa tài sản",
-      asset,
-      categories,
-      suppliers,
-      locations,
-      employees,
-    });
   },
 
-  // 5. Cập nhật thông tin tài sản 
-  async update(req, res) {
-    const {
-      asset_code, asset_name, category_id, supplier_id, location_id,
-      current_employee_id, original_cost, residual_value,
-      purchase_date, useful_life_months, status, specifications,
-    } = req.body;
-
-    await db.query(
-      `UPDATE assets
-       SET asset_code = ?, asset_name = ?, category_id = ?,
-           supplier_id = ?, location_id = ?, current_employee_id = ?,
-           original_cost = ?, residual_value = ?, purchase_date = ?,
-           useful_life_months = ?, status = ?, specifications = ?
-       WHERE asset_id = ?`,
-      [
-        asset_code,
-        asset_name,
-        category_id,
-        supplier_id         || null,
-        location_id         || null,
-        current_employee_id || null,
-        Number(original_cost)      || 0,
-        Number(residual_value)     || 0,
-        purchase_date               || dayjs().format("YYYY-MM-DD"),
-        Number(useful_life_months)  || 36,
-        status              || "in_stock",
-        specifications      || null,
+  // 2. Chi tiết hồ sơ tài sản + Tem mã QR
+  async show(req, res) {
+    try {
+      const [rows] = await db.query(`${ASSET_SELECT_SQL} WHERE a.id = ? AND a.deleted_at IS NULL`, [
         req.params.id,
-      ]
-    );
+      ]);
+      if (rows.length === 0) return res.redirect("/assets");
 
-    res.redirect(`/assets/${req.params.id}`);
+      const asset = rows[0];
+
+      // Sinh ảnh QR Code Data URL để hiển thị trực tiếp
+      const qrData = asset.qr_token || asset.code;
+      const qrCodeDataUrl = await QRCode.toDataURL(qrData, {
+        width: 180,
+        margin: 1,
+      });
+
+      // Lấy lịch sử biến động tài sản từ asset_events (hoặc asset_history)
+      const [events] = await db.query(
+        `
+        SELECT ae.*, u.full_name AS actor_name
+        FROM asset_events ae
+        LEFT JOIN users u ON ae.actor_id = u.id
+        WHERE ae.asset_id = ?
+        ORDER BY ae.id DESC
+        LIMIT 20
+      `,
+        [asset.id]
+      ).catch(() => [[]]);
+
+      res.render("assets/show", {
+        title: `Chi tiết tài sản - ${asset.code}`,
+        asset,
+        qrCodeDataUrl,
+        events: events || [],
+      });
+    } catch (err) {
+      console.error("Lỗi xem chi tiết tài sản:", err);
+      res.redirect("/assets");
+    }
   },
 
-  // 6. Xóa vĩnh viễn tài sản
+  // 3. Form chỉnh sửa tài sản
+  async edit(req, res) {
+    try {
+      const [rows] = await db.query("SELECT * FROM assets WHERE id = ? AND deleted_at IS NULL", [
+        req.params.id,
+      ]);
+      if (rows.length === 0) return res.redirect("/assets");
+
+      const asset = rows[0];
+      if (asset.purchase_date) {
+        asset.purchase_date = dayjs(asset.purchase_date).format("YYYY-MM-DD");
+      }
+
+      const [categories] = await db.query("SELECT id, name FROM asset_categories ORDER BY name");
+      const [suppliers] = await db.query("SELECT id, name FROM suppliers ORDER BY name");
+      const [orgUnits] = await db.query("SELECT id, name FROM org_units WHERE active = 1 ORDER BY name");
+      const [locations] = await db.query("SELECT id, name FROM locations WHERE active = 1 ORDER BY name");
+      const [users] = await db.query("SELECT id, full_name, email FROM users WHERE status = 'ACTIVE' ORDER BY full_name");
+
+      res.render("assets/asset-edit", {
+        title: `Chỉnh sửa tài sản - ${asset.code}`,
+        asset,
+        formData: { categories, suppliers, orgUnits, locations, users },
+      });
+    } catch (err) {
+      console.error("Lỗi form sửa tài sản:", err);
+      res.redirect("/assets");
+    }
+  },
+
+  // 4. Cập nhật thông tin tài sản
+  async update(req, res) {
+    try {
+      const {
+        code,
+        name,
+        category_id,
+        supplier_id,
+        org_unit_id,
+        location_id,
+        assignee_id,
+        original_cost,
+        purchase_date,
+        useful_life_months,
+        serial_no,
+        status,
+      } = req.body;
+
+      await db.query(
+        `
+        UPDATE assets
+        SET code = ?, name = ?, category_id = ?, supplier_id = ?,
+            org_unit_id = ?, location_id = ?, assignee_id = ?,
+            original_cost = ?, purchase_date = ?, useful_life_months = ?,
+            serial_no = ?, status = ?, updated_at = NOW()
+        WHERE id = ?
+      `,
+        [
+          code,
+          name,
+          category_id || null,
+          supplier_id || null,
+          org_unit_id || null,
+          location_id || null,
+          assignee_id || null,
+          original_cost || 0,
+          purchase_date || null,
+          useful_life_months || 0,
+          serial_no || null,
+          status || "in_stock",
+          req.params.id,
+        ]
+      );
+
+      res.redirect(`/assets/${req.params.id}`);
+    } catch (err) {
+      console.error("Lỗi cập nhật tài sản:", err);
+      res.status(500).send("Không thể cập nhật tài sản: " + err.message);
+    }
+  },
+
+  // 5. Thu hồi tài sản từ nhân viên về kho
+  async recall(req, res) {
+    try {
+      const assetId = req.params.id;
+      const currentUserId = req.session.user ? req.session.user.id : null;
+
+      // Đưa trạng thái về 'in_stock', gỡ assignee_id
+      await db.query(
+        "UPDATE assets SET assignee_id = NULL, status = 'in_stock', updated_at = NOW() WHERE id = ?",
+        [assetId]
+      );
+
+      // Ghi nhận biến động vào asset_events
+      await db.query(
+        `
+        INSERT INTO asset_events (asset_id, event_type, from_status, to_status, actor_id, note)
+        VALUES (?, 'RECALL', 'in_use', 'in_stock', ?, 'Thu hồi tài sản về kho trung tâm')
+      `,
+        [assetId, currentUserId]
+      ).catch(() => {});
+
+      res.redirect("/assets/" + assetId);
+    } catch (err) {
+      console.error("Lỗi thu hồi tài sản:", err);
+      res.redirect("/assets");
+    }
+  },
+
+  // 6. Xóa logic tài sản (Soft Delete)
   async delete(req, res) {
-    const assetId = req.params.id;
-
-    await db.query("DELETE FROM assets WHERE asset_id = ?", [assetId]);
-
-    res.redirect("/assets");
+    try {
+      await db.query("UPDATE assets SET deleted_at = NOW() WHERE id = ?", [req.params.id]);
+      res.redirect("/assets");
+    } catch (err) {
+      res.status(500).send("Không thể xóa tài sản: " + err.message);
+    }
   },
-
 };
 
 module.exports = assetController;

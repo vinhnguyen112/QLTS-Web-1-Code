@@ -1,106 +1,169 @@
-<div class="container-fluid">
+<div class="container-fluid p-0">
   <div class="card">
-    <div class="card-header">
+    <div class="card-header bg-white py-3">
       <div class="row align-items-center g-2">
-        <div class="col">
-          <h5 class="mb-0">Nhân sự</h5>
-          <small class="text-muted">Quản lý nhân sự sử dụng tài sản trong hệ thống</small>
+        <div class="col-md-6">
+          <h5 class="mb-0 fw-bold text-dark">Nhân sự & Người dùng</h5>
+          <small class="text-muted">Quản lý tài khoản đăng nhập và nhân sự bàn giao tài sản tại Devmaster</small>
         </div>
 
-        <div class="col-auto d-flex align-items-center gap-2">
+        <div class="col-md-6 d-flex flex-wrap justify-content-md-end align-items-center gap-2">
           <form action="/employees" method="get" class="m-0" role="search">
-            <div class="input-group">
+            <div class="input-group input-group-sm" style="width: 240px;">
               <input
                 type="text"
                 name="name"
                 class="form-control"
                 value="{{searchName}}"
-                placeholder="Tìm nhân sự..."
+                placeholder="Tìm tên, username, email..."
               />
-              <button class="btn btn-secondary" type="submit">Lọc</button>
+              <button class="btn btn-primary" type="submit">Tìm</button>
             </div>
           </form>
           <button
             type="button"
-            class="btn btn-sm btn-secondary"
+            class="btn btn-sm btn-success"
             data-bs-toggle="modal"
             data-bs-target="#addEmployeeModal"
-          >+ Thêm nhân sự</button>
+          >
+            Thêm người dùng mới
+          </button>
         </div>
       </div>
     </div>
 
     <div class="table-responsive">
-      <table class="table table-bordered table-hover align-middle mb-0">
+      <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th style="width: 50px;" class="text-center">STT</th>
-            <th>Mã nhân sự</th>
-            <th>Họ và tên</th>
-            <th>Phòng ban</th>
-            <th>Chức vụ</th>
-            <th class="text-center" style="width: 120px;">Số tài sản</th>
-            <th class="text-center" style="width: 160px;">Thao tác</th>
+            <th scope="col" class="ps-3">#</th>
+            <th scope="col">Tên đăng nhập</th>
+            <th scope="col">Họ và tên</th>
+            <th scope="col">Email</th>
+            <th scope="col">Phòng ban</th>
+            <th scope="col">Vai trò (Role)</th>
+            <th scope="col">Tài sản đang giữ</th>
+            <th scope="col">Trạng thái</th>
+            <th scope="col" class="text-end pe-3" style="width: 100px;">Thao tác</th>
           </tr>
         </thead>
         <tbody>
           {{#each employees}}
             <tr>
-              <td class="text-center">{{addOne @index}}</td>
-              <td><span class="badge bg-light text-dark border">{{this.employee_code}}</span></td>
-              <td><strong>{{this.full_name}}</strong></td>
+              <th scope="row" class="ps-3 text-muted">{{addOne @index}}</th>
+              <td><span class="fw-bold text-dark">@{{this.username}}</span></td>
+              <td class="text-dark">{{this.full_name}}</td>
+              <td class="text-muted small">{{this.email}}</td>
               <td>{{this.department_name}}</td>
-              <td>{{this.position}}</td>
-              <td class="text-center">{{this.asset_count}}</td>
               <td>
-                <div class="d-flex justify-content-center gap-1">
-                  <a href="/employees/{{this.employee_id}}" class="btn btn-sm btn-success">Xem</a>
-                  <a href="/employees/{{this.employee_id}}/edit" class="btn btn-sm btn-warning">Sửa</a>
-                  <form
-                    action="/employees/{{this.employee_id}}/delete"
-                    method="POST"
-                    class="m-0"
-                    onsubmit="return confirm('Bạn có chắc chắn muốn xóa nhân sự này không?');"
-                  >
-                    <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
-                  </form>
-                </div>
+                <span class="badge text-bg-light border">
+                  {{#if this.role_name}}{{this.role_name}}{{else}}Nhân viên{{/if}}
+                </span>
+              </td>
+              <td>
+                {{#if this.asset_count}}
+                  <span class="badge text-bg-light border">{{this.asset_count}} thiết bị</span>
+                {{else}}
+                  <span class="text-muted small">0</span>
+                {{/if}}
+              </td>
+              <td>
+                {{#if (eq this.status "ACTIVE")}}
+                  <span class="badge text-bg-light border">Hoạt động</span>
+                {{else}}
+                  <span class="badge text-bg-secondary">{{this.status}}</span>
+                {{/if}}
+              </td>
+              <td class="text-end pe-3">
+                <a href="/employees/{{this.id}}/edit" class="btn btn-sm btn-warning text-dark">
+                  Sửa
+                </a>
               </td>
             </tr>
           {{else}}
             <tr>
-              <td colspan="7" class="text-center py-4 text-muted">Chưa có nhân sự nào.</td>
+              <td colspan="9" class="text-center py-4 text-muted">Không tìm thấy người dùng nào.</td>
             </tr>
           {{/each}}
         </tbody>
       </table>
     </div>
 
+    <!-- Phân trang -->
+    {{#if (gt totalPages 1)}}
+    <div class="card-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+      <small class="text-muted">Trang {{pages.[0].number}} / {{totalPages}}</small>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          {{#each pages}}
+            <li class="page-item {{#if this.active}}active{{/if}}">
+              <a class="page-link" href="/employees?page={{this.number}}&name={{../searchName}}">
+                {{this.number}}
+              </a>
+            </li>
+          {{/each}}
+        </ul>
+      </nav>
+    </div>
+    {{/if}}
   </div>
 </div>
 
-<!-- Modal thêm nhân sự -->
+<!-- Modal Thêm Người Dùng Mới -->
 <div class="modal fade" id="addEmployeeModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
-      {{> employees-create}}
+      <form action="/employees" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold text-dark">Thêm tài khoản nhân sự</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Tên đăng nhập (Username) <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="username" placeholder="Ví dụ: nv.it.nam" required />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Họ và tên đầy đủ <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="full_name" placeholder="Ví dụ: Nguyễn Văn Nam" required />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Địa chỉ Email <span class="text-danger">*</span></label>
+            <input type="email" class="form-control" name="email" placeholder="Ví dụ: namnv@devmaster.edu.vn" required />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Phòng ban làm việc <span class="text-danger">*</span></label>
+            <select class="form-select" name="org_unit_id" required>
+              {{#each formData.departments}}
+                <option value="{{this.id}}">{{this.name}}</option>
+              {{/each}}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Vai trò hệ thống</label>
+            <select class="form-select" name="role_id">
+              {{#each formData.roles}}
+                <option value="{{this.id}}">{{this.name}} ({{this.code}})</option>
+              {{/each}}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Mật khẩu (mặc định: Devmaster@2026!)</label>
+            <input type="password" class="form-control" name="password" placeholder="Devmaster@2026!" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-success btn-sm px-3">
+            Tạo tài khoản
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
-
-{{#if pages.length}}
-  <nav class="mt-3">
-    <ul class="pagination">
-      {{#each pages}}
-        <li class="page-item {{#if active}}active{{/if}}">
-          <a
-            class="page-link"
-            href="/employees?page={{number}}&name={{../searchName}}"
-          >
-            {{number}}
-          </a>
-        </li>
-      {{/each}}
-    </ul>
-  </nav>
-{{/if}}

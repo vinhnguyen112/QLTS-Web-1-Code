@@ -1,54 +1,59 @@
 const db = require("../config/db");
 
 const reportController = {
-  // Trang Báo cáo & Thống kê tổng hợp (Dữ liệu thật từ MySQL qlts-new-01)
   async index(req, res) {
     try {
-      // 1. Tổng số lượng và tổng nguyên giá toàn bộ tài sản
       const [[totals]] = await db.query(`
-        SELECT 
-          COUNT(*) AS grandTotalAssets,
-          IFNULL(SUM(original_cost), 0) AS grandTotalCost
+        SELECT COUNT(*) AS grandTotalAssets,
+               IFNULL(SUM(original_cost), 0) AS grandTotalCost
         FROM assets
+        WHERE deleted_at IS NULL
       `);
 
-      // 2. Thống kê theo phòng ban (thông qua locations)
       const [byDepartment] = await db.query(`
-        SELECT 
-          d.department_id, 
-          d.department_name, 
-          COUNT(a.asset_id) AS total_assets, 
-          IFNULL(SUM(a.original_cost), 0) AS total_cost 
-        FROM departments d 
-        LEFT JOIN locations l ON d.department_id = l.department_id
-        LEFT JOIN assets a ON l.location_id = a.location_id
-        GROUP BY d.department_id, d.department_name 
-        ORDER BY total_assets DESC, d.department_name ASC
+        SELECT ou.name AS department_name,
+               COUNT(a.id) AS total_assets,
+               IFNULL(SUM(a.original_cost), 0) AS total_cost
+        FROM org_units ou
+        LEFT JOIN assets a ON ou.id = a.org_unit_id AND a.deleted_at IS NULL
+        WHERE ou.active = 1
+        GROUP BY ou.id, ou.name
+        HAVING total_assets > 0
+        ORDER BY total_assets DESC
       `);
 
-      // 3. Thống kê theo danh mục loại tài sản
       const [byCategory] = await db.query(`
-        SELECT 
-          c.category_id, 
-          c.category_name, 
-          COUNT(a.asset_id) AS total_assets, 
-          IFNULL(SUM(a.original_cost), 0) AS total_cost 
-        FROM categories c 
-        LEFT JOIN assets a ON c.category_id = a.category_id
-        GROUP BY c.category_id, c.category_name 
-        ORDER BY total_assets DESC, c.category_name ASC
+        SELECT c.name AS category_name,
+               COUNT(a.id) AS total_assets,
+               IFNULL(SUM(a.original_cost), 0) AS total_cost
+        FROM asset_categories c
+        LEFT JOIN assets a ON c.id = a.category_id AND a.deleted_at IS NULL
+        WHERE c.active = 1
+        GROUP BY c.id, c.name
+        ORDER BY total_assets DESC
+      `);
+
+      const [byStatus] = await db.query(`
+        SELECT status,
+               COUNT(*) AS total_assets,
+               IFNULL(SUM(original_cost), 0) AS total_cost
+        FROM assets
+        WHERE deleted_at IS NULL
+        GROUP BY status
+        ORDER BY total_assets DESC
       `);
 
       res.render("reports/index", {
-        title: "Báo cáo & Thống kê",
-        grandTotalAssets: totals ? Number(totals.grandTotalAssets) || 0 : 0,
-        grandTotalCost: totals ? Number(totals.grandTotalCost) || 0 : 0,
+        title: "Báo cáo & Thống kê tài sản doanh nghiệp",
+        grandTotalAssets: Number(totals.grandTotalAssets) || 0,
+        grandTotalCost: Number(totals.grandTotalCost) || 0,
         byDepartment,
         byCategory,
+        byStatus,
       });
     } catch (err) {
-      console.log("Lỗi lấy dữ liệu báo cáo:", err);
-      res.status(500).send("Đã xảy ra lỗi khi lấy báo cáo thống kê");
+      console.error("Lỗi báo cáo:", err);
+      res.status(500).send("Lỗi: " + err.message);
     }
   },
 };

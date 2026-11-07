@@ -1,47 +1,55 @@
-<header class="navbar-top d-flex align-items-center">
+<header class="navbar-top d-flex align-items-center bg-white border-bottom">
   <div class="container-fluid px-3">
     <div class="d-flex justify-content-between align-items-center">
       <div class="d-flex align-items-center">
-        <!-- Nút mở offcanvas sidebar với body scrolling -->
+        <!-- Nút mở menu sidebar -->
         <button
-          class="btn btn-sm btn-outline-secondary me-3"
+          class="btn btn-secondary btn-sm me-3"
           type="button"
           data-bs-toggle="offcanvas"
           data-bs-target="#offcanvasScrolling"
           aria-controls="offcanvasScrolling"
         >
-          Menu
+          <i class="bi bi-list me-1"></i> Menu
         </button>
 
-        <div>
-          <span class="fs-6 fw-bold text-dark text-uppercase">
-            Quản Lý Tài Sản
-          </span>
-          <span class="text-muted small ms-2 d-none d-sm-inline">
-            | Hệ thống quản lý tài sản doanh nghiệp
-          </span>
-        </div>
+        <a href="/" class="text-decoration-none d-flex align-items-center">
+          <span class="badge bg-primary text-white me-2 py-1 px-2 fw-bold">TS</span>
+          <span class="text-dark fw-bold fs-6">QLTS Doanh Nghiệp</span>
+        </a>
       </div>
 
       <div class="d-flex align-items-center">
+        {{#if currentUser}}
         <div class="dropdown">
           <button
-            class="btn btn-outline-secondary dropdown-toggle btn-sm"
+            class="btn btn-sm btn-secondary dropdown-toggle d-flex align-items-center"
             type="button"
             data-bs-toggle="dropdown"
             aria-expanded="false"
           >
-            Quản trị viên
+            <i class="bi bi-person-circle me-1 fs-6"></i>
+            <span class="fw-semibold">{{currentUser.full_name}}</span>
+            <span class="small ms-1">({{currentUser.role_name}})</span>
           </button>
 
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li><h6 class="dropdown-header">Tài khoản</h6></li>
-            <li><a class="dropdown-item" href="#">Thông tin cá nhân</a></li>
-            <li><a class="dropdown-item" href="#">Đổi mật khẩu</a></li>
-            <li><hr class="dropdown-divider" /></li>
-            <li><a class="dropdown-item" href="#">Đăng xuất</a></li>
+          <ul class="dropdown-menu dropdown-menu-end mt-2">
+            <li class="px-3 py-2 border-bottom">
+              <div class="fw-bold">{{currentUser.full_name}}</div>
+              <div class="text-muted small">{{currentUser.username}} • {{currentUser.email}}</div>
+            </li>
+            <li>
+              <a class="dropdown-item text-danger py-2" href="/auth/logout">
+                <i class="bi bi-box-arrow-right me-1"></i> Đăng xuất
+              </a>
+            </li>
           </ul>
         </div>
+        {{else}}
+        <a href="/auth/login" class="btn btn-primary btn-sm">
+          <i class="bi bi-box-arrow-in-right me-1"></i> Đăng nhập
+        </a>
+        {{/if}}
       </div>
     </div>
   </div>

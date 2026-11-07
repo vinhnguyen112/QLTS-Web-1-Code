@@ -1,0 +1,117 @@
+﻿<div class="container-fluid p-0">
+  <div class="card border shadow-none mb-4">
+    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-2">
+        <a href="/stocktakes" class="btn btn-secondary btn-sm">Quay lại</a>
+        <div>
+          <h5 class="mb-0 fw-bold text-dark">
+            Kiểm kê: <span class="text-primary font-monospace">{{stocktake.code}}</span> - {{stocktake.name}}
+          </h5>
+          <small class="text-muted">Tạo ngày {{formatDate stocktake.started_at}} bởi {{stocktake.created_by_name}}</small>
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        {{#if (eq stocktake.status "in_progress")}}
+          <a href="/stocktakes/{{stocktake.id}}/scan" class="btn btn-danger btn-sm px-3 fw-semibold">
+            Mở Camera Quét Mã QR
+          </a>
+
+          <form action="/stocktakes/{{stocktake.id}}/close" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn chốt kết quả kiểm kê? Toàn bộ tài sản chưa quét sẽ chuyển thành Thiếu (Missing)');">
+            <button type="submit" class="btn btn-success btn-sm px-3 fw-semibold">
+              Chốt & Đóng đợt kiểm kê
+            </button>
+          </form>
+        {{else}}
+          <span class="badge bg-success py-2 px-3 fs-6">Đã đóng đợt kiểm kê</span>
+        {{/if}}
+        <button onclick="window.print()" class="btn btn-dark btn-sm">In biên bản</button>
+      </div>
+    </div>
+
+    <div class="card-body pt-0">
+      <!-- 5 Thẻ tóm tắt kết quả kiểm kê -->
+      <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-lg">
+          <div class="p-3 bg-light rounded border text-center">
+            <small class="text-muted d-block fw-semibold">Tổng tài sản cần kiểm</small>
+            <span class="fs-4 fw-bold text-dark">{{summary.total}}</span>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg">
+          <div class="p-3 bg-success bg-opacity-10 rounded border border-success-subtle text-center">
+            <small class="text-success d-block fw-semibold">Đã quét khớp (Matched)</small>
+            <span class="fs-4 fw-bold text-success">{{summary.matched}}</span>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg">
+          <div class="p-3 bg-warning bg-opacity-10 rounded border border-warning-subtle text-center">
+            <small class="text-warning-emphasis d-block fw-semibold">Chờ quét (Pending)</small>
+            <span class="fs-4 fw-bold text-warning-emphasis">{{summary.pending}}</span>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg">
+          <div class="p-3 bg-danger bg-opacity-10 rounded border border-danger-subtle text-center">
+            <small class="text-danger d-block fw-semibold">Không tìm thấy (Missing)</small>
+            <span class="fs-4 fw-bold text-danger">{{summary.missing}}</span>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg">
+          <div class="p-3 bg-info bg-opacity-10 rounded border border-info-subtle text-center">
+            <small class="text-info d-block fw-semibold">Phát hiện thừa (Extra)</small>
+            <span class="fs-4 fw-bold text-info">{{summary.extra}}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bảng đối chiếu từng tài sản -->
+      <h6 class="fw-bold text-dark mb-3">Bảng đối chiếu chi tiết tài sản</h6>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th scope="col" class="ps-3" style="width: 50px;">#</th>
+              <th scope="col">Mã tài sản</th>
+              <th scope="col">Tên tài sản</th>
+              <th scope="col">Người đang giữ</th>
+              <th scope="col">Vị trí dự kiến</th>
+              <th scope="col">Thời điểm quét</th>
+              <th scope="col">Người quét</th>
+              <th scope="col" class="text-center" style="width: 130px;">Kết quả đối chiếu</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each items}}
+              <tr>
+                <td class="ps-3 text-muted">{{addOne @index}}</td>
+                <td>
+                  <a href="/assets/{{this.asset_id}}" class="fw-bold text-primary font-monospace text-decoration-none">
+                    {{#if this.asset_code}}{{this.asset_code}}{{else}}{{this.raw_code}}{{/if}}
+                  </a>
+                </td>
+                <td class="fw-semibold text-dark">{{#if this.asset_name}}{{this.asset_name}}{{else}}<em>Tài sản thừa quét được</em>{{/if}}</td>
+                <td>{{#if this.assignee_name}}{{this.assignee_name}}{{else}}<span class="text-muted">Trong kho</span>{{/if}}</td>
+                <td>{{#if this.expected_location_name}}{{this.expected_location_name}}{{else}}Kho trung tâm{{/if}}</td>
+                <td class="text-muted small">{{#if this.scanned_at}}{{formatDateTime this.scanned_at}}{{else}}—{{/if}}</td>
+                <td>{{#if this.scanned_by_name}}{{this.scanned_by_name}}{{else}}—{{/if}}</td>
+                <td class="text-center">
+                  {{#if (eq this.result "matched")}}
+                    <span class="badge bg-success">Khớp</span>
+                  {{else if (eq this.result "pending")}}
+                    <span class="badge bg-secondary">Chờ quét</span>
+                  {{else if (eq this.result "missing")}}
+                    <span class="badge bg-danger">Thiếu</span>
+                  {{else if (eq this.result "extra")}}
+                    <span class="badge bg-info text-dark">Thừa</span>
+                  {{else if (eq this.result "misplaced")}}
+                    <span class="badge bg-warning text-dark">Sai vị trí</span>
+                  {{/if}}
+                </td>
+              </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+

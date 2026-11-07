@@ -1,0 +1,148 @@
+﻿<div class="container-fluid p-0">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h4 class="mb-1 text-dark fw-bold">Bảo trì & Sửa chữa tài sản</h4>
+      <p class="text-muted mb-0 small">Theo dõi sự cố, lịch sử khắc phục và chi phí sửa chữa thiết bị</p>
+    </div>
+    <div>
+      <a href="/maintenance/create" class="btn btn-primary btn-sm">
+        Báo hỏng thiết bị mới
+      </a>
+    </div>
+  </div>
+
+  <!-- Thống kê nhanh bảo trì -->
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-md-3">
+      <div class="card p-3 border shadow-none h-100">
+        <div class="text-muted small mb-1">Tổng số phiếu</div>
+        <div class="fs-4 fw-bold text-dark">{{summary.total}}</div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+      <div class="card p-3 border shadow-none h-100">
+        <div class="text-muted small mb-1">Đang xử lý</div>
+        <div class="fs-4 fw-bold {{#if (gt summary.inProgress 0)}}text-warning{{else}}text-dark{{/if}}">
+          {{summary.inProgress}}
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+      <div class="card p-3 border shadow-none h-100">
+        <div class="text-muted small mb-1">Đã hoàn thành</div>
+        <div class="fs-4 fw-bold text-dark">{{summary.completed}}</div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+      <div class="card p-3 border shadow-none h-100">
+        <div class="text-muted small mb-1">Tổng chi phí sửa chữa</div>
+        <div class="fs-5 fw-bold text-dark">{{formatCurrency summary.totalCost}}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bảng danh sách phiếu sửa chữa -->
+  <div class="card border shadow-none">
+    <div class="card-header bg-white py-3 border-0">
+      <h6 class="fw-bold text-dark mb-0">Danh sách sự cố & Đơn bảo trì</h6>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th scope="col" class="ps-3">#</th>
+            <th scope="col">Mã phiếu</th>
+            <th scope="col">Tài sản gặp sự cố</th>
+            <th scope="col">Mô tả hỏng hóc</th>
+            <th scope="col">Người báo</th>
+            <th scope="col">Kỹ thuật viên</th>
+            <th scope="col">Chi phí</th>
+            <th scope="col">Ngày báo</th>
+            <th scope="col">Trạng thái</th>
+            <th scope="col" class="text-end pe-3">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each orders}}
+            <tr>
+              <th scope="row" class="ps-3 text-muted">{{addOne @index}}</th>
+              <td class="fw-semibold text-dark">{{this.code}}</td>
+              <td>
+                <a href="/assets/{{this.asset_id}}" class="text-dark text-decoration-none">
+                  [{{this.asset_code}}] {{this.asset_name}}
+                </a>
+              </td>
+              <td><span class="text-secondary small">{{this.cause}}</span></td>
+              <td>{{this.reported_by_name}}</td>
+              <td>
+                {{#if this.technician_name}}
+                  <span class="badge text-bg-light border">{{this.technician_name}}</span>
+                {{else}}
+                  <span class="text-muted">Chưa phân công</span>
+                {{/if}}
+              </td>
+              <td class="text-dark">
+                {{#if this.cost}}{{formatCurrency this.cost}}{{else}}—{{/if}}
+              </td>
+              <td class="text-muted small">{{formatDate this.started_at}}</td>
+              <td>
+                {{#if (eq this.status "done")}}
+                  <span class="badge text-bg-light border">Đã sửa xong</span>
+                {{else}}
+                  <span class="badge text-bg-warning text-dark">Đang sửa</span>
+                {{/if}}
+              </td>
+              <td class="text-end pe-3">
+                {{#if (not (eq this.status "done"))}}
+                  <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#completeModal{{this.id}}">
+                    Hoàn thành
+                  </button>
+                {{else}}
+                  <span class="text-muted small">Đã đóng</span>
+                {{/if}}
+
+                <!-- Modal Hoàn Thành Sửa Chữa -->
+                <div class="modal fade text-start" id="completeModal{{this.id}}" tabindex="-1">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <form action="/maintenance/{{this.id}}/complete" method="POST">
+                        <div class="modal-header">
+                          <h6 class="modal-title fw-bold text-dark">Nghiệm thu sửa chữa: {{this.code}}</h6>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                          <div class="mb-3">
+                            <label class="form-label small fw-semibold">Chi phí sửa chữa (VNĐ)</label>
+                            <input type="number" class="form-control" name="cost" value="250000" min="0" required />
+                          </div>
+
+                          <div class="mb-3">
+                            <label class="form-label small fw-semibold">Kết quả kiểm tra</label>
+                            <textarea class="form-control" name="result" rows="3" placeholder="Ghi chú kết quả nghiệm thu..." required></textarea>
+                          </div>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Hủy</button>
+                          <button type="submit" class="btn btn-primary btn-sm">
+                            Xác nhận hoàn thành
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          {{else}}
+            <tr>
+              <td colspan="10" class="text-center py-5 text-muted">
+                Hiện tại không có thiết bị nào đang gặp sự cố hoặc cần bảo trì.
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

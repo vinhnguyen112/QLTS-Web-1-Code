@@ -1,66 +1,38 @@
-<div class="container-fluid">
-  <!-- Thanh tiêu đề & nút thêm mới -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-      <h4 class="mb-0 text-dark">Quản lý hồ sơ tài sản</h4>
-    </div>
-
-    <button
-      type="button"
-      class="btn btn-secondary"
-      data-bs-toggle="modal"
-      data-bs-target="#addAssetModal"
-    >
-      + Thêm tài sản mới
-    </button>
-  </div>
-
+<div class="container-fluid p-0">
   <div class="card">
-    <div class="card-header">
+    <div class="card-header bg-white py-3">
       <div class="row align-items-center g-2">
-        <div class="col">
-          <h5 class="mb-0">{{title}}</h5>
-          <small class="text-muted">
-            Quản lý hồ sơ và vòng đời tài sản công ty
-          </small>
+        <div class="col-md-5">
+          <h5 class="mb-0 fw-bold text-dark">Quản lý Hồ sơ Tài sản</h5>
+          <small class="text-muted">Hồ sơ tài sản cố định và công cụ dụng cụ toàn hệ thống</small>
         </div>
 
-        <div class="col-auto">
-          <form action="/assets" method="get" class="row g-2 align-items-center m-0">
-            <div class="col-auto">
-              <select name="category_id" class="form-select form-select-sm" onchange="this.form.submit()">
-                <option value="">-- Tất cả danh mục --</option>
-                {{#each categories}}
-                  <option value="{{this.category_id}}" {{#if (eq ../filterCategory (lookup . 'category_id'))}}selected{{/if}}>
-                    {{this.category_name}}
-                  </option>
-                {{/each}}
-              </select>
-            </div>
-
-            <div class="col-auto">
-              <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
-                <option value="">-- Tất cả trạng thái --</option>
-                <option value="in_use" {{#if (eq filterStatus "in_use")}}selected{{/if}}>Đang sử dụng</option>
-                <option value="in_stock" {{#if (eq filterStatus "in_stock")}}selected{{/if}}>Trong kho</option>
-                <option value="maintenance" {{#if (eq filterStatus "maintenance")}}selected{{/if}}>Đang bảo trì</option>
-                <option value="disposed" {{#if (eq filterStatus "disposed")}}selected{{/if}}>Đã thanh lý</option>
-              </select>
-            </div>
-
-            <div class="col-auto">
-              <div class="input-group input-group-sm">
-                <input
-                  type="text"
-                  name="name"
-                  class="form-control"
-                  value="{{searchName}}"
-                  placeholder="Mã hoặc tên tài sản..."
-                />
-                <button class="btn btn-secondary" type="submit">Tìm</button>
-              </div>
+        <div class="col-md-7 d-flex flex-wrap justify-content-md-end align-items-center gap-2">
+          <form action="/assets" method="get" class="d-flex align-items-center gap-2 m-0" role="search">
+            <select name="status" class="form-select form-select-sm" style="width: 140px;" onchange="this.form.submit()">
+              <option value="">Tất cả trạng thái</option>
+              <option value="in_stock" {{#if (eq status "in_stock")}}selected{{/if}}>Trong kho</option>
+              <option value="in_use" {{#if (eq status "in_use")}}selected{{/if}}>Đang sử dụng</option>
+              <option value="maintenance" {{#if (eq status "maintenance")}}selected{{/if}}>Đang bảo trì</option>
+              <option value="disposed" {{#if (eq status "disposed")}}selected{{/if}}>Đã thanh lý</option>
+            </select>
+            <div class="input-group input-group-sm" style="width: 220px;">
+              <input
+                type="text"
+                name="name"
+                class="form-control"
+                value="{{searchName}}"
+                placeholder="Tìm theo mã, tên, số seri..."
+              />
+              <button class="btn btn-primary" type="submit">
+                <i class="bi bi-search"></i>
+              </button>
             </div>
           </form>
+
+          <a href="/warehouse" class="btn btn-sm btn-success">
+            <i class="bi bi-plus-lg me-1"></i> Thêm tài sản mới
+          </a>
         </div>
       </div>
     </div>
@@ -69,110 +41,72 @@
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th style="width: 50px;">STT</th>
-            <th>Mã tài sản</th>
-            <th>Tên tài sản</th>
-            <th>Danh mục</th>
-            <th>Vị trí / Kho</th>
-            <th>Người đang giữ</th>
-            <th>Nguyên giá</th>
-            <th>Trạng thái</th>
-            <th class="text-center" style="width: 160px;">Thao tác</th>
+            <th scope="col" class="ps-3">#</th>
+            <th scope="col">Mã tài sản</th>
+            <th scope="col">Tên tài sản</th>
+            <th scope="col">Loại tài sản</th>
+            <th scope="col">Đơn vị quản lý</th>
+            <th scope="col">Người sử dụng</th>
+            <th scope="col">Nguyên giá</th>
+            <th scope="col">Trạng thái</th>
+            <th scope="col" class="text-end pe-3" style="width: 150px;">Thao tác</th>
           </tr>
         </thead>
         <tbody>
           {{#each assets}}
             <tr>
-              <td>{{addOne @index}}</td>
-              <td>
-                <a href="/assets/{{this.asset_id}}" class="fw-bold text-decoration-none">
-                  <span class="badge bg-light text-dark border">{{this.asset_code}}</span>
-                </a>
-              </td>
-              <td>
-                <strong>{{this.asset_name}}</strong>
-                {{#if this.supplier_name}}<br><small class="text-muted">NCC: {{this.supplier_name}}</small>{{/if}}
-              </td>
-              <td>{{this.category_name}}</td>
-              <td>
-                {{#if this.location_name}}
-                  {{this.location_name}}
-                {{else}}
-                  <span class="text-muted">-</span>
-                {{/if}}
-              </td>
+              <td class="ps-3 text-muted">{{addOne @index}}</td>
+              <td class="fw-semibold text-primary font-monospace">{{this.code}}</td>
+              <td class="fw-semibold text-dark">{{this.name}}</td>
+              <td><span class="badge text-bg-light border">{{this.category_name}}</span></td>
+              <td>{{this.org_unit_name}}</td>
               <td>
                 {{#if this.current_employee_name}}
-                  <strong>{{this.current_employee_name}}</strong>
+                  <span class="text-dark">{{this.current_employee_name}}</span>
                 {{else}}
-                  <span class="text-muted">Chưa giao</span>
+                  <span class="text-muted fst-italic">Chưa bàn giao</span>
                 {{/if}}
               </td>
-              <td>{{formatCurrency this.original_cost}} đ</td>
-              <td>
-                {{#if (eq this.status "in_use")}}
-                  <span class="badge bg-light text-dark border">Đang sử dụng</span>
-                {{else if (eq this.status "in_stock")}}
-                  <span class="badge bg-light text-dark border">Trong kho</span>
-                {{else if (eq this.status "maintenance")}}
-                  <span class="badge bg-light text-dark border">Đang bảo trì</span>
-                {{else if (eq this.status "disposed")}}
-                  <span class="badge bg-light text-dark border">Đã thanh lý</span>
-                {{/if}}
-              </td>
-              <td>
-                <div class="d-flex justify-content-center gap-1">
-                  <a href="/assets/{{this.asset_id}}" class="btn btn-sm btn-success">
-                    Xem
+              <td class="text-dark fw-semibold">{{formatCurrency this.original_cost}}</td>
+              <td>{{{assetStatusBadge this.status}}}</td>
+              <td class="text-end pe-3">
+                <div class="btn-group btn-group-sm" role="group">
+                  <a href="/assets/{{this.id}}" class="btn btn-primary" title="Chi tiết">
+                    Chi tiết
                   </a>
-                  <a href="/assets/{{this.asset_id}}/edit" class="btn btn-sm btn-warning">
+                  <a href="/assets/{{this.id}}/edit" class="btn btn-warning text-dark" title="Sửa">
                     Sửa
                   </a>
-                  <form
-                    action="/assets/{{this.asset_id}}/delete"
-                    method="POST"
-                    class="m-0"
-                    onsubmit="return confirm('Bạn có chắc chắn muốn xóa tài sản này?');"
-                  >
-                    <button type="submit" class="btn btn-sm btn-danger">
-                      Xóa
-                    </button>
-                  </form>
                 </div>
               </td>
             </tr>
           {{else}}
             <tr>
-              <td colspan="9" class="text-center py-4 text-muted">
-                Không tìm thấy tài sản nào phù hợp.
-              </td>
+              <td colspan="9" class="text-center py-4 text-muted">Không tìm thấy tài sản nào phù hợp</td>
             </tr>
           {{/each}}
         </tbody>
       </table>
     </div>
+
+    <!-- Phân trang Bootstrap 5 chuẩn -->
+    {{#if (gt totalPages 1)}}
+      <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+        <div class="small text-muted">
+          Trang <b>{{page}}</b> / {{totalPages}}
+        </div>
+        <nav aria-label="Phân trang">
+          <ul class="pagination pagination-sm mb-0">
+            {{#each pages}}
+              <li class="page-item {{#if this.active}}active{{/if}}">
+                <a class="page-link" href="/assets?page={{this.number}}&name={{../searchName}}&status={{../status}}">
+                  {{this.number}}
+                </a>
+              </li>
+            {{/each}}
+          </ul>
+        </nav>
+      </div>
+    {{/if}}
   </div>
 </div>
-
-<!-- Modal Thêm Tài Sản -->
-<div class="modal fade" id="addAssetModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      {{> asset-create}}
-    </div>
-  </div>
-</div>
-
-{{#if pages.length}}
-  <nav class="mt-3">
-    <ul class="pagination">
-      {{#each pages}}
-        <li class="page-item {{#if active}}active{{/if}}">
-          <a class="page-link" href="/assets?page={{number}}&name={{../searchName}}&category_id={{../filterCategory}}&status={{../filterStatus}}">
-            {{number}}
-          </a>
-        </li>
-      {{/each}}
-    </ul>
-  </nav>
-{{/if}}
