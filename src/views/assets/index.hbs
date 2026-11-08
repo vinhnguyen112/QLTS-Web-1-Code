@@ -94,11 +94,11 @@
               </td>
               <td class="text-dark fw-semibold">{{formatCurrency this.original_cost}}</td>
               <td class="text-center">{{{assetStatusBadge this.status}}}</td>
-              <td class="text-end pe-3">
+              <td class="text-end pe-3 text-nowrap">
                 <div class="d-inline-flex gap-1">
-                  <a href="/assets/{{this.id}}" class="btn btn-primary">Chi tiết</a>
+                  <a href="/assets/{{this.id}}" class="btn btn-primary text-nowrap">Chi tiết</a>
                   {{#if ../canManageAssets}}
-                  <a href="/assets/{{this.id}}/edit" class="btn btn-warning">Sửa</a>
+                  <a href="/assets/{{this.id}}/edit" class="btn btn-warning text-nowrap">Sửa</a>
                   {{/if}}
                 </div>
               </td>

@@ -93,11 +93,11 @@
                   <span class="badge text-bg-warning text-dark">Đang sửa</span>
                 {{/if}}
               </td>
-              <td class="text-end pe-3">
+              <td class="text-end pe-3 text-nowrap">
                 {{#if (not (eq this.status "done"))}}
                   {{#if ../canMaintain}}
                     <div class="d-inline-flex gap-1">
-                      <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#completeModal{{this.id}}">
+                      <button type="button" class="btn btn-success text-nowrap" data-bs-toggle="modal" data-bs-target="#completeModal{{this.id}}">
                         Hoàn thành
                       </button>
                     </div>

@@ -59,9 +59,9 @@
               <td>{{formatDate this.created_at}}</td>
               <td class="text-dark">{{formatCurrency this.total_estimated_cost}}</td>
               <td>{{{requestStatusBadge this.status}}}</td>
-              <td class="text-end pe-3">
+              <td class="text-end pe-3 text-nowrap">
                 <div class="d-inline-flex gap-1">
-                  <a href="/requests/{{this.id}}" class="btn btn-primary">
+                  <a href="/requests/{{this.id}}" class="btn btn-primary text-nowrap">
                     Chi tiết
                   </a>
                 </div>

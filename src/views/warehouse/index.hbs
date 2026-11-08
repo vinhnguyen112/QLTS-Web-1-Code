@@ -60,13 +60,13 @@
               <td>{{this.org_unit_name}}</td>
               <td>{{#if this.location_name}}{{this.location_name}}{{else}}<span class="text-muted">Kho tổng</span>{{/if}}</td>
               <td class="text-dark">{{formatCurrency this.original_cost}}</td>
-              <td class="text-end pe-3">
+              <td class="text-end pe-3 text-nowrap">
                 <div class="d-inline-flex gap-1">
                   <!-- Chỉ Quản lý tài sản hoặc Admin mới có nút Cấp phát -->
                   {{#if ../canManageAssets}}
                   <button
                     type="button"
-                    class="btn btn-success"
+                    class="btn btn-success text-nowrap"
                     data-bs-toggle="modal"
                     data-bs-target="#assignModal"
                     data-id="{{this.id}}"
@@ -76,7 +76,7 @@
                     Cấp phát
                   </button>
                   {{/if}}
-                  <a href="/assets/{{this.id}}" class="btn btn-primary">
+                  <a href="/assets/{{this.id}}" class="btn btn-primary text-nowrap">
                     Chi tiết
                   </a>
                 </div>
