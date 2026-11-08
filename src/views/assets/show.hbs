@@ -114,9 +114,13 @@
                 <small class="text-muted d-block">Người đang giữ:</small>
                 <div class="fw-semibold text-dark mt-1">
                   {{#if asset.current_employee_name}}
-                    {{asset.current_employee_name}}
+                    <i class="bi bi-person me-1 text-secondary"></i>{{asset.current_employee_name}}
+                  {{else if (eq asset.status "in_use")}}
+                    <span class="text-primary"><i class="bi bi-people me-1"></i>Sử dụng chung ({{asset.org_unit_name}})</span>
+                  {{else if (eq asset.status "in_stock")}}
+                    <span class="badge text-bg-light text-muted border">Đang lưu kho</span>
                   {{else}}
-                    <span class="text-muted fst-italic">Trong kho</span>
+                    <span class="text-muted fst-italic">Chưa bàn giao</span>
                   {{/if}}
                 </div>
               </div>
