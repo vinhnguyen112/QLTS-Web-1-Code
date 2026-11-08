@@ -2,13 +2,19 @@
   <div class="card">
     <div class="card-header bg-white py-3">
       <div class="row align-items-center g-2">
-        <div class="col-md-6">
+        <div class="col-md-5">
           <h5 class="mb-0 fw-bold text-dark">Vị trí phòng máy & Kho</h5>
           <small class="text-muted">Quản lý sơ đồ phòng học, phòng ban và kho lưu trữ thiết bị</small>
         </div>
 
-        <div class="col-md-6 d-flex flex-wrap justify-content-md-end align-items-center gap-2">
-          <form action="/locations" method="get" class="m-0" role="search">
+        <div class="col-md-7 d-flex flex-wrap justify-content-md-end align-items-center gap-2">
+          <form action="/locations" method="get" class="m-0 d-flex flex-wrap gap-2" role="search">
+            <select name="org_unit_id" class="form-select form-select-sm" style="width: 200px;" onchange="this.form.submit()">
+              <option value="">Tất cả đơn vị</option>
+              {{#each orgUnits}}
+                <option value="{{this.id}}" {{#if (eq this.id ../orgUnitId)}}selected{{/if}}>{{this.name}}</option>
+              {{/each}}
+            </select>
             <div class="input-group input-group-sm" style="width: 220px;">
               <input
                 type="text"
@@ -60,6 +66,7 @@
               </td>
               <td class="text-end pe-3 text-nowrap">
                 <div class="d-inline-flex gap-1">
+                  <a href="/locations/{{this.id}}/edit" class="btn btn-warning">Sửa</a>
                   <form
                     action="/locations/{{this.id}}/delete"
                     method="POST"
@@ -83,12 +90,12 @@
     <!-- Phân trang -->
     {{#if (gt totalPages 1)}}
     <div class="card-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center">
-      <small class="text-muted">Trang {{pages.[0].number}} / {{totalPages}}</small>
+      <small class="text-muted">Trang {{currentPage}} / {{totalPages}}</small>
       <nav>
         <ul class="pagination pagination-sm mb-0">
           {{#each pages}}
             <li class="page-item {{#if this.active}}active{{/if}}">
-              <a class="page-link" href="/locations?page={{this.number}}&name={{../searchName}}">
+              <a class="page-link" href="/locations?page={{this.number}}&name={{../searchName}}&org_unit_id={{../orgUnitId}}">
                 {{this.number}}
               </a>
             </li>

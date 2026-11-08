@@ -1,0 +1,49 @@
+<div class="container-fluid p-0" style="max-width: 700px; margin: auto;">
+  <div class="card border shadow-none">
+    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="mb-0 fw-bold text-dark">Sửa vị trí: {{location.name}}</h5>
+        <small class="text-muted">Mã: {{location.code}}</small>
+      </div>
+      <a href="/locations" class="btn btn-secondary btn-sm">Quay lại</a>
+    </div>
+
+    <form action="/locations/{{location.id}}/update" method="POST">
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Mã vị trí / Mã phòng <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" name="code" value="{{location.code}}" required />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Tên phòng / Khu vực <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" name="name" value="{{location.name}}" required />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Đơn vị quản lý khu vực này <span class="text-danger">*</span></label>
+          <select class="form-select" name="org_unit_id" required>
+            {{#each orgUnits}}
+              <option value="{{this.id}}" {{#if (eq this.id ../location.org_unit_id)}}selected{{/if}}>
+                {{this.name}}
+              </option>
+            {{/each}}
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Trạng thái hoạt động</label>
+          <select class="form-select" name="active">
+            <option value="1" {{#if (eq location.active 1)}}selected{{/if}}>Đang hoạt động</option>
+            <option value="0" {{#if (eq location.active 0)}}selected{{/if}}>Ngừng sử dụng</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card-footer bg-white border-top d-flex justify-content-end gap-2 py-3">
+        <a href="/locations" class="btn btn-secondary btn-sm px-3">Hủy</a>
+        <button type="submit" class="btn btn-primary btn-sm px-4 fw-semibold">Lưu thay đổi</button>
+      </div>
+    </form>
+  </div>
+</div>
