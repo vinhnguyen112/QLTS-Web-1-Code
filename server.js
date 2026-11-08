@@ -26,6 +26,7 @@ app.engine(
       path.join(__dirname, "src/views/stocktakes"),
       path.join(__dirname, "src/views/maintenance"),
       path.join(__dirname, "src/views/locations"),
+      path.join(__dirname, "src/views/depreciation"),
     ],
 
     helpers: {

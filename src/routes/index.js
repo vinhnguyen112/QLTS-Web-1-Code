@@ -18,6 +18,7 @@ router.use("/requests", require("./requestRoutes"));
 router.use("/procurement", (req, res) => res.redirect("/requests")); // Alias
 router.use("/stocktakes", require("./stocktakeRoutes"));
 router.use("/maintenance", require("./maintenanceRoutes"));
+router.use("/depreciation", require("./depreciationRoutes"));
 
 // 4. Phân hệ Danh mục & Cơ cấu tổ chức
 // Quản lý Người dùng & Vai trò: CHỈ SYS_ADMIN

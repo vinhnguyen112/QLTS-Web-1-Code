@@ -134,6 +134,55 @@
             <div class="fw-semibold text-dark">{{asset.supplier_name}}</div>
           </div>
           {{/if}}
+
+          <!-- Khấu hao tài sản (Phương pháp đường thẳng) -->
+          <div class="card border mb-4">
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+              <span class="fw-bold text-dark small text-uppercase">Khấu hao tài sản (Phương pháp đường thẳng)</span>
+              {{#if depreciation.hasDepreciation}}
+                {{#if depreciation.isFullyDepreciated}}
+                  <span class="badge text-bg-secondary">Đã hết khấu hao</span>
+                {{else}}
+                  <span class="badge text-bg-success">Đang trích khấu hao</span>
+                {{/if}}
+              {{else}}
+                <span class="badge text-bg-light border">Không trích khấu hao</span>
+              {{/if}}
+            </div>
+            <div class="card-body py-3">
+              {{#if depreciation.hasDepreciation}}
+                <div class="row g-3 text-center mb-3">
+                  <div class="col-sm-3">
+                    <small class="text-muted d-block">Mức trích hàng tháng</small>
+                    <span class="fw-bold text-primary">{{formatCurrency depreciation.monthly}}</span>
+                  </div>
+                  <div class="col-sm-3">
+                    <small class="text-muted d-block">Thời gian đã trích</small>
+                    <span class="fw-bold text-dark">{{depreciation.usedMonths}} / {{asset.useful_life_months}} tháng</span>
+                  </div>
+                  <div class="col-sm-3">
+                    <small class="text-muted d-block">Hao mòn lũy kế</small>
+                    <span class="fw-bold text-warning-emphasis">{{formatCurrency depreciation.accumulated}}</span>
+                  </div>
+                  <div class="col-sm-3">
+                    <small class="text-muted d-block">Giá trị còn lại (Book Value)</small>
+                    <span class="fw-bold text-success">{{formatCurrency depreciation.remainingValue}}</span>
+                  </div>
+                </div>
+                <div>
+                  <div class="d-flex justify-content-between small text-muted mb-1">
+                    <span>Tiến độ khấu hao</span>
+                    <span class="fw-bold text-dark">{{depreciation.percent}}%</span>
+                  </div>
+                  <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{depreciation.percent}}%;"></div>
+                  </div>
+                </div>
+              {{else}}
+                <p class="text-muted small mb-0">Tài sản này không thiết lập thời gian sử dụng hữu ích hoặc không trích khấu hao.</p>
+              {{/if}}
+            </div>
+          </div>
         </div>
 
         <!-- Cột Tem mã QR -->
