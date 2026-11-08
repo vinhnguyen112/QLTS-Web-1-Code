@@ -32,7 +32,7 @@ const employeeController = {
         LEFT JOIN user_roles ur ON u.id          = ur.user_id
         LEFT JOIN roles      r  ON ur.role_id    = r.id
         WHERE (u.full_name LIKE ? OR u.username LIKE ? OR u.email LIKE ?)
-        ORDER BY u.id ASC
+        ORDER BY u.id DESC
         LIMIT ${offset}, ${limit}
       `,
         [`%${searchName}%`, `%${searchName}%`, `%${searchName}%`]
@@ -47,6 +47,7 @@ const employeeController = {
         searchName,
         totalPages,
         pages,
+        currentPage: page,
         formData: { departments, roles },
       });
     } catch (err) {

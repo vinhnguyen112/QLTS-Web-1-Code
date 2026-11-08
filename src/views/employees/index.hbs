@@ -94,7 +94,7 @@
     <!-- Phân trang -->
     {{#if (gt totalPages 1)}}
     <div class="card-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center">
-      <small class="text-muted">Trang {{pages.[0].number}} / {{totalPages}}</small>
+      <small class="text-muted">Trang {{currentPage}} / {{totalPages}}</small>
       <nav>
         <ul class="pagination pagination-sm mb-0">
           {{#each pages}}
