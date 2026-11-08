@@ -1,5 +1,6 @@
 const db = require("../config/db");
 const dayjs = require("dayjs");
+const { logAssetEvent, logAudit } = require("../utils/logger");
 
 const ASSET_SQL = `
   SELECT a.*, 
@@ -108,14 +109,23 @@ const warehouseController = {
         ]
       );
 
-      // Ghi log biến động
-      await db.query(
-        `
-        INSERT INTO asset_events (asset_id, event_type, from_status, to_status, actor_id, note)
-        VALUES (?, 'INITIAL_IMPORT', NULL, 'in_stock', ?, 'Nhập mới tài sản vào kho')
-      `,
-        [result.insertId, currentUserId]
-      ).catch(() => {});
+      // Ghi log biến động chuẩn
+      await logAssetEvent(db, {
+        asset_id: result.insertId,
+        event_type: "INITIAL_IMPORT",
+        to_org_unit_id: org_unit_id || 227,
+        performed_by: currentUserId,
+        note: "Nhập mới tài sản vào kho",
+      });
+
+      // Ghi audit
+      await logAudit(db, {
+        actor_id: currentUserId,
+        action: "ASSET_IMPORT",
+        entity: "assets",
+        entity_id: result.insertId,
+        after: { code, name, original_cost },
+      });
 
       res.redirect("/warehouse");
     } catch (err) {
@@ -140,14 +150,25 @@ const warehouseController = {
         [assignee_id, org_unit_id || null, location_id || null, asset_id]
       );
 
-      // Ghi nhận biến động
-      await db.query(
-        `
-        INSERT INTO asset_events (asset_id, event_type, from_status, to_status, actor_id, note)
-        VALUES (?, 'ASSIGN', 'in_stock', 'in_use', ?, ?)
-      `,
-        [asset_id, currentUserId, note || "Cấp phát trực tiếp từ kho"]
-      ).catch(() => {});
+      // Ghi nhận biến động chuẩn
+      await logAssetEvent(db, {
+        asset_id,
+        event_type: "ASSIGN",
+        to_org_unit_id: org_unit_id || null,
+        to_assignee_id: assignee_id || null,
+        performed_by: currentUserId,
+        note: note || "Cấp phát trực tiếp từ kho",
+      });
+
+      // Ghi audit
+      await logAudit(db, {
+        actor_id: currentUserId,
+        action: "ASSET_ASSIGN",
+        entity: "assets",
+        entity_id: asset_id,
+        before: { status: "in_stock" },
+        after: { status: "in_use", assignee_id, org_unit_id },
+      });
 
       res.redirect("/warehouse");
     } catch (err) {

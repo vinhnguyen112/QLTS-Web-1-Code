@@ -83,6 +83,37 @@
             </div>
           </div>
 
+          <!-- Khấu hao & Giá trị còn lại (Chuẩn Thông tư 45) -->
+          <div class="card p-3 mb-4 border bg-white shadow-none">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="fw-bold text-dark mb-0">Theo dõi Khấu hao & Giá trị còn lại</h6>
+              <span class="badge text-bg-light border small">Khấu hao đường thẳng</span>
+            </div>
+            <div class="row g-3 my-1">
+              <div class="col-sm-4">
+                <small class="text-muted d-block">Khấu hao / tháng:</small>
+                <div class="fw-semibold text-dark mt-1">{{formatCurrency depreciation.monthlyDepreciation}}</div>
+              </div>
+              <div class="col-sm-4">
+                <small class="text-muted d-block">Khấu hao lũy kế:</small>
+                <div class="fw-semibold text-danger mt-1">{{formatCurrency depreciation.accumulatedDepreciation}}</div>
+              </div>
+              <div class="col-sm-4">
+                <small class="text-muted d-block">Giá trị còn lại:</small>
+                <div class="fs-6 fw-bold text-success mt-1">{{formatCurrency depreciation.remainingValue}}</div>
+              </div>
+            </div>
+            <div class="mt-2">
+              <div class="d-flex justify-content-between small text-muted mb-1">
+                <span>Tiến độ khấu hao ({{depreciation.monthsUsed}} / {{depreciation.usefulLifeMonths}} tháng)</span>
+                <span class="fw-semibold text-dark">{{depreciation.depreciationPercent}}%</span>
+              </div>
+              <div class="progress" style="height: 6px;">
+                <div class="progress-bar bg-primary" role="progressbar" style="width: {{depreciation.depreciationPercent}}%;"></div>
+              </div>
+            </div>
+          </div>
+
           <!-- Phân bổ & Vị trí -->
           <h6 class="fw-bold text-dark mb-3">Hiện trạng phân bổ & Bàn giao</h6>
           <div class="row g-3 mb-4">
@@ -146,8 +177,8 @@
               <tr>
                 <th>Thời gian</th>
                 <th>Sự kiện</th>
-                <th>Từ trạng thái</th>
-                <th>Sang trạng thái</th>
+                <th>Đơn vị liên quan</th>
+                <th>Nhân sự liên quan</th>
                 <th>Người thực hiện</th>
                 <th>Ghi chú</th>
               </tr>
@@ -155,12 +186,28 @@
             <tbody>
               {{#each events}}
               <tr>
-                <td class="text-muted small">{{formatDateTime this.created_at}}</td>
-                <td><span class="badge text-bg-light border">{{this.event_type}}</span></td>
-                <td>{{this.from_status}}</td>
-                <td><span class="text-dark">{{this.to_status}}</span></td>
+                <td class="text-muted small">{{formatDateTime this.performed_at}}</td>
+                <td><span class="badge text-bg-light border text-primary fw-semibold">{{this.event_type}}</span></td>
+                <td>
+                  {{#if this.to_org_unit_name}}
+                    <span class="text-dark">{{this.to_org_unit_name}}</span>
+                  {{else if this.from_org_unit_name}}
+                    <span class="text-dark">{{this.from_org_unit_name}}</span>
+                  {{else}}
+                    <span class="text-muted">—</span>
+                  {{/if}}
+                </td>
+                <td>
+                  {{#if this.to_assignee_name}}
+                    <span class="text-dark">{{this.to_assignee_name}}</span>
+                  {{else if this.from_assignee_name}}
+                    <span class="text-dark">{{this.from_assignee_name}}</span>
+                  {{else}}
+                    <span class="text-muted">—</span>
+                  {{/if}}
+                </td>
                 <td>{{#if this.actor_name}}{{this.actor_name}}{{else}}Hệ thống{{/if}}</td>
-                <td>{{this.note}}</td>
+                <td class="text-secondary small">{{this.note}}</td>
               </tr>
               {{else}}
               <tr>

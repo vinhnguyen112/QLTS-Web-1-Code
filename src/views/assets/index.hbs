@@ -51,6 +51,7 @@
             <th scope="col">Đơn vị quản lý</th>
             <th scope="col">Người sử dụng</th>
             <th scope="col">Nguyên giá</th>
+            <th scope="col">Giá trị còn lại</th>
             <th scope="col">Trạng thái</th>
             <th scope="col" class="text-end pe-3" style="width: 150px;">Thao tác</th>
           </tr>
@@ -71,6 +72,7 @@
                 {{/if}}
               </td>
               <td class="text-dark fw-semibold">{{formatCurrency this.original_cost}}</td>
+              <td class="text-success fw-semibold">{{formatCurrency this.remaining_value}}</td>
               <td>{{{assetStatusBadge this.status}}}</td>
               <td class="text-end pe-3">
                 <div class="btn-group btn-group-sm" role="group">
@@ -88,7 +90,7 @@
             </tr>
           {{else}}
             <tr>
-              <td colspan="9" class="text-center py-4 text-muted">Không tìm thấy tài sản nào phù hợp</td>
+              <td colspan="10" class="text-center py-4 text-muted">Không tìm thấy tài sản nào phù hợp</td>
             </tr>
           {{/each}}
         </tbody>

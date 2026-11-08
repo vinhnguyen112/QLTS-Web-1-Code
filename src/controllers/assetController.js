@@ -1,6 +1,8 @@
 const db = require("../config/db");
 const dayjs = require("dayjs");
 const QRCode = require("qrcode");
+const { logAssetEvent, logAudit } = require("../utils/logger");
+const { calculateStraightLineDepreciation } = require("../utils/depreciation");
 
 // Câu SQL dùng chung lấy ra asset_categories , suppliers, org_units, locations, users
 const ASSET_SELECT_SQL = `
@@ -60,12 +62,22 @@ const assetController = {
       `;
       const [assets] = await db.query(listSql, params);
 
+      // Tính toán giá trị còn lại (khấu hao) cho từng tài sản
+      const assetsWithDepreciation = assets.map((a) => {
+        const depr = calculateStraightLineDepreciation(a);
+        return {
+          ...a,
+          remaining_value: depr.remainingValue,
+          depreciation_percent: depr.depreciationPercent,
+        };
+      });
+
       // Lấy danh mục để lọc
       const [categories] = await db.query("SELECT id, name FROM asset_categories ORDER BY name");
 
       res.render("assets/index", {
         title: "Hồ sơ tài sản",
-        assets,
+        assets: assetsWithDepreciation,
         searchName: search,
         status,
         totalPages,
@@ -95,12 +107,21 @@ const assetController = {
         margin: 1,
       });
 
-      // Lấy lịch sử biến động tài sản từ asset_events (hoặc asset_history)
+      // Lấy lịch sử biến động tài sản từ asset_events chuẩn hóa
       const [events] = await db.query(
         `
-        SELECT ae.*, u.full_name AS actor_name
+        SELECT ae.*,
+               u_perf.full_name  AS actor_name,
+               u_from.full_name  AS from_assignee_name,
+               u_to.full_name    AS to_assignee_name,
+               ou_from.name      AS from_org_unit_name,
+               ou_to.name        AS to_org_unit_name
         FROM asset_events ae
-        LEFT JOIN users u ON ae.actor_id = u.id
+        LEFT JOIN users u_perf      ON ae.performed_by     = u_perf.id
+        LEFT JOIN users u_from      ON ae.from_assignee_id = u_from.id
+        LEFT JOIN users u_to        ON ae.to_assignee_id   = u_to.id
+        LEFT JOIN org_units ou_from ON ae.from_org_unit_id = ou_from.id
+        LEFT JOIN org_units ou_to   ON ae.to_org_unit_id   = ou_to.id
         WHERE ae.asset_id = ?
         ORDER BY ae.id DESC
         LIMIT 20
@@ -108,9 +129,13 @@ const assetController = {
         [asset.id]
       ).catch(() => [[]]);
 
+      // Tính toán giá trị khấu hao và giá trị còn lại theo chuẩn kế toán
+      const depreciation = calculateStraightLineDepreciation(asset);
+
       res.render("assets/show", {
         title: `Chi tiết tài sản - ${asset.code}`,
         asset,
+        depreciation,
         qrCodeDataUrl,
         events: events || [],
       });
@@ -205,7 +230,11 @@ const assetController = {
   async recall(req, res) {
     try {
       const assetId = req.params.id;
-      const currentUserId = req.session.user ? req.session.user.id : null;
+      const currentUserId = req.session.user ? req.session.user.id : 315;
+
+      const [assets] = await db.query("SELECT * FROM assets WHERE id = ?", [assetId]);
+      if (assets.length === 0) return res.redirect("/assets");
+      const asset = assets[0];
 
       // Đưa trạng thái về 'in_stock', gỡ assignee_id
       await db.query(
@@ -213,14 +242,27 @@ const assetController = {
         [assetId]
       );
 
-      // Ghi nhận biến động vào asset_events
-      await db.query(
-        `
-        INSERT INTO asset_events (asset_id, event_type, from_status, to_status, actor_id, note)
-        VALUES (?, 'RECALL', 'in_use', 'in_stock', ?, 'Thu hồi tài sản về kho trung tâm')
-      `,
-        [assetId, currentUserId]
-      ).catch(() => {});
+      // Ghi nhận biến động vào asset_events chuẩn
+      await logAssetEvent(db, {
+        asset_id: assetId,
+        event_type: "RECALL",
+        from_org_unit_id: asset.org_unit_id,
+        to_org_unit_id: asset.org_unit_id,
+        from_assignee_id: asset.assignee_id,
+        to_assignee_id: null,
+        performed_by: currentUserId,
+        note: "Thu hồi tài sản về kho trung tâm",
+      });
+
+      // Ghi nhật ký kiểm toán audit
+      await logAudit(db, {
+        actor_id: currentUserId,
+        action: "ASSET_RECALL",
+        entity: "assets",
+        entity_id: assetId,
+        before: { status: asset.status, assignee_id: asset.assignee_id },
+        after: { status: "in_stock", assignee_id: null },
+      });
 
       res.redirect("/assets/" + assetId);
     } catch (err) {

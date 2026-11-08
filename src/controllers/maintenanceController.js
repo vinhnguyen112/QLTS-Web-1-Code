@@ -1,5 +1,6 @@
 const db = require("../config/db");
 const dayjs = require("dayjs");
+const { logAssetEvent, logAudit } = require("../utils/logger");
 
 const maintenanceController = {
   // 1. Danh sách các phiếu bảo trì & sửa chữa
@@ -96,14 +97,22 @@ const maintenanceController = {
         [asset_id]
       );
 
-      // 3. Ghi vết biến động
-      await connection.query(
-        `
-        INSERT INTO asset_events (asset_id, event_type, from_status, to_status, actor_id, note)
-        VALUES (?, 'MAINTENANCE_START', 'in_use', 'maintenance', ?, ?)
-      `,
-        [asset_id, currentUserId, `Báo hỏng / Chuyển sửa chữa: ${cause}`]
-      ).catch(() => {});
+      // 3. Ghi vết biến động chuẩn
+      await logAssetEvent(connection, {
+        asset_id,
+        event_type: "MAINTENANCE_START",
+        performed_by: currentUserId,
+        note: `Báo hỏng / Chuyển sửa chữa: ${cause}`,
+      });
+
+      // 4. Ghi nhật ký kiểm toán audit
+      await logAudit(connection, {
+        actor_id: currentUserId,
+        action: "MAINTENANCE_CREATE",
+        entity: "maintenance_orders",
+        entity_id: code,
+        after: { asset_id, type, cause, assigned_to },
+      });
 
       await connection.commit();
       res.redirect("/maintenance");
@@ -149,14 +158,24 @@ const maintenanceController = {
         [returnStatus, order.asset_id]
       );
 
-      // 3. Ghi vết biến động
-      await connection.query(
-        `
-        INSERT INTO asset_events (asset_id, event_type, from_status, to_status, actor_id, note)
-        VALUES (?, 'MAINTENANCE_END', 'maintenance', ?, ?, ?)
-      `,
-        [order.asset_id, returnStatus, currentUserId, `Hoàn thành sửa chữa (Chi phí: ${cost || 0} đ)`]
-      ).catch(() => {});
+      // 3. Ghi vết biến động chuẩn
+      await logAssetEvent(connection, {
+        asset_id: order.asset_id,
+        event_type: "MAINTENANCE_END",
+        to_assignee_id: assets[0]?.assignee_id || null,
+        performed_by: currentUserId,
+        note: `Hoàn thành sửa chữa (Chi phí: ${Number(cost || 0).toLocaleString('vi-VN')} đ). Kết quả: ${result || 'Tốt'}`,
+      });
+
+      // 4. Ghi nhật ký kiểm toán audit
+      await logAudit(connection, {
+        actor_id: currentUserId,
+        action: "MAINTENANCE_COMPLETE",
+        entity: "maintenance_orders",
+        entity_id: order.id,
+        before: { status: order.status },
+        after: { status: "done", cost, result },
+      });
 
       await connection.commit();
       res.redirect("/maintenance");
