@@ -96,8 +96,8 @@
               <td class="text-end pe-3">
                 {{#if (not (eq this.status "done"))}}
                   {{#if ../canMaintain}}
-                    <div class="btn-group btn-group-sm" role="group">
-                      <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#completeModal{{this.id}}">
+                    <div class="btn-group" role="group" aria-label="Basic mixed styles example">
+                      <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#completeModal{{this.id}}">
                         Hoàn thành
                       </button>
                     </div>

@@ -60,8 +60,8 @@
               <td class="text-secondary small">{{this.address}}</td>
               <td><span class="badge text-bg-light border">{{this.asset_count}} tài sản</span></td>
               <td class="text-end pe-3">
-                <div class="btn-group btn-group-sm" role="group">
-                  <a href="/suppliers/{{this.id}}/edit" class="btn btn-outline-secondary">
+                <div class="btn-group" role="group" aria-label="Basic mixed styles example">
+                  <a href="/suppliers/{{this.id}}/edit" class="btn btn-warning">
                     Sửa
                   </a>
                   <form
@@ -70,7 +70,7 @@
                     class="d-inline m-0"
                     onsubmit="return confirm('Bạn có chắc chắn muốn ngưng hợp tác với nhà cung cấp này?');"
                   >
-                    <button type="submit" class="btn btn-outline-danger">
+                    <button type="submit" class="btn btn-danger">
                       Xóa
                     </button>
                   </form>

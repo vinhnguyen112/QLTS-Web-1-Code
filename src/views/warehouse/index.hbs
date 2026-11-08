@@ -1,4 +1,4 @@
-﻿<div class="container-fluid p-0">
+<div class="container-fluid p-0">
   <div class="card">
     <div class="card-header bg-white py-3">
       <div class="row align-items-center g-2">
@@ -61,12 +61,12 @@
               <td>{{#if this.location_name}}{{this.location_name}}{{else}}<span class="text-muted">Kho tổng</span>{{/if}}</td>
               <td class="text-dark">{{formatCurrency this.original_cost}}</td>
               <td class="text-end pe-3">
-                <div class="btn-group btn-group-sm" role="group">
+                <div class="btn-group" role="group" aria-label="Basic mixed styles example">
                   <!-- Chỉ Quản lý tài sản hoặc Admin mới có nút Cấp phát -->
                   {{#if ../canManageAssets}}
                   <button
                     type="button"
-                    class="btn btn-outline-primary"
+                    class="btn btn-success"
                     data-bs-toggle="modal"
                     data-bs-target="#assignModal"
                     data-id="{{this.id}}"
@@ -76,7 +76,7 @@
                     Cấp phát
                   </button>
                   {{/if}}
-                  <a href="/assets/{{this.id}}" class="btn btn-outline-secondary">
+                  <a href="/assets/{{this.id}}" class="btn btn-primary">
                     Chi tiết
                   </a>
                 </div>

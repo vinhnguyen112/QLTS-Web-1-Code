@@ -95,10 +95,10 @@
               <td class="text-dark fw-semibold">{{formatCurrency this.original_cost}}</td>
               <td class="text-center">{{{assetStatusBadge this.status}}}</td>
               <td class="text-end pe-3">
-                <div class="btn-group btn-group-sm" role="group">
-                  <a href="/assets/{{this.id}}" class="btn btn-outline-primary">Chi tiết</a>
+                <div class="btn-group" role="group" aria-label="Basic mixed styles example">
+                  <a href="/assets/{{this.id}}" class="btn btn-primary">Chi tiết</a>
                   {{#if ../canManageAssets}}
-                  <a href="/assets/{{this.id}}/edit" class="btn btn-outline-secondary">Sửa</a>
+                  <a href="/assets/{{this.id}}/edit" class="btn btn-warning">Sửa</a>
                   {{/if}}
                 </div>
               </td>
