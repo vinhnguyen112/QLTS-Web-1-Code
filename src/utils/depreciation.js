@@ -47,3 +47,4 @@ function calcDepreciation(asset, now = dayjs()) {
 }
 
 module.exports = { calcDepreciation };
+
