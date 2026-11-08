@@ -79,7 +79,7 @@ const maintenanceController = {
       await connection.beginTransaction();
 
       const { asset_id, cause, assigned_to, type } = req.body;
-      const currentUserId = req.session.user ? req.session.user.id : 315;
+      const currentUserId = req.session.user ? req.session.user.id : null;
       const code = `BT-${dayjs().format("YYYY")}-${Math.floor(1000 + Math.random() * 9000)}`;
 
       // 1. Lưu đơn bảo trì
@@ -119,7 +119,7 @@ const maintenanceController = {
 
       const orderId = req.params.id;
       const { cost, result } = req.body;
-      const currentUserId = req.session.user ? req.session.user.id : 315;
+      const currentUserId = req.session.user ? req.session.user.id : null;
 
       const [orders] = await connection.query("SELECT * FROM maintenance_orders WHERE id = ?", [orderId]);
       if (orders.length === 0) return res.redirect("/maintenance");

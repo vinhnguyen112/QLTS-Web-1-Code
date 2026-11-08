@@ -7,13 +7,13 @@ const db = require("../config/db");
  * @param {string} note - Ghi chú tóm tắt hành động
  * @param {number} userId - ID người thực hiện
  */
-async function recordEvent(assetId, eventType, note = "", userId = 315) {
+async function recordEvent(assetId, eventType, note = "", userId = null) {
   if (!assetId) return;
   try {
     await db.query(
       `INSERT INTO asset_events (asset_id, event_type, performed_by, performed_at, note)
        VALUES (?, ?, ?, NOW(), ?)`,
-      [assetId, eventType, userId || 315, note || ""]
+      [assetId, eventType, userId || null, note || ""]
     );
   } catch (err) {
     console.error("Lỗi recordEvent:", err.message);

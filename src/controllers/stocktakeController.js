@@ -40,7 +40,7 @@ const stocktakeController = {
       await connection.beginTransaction();
 
       const { name, scope_org_unit_id, scope_location_id, notes } = req.body;
-      const currentUserId = req.session.user ? req.session.user.id : 315;
+      const currentUserId = req.session.user ? req.session.user.id : null;
       const code = `KK-${dayjs().format("YYYY")}-${Math.floor(1000 + Math.random() * 9000)}`;
 
       const orgUnitId = scope_org_unit_id && scope_org_unit_id.trim() !== "" ? scope_org_unit_id.trim() : null;
@@ -63,29 +63,27 @@ const stocktakeController = {
       );
       const stocktakeId = result.insertId;
 
-      // Nạp danh sách tài sản nằm trong phạm vi kiểm kê vào stocktake_items với trạng thái 'pending'
+      // Nạp toàn bộ tài sản vào đợt kiểm kê trong 1 câu truy vấn duy nhất (Batch Insert)
       let assetWhere = "WHERE a.deleted_at IS NULL AND a.status IN ('in_use', 'in_stock', 'maintenance')";
-      const params = [];
+      const insertParams = [stocktakeId];
       if (orgUnitId) {
         assetWhere += " AND a.org_unit_id = ?";
-        params.push(orgUnitId);
+        insertParams.push(orgUnitId);
       }
       if (locationId) {
         assetWhere += " AND a.location_id = ?";
-        params.push(locationId);
+        insertParams.push(locationId);
       }
 
-      const [assets] = await connection.query(`SELECT id, code, location_id FROM assets a ${assetWhere}`, params);
-
-      for (const asset of assets) {
-        await connection.query(
-          `
-          INSERT INTO stocktake_items (stocktake_id, asset_id, raw_code, expected_location_id, result)
-          VALUES (?, ?, ?, ?, 'pending')
-        `,
-          [stocktakeId, asset.id, asset.code, asset.location_id || null]
-        );
-      }
+      await connection.query(
+        `
+        INSERT INTO stocktake_items (stocktake_id, asset_id, raw_code, expected_location_id, result)
+        SELECT ?, a.id, a.code, a.location_id, 'pending'
+        FROM assets a
+        ${assetWhere}
+      `,
+        insertParams
+      );
 
       await connection.commit();
       res.redirect("/stocktakes/" + stocktakeId);
@@ -184,7 +182,7 @@ const stocktakeController = {
     try {
       const stocktakeId = req.params.id;
       const { code } = req.body;
-      const currentUserId = req.session.user ? req.session.user.id : 315;
+      const currentUserId = req.session.user ? req.session.user.id : null;
 
       if (!code) {
         return res.status(400).json({ success: false, message: "Không tìm thấy mã quét" });

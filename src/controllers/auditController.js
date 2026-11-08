@@ -24,16 +24,14 @@ const auditController = {
         pages.push({ number: i, active: i === page });
       }
 
-      // Truy vấn danh sách nhật ký join với users
+      // Truy vấn danh sách nhật ký join với users (tránh trùng lặp dòng)
       let querySql = `
         SELECT al.*, 
                u.full_name AS actor_name, 
                u.username AS actor_username,
-               r.name AS actor_role
+               (SELECT r.name FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.user_id = u.id LIMIT 1) AS actor_role
         FROM audit_logs al
         LEFT JOIN users u ON al.actor_id = u.id
-        LEFT JOIN user_roles ur ON u.id = ur.user_id
-        LEFT JOIN roles r ON ur.role_id = r.id
       `;
       if (searchAction) {
         querySql += " WHERE al.action LIKE ? OR al.entity LIKE ?";

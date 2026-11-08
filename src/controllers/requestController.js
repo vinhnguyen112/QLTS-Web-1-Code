@@ -103,7 +103,7 @@ const requestController = {
         notes,
       } = req.body;
 
-      const currentUserId = req.session.user ? req.session.user.id : 315;
+      const currentUserId = req.session.user ? req.session.user.id : null;
       const userOrgUnitId = req.session.user ? req.session.user.org_unit_id : 227;
 
       const prefixMap = {

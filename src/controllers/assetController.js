@@ -124,7 +124,7 @@ const assetController = {
         initialStatus = status;
       }
 
-      const currentUserId = req.session.user ? req.session.user.id : 315;
+      const currentUserId = req.session.user ? req.session.user.id : null;
 
       const [result] = await db.query(
         `
@@ -166,7 +166,7 @@ const assetController = {
     try {
       const assetId = req.params.id || req.body.asset_id;
       const { assignee_id, org_unit_id, location_id, note } = req.body;
-      const currentUserId = req.session.user ? req.session.user.id : 315;
+      const currentUserId = req.session.user ? req.session.user.id : null;
 
       if (!assignee_id) {
         return res.status(400).send("Vui lòng chọn nhân viên tiếp nhận bàn giao!");
@@ -328,7 +328,7 @@ const assetController = {
   async recall(req, res) {
     try {
       const assetId = req.params.id;
-      const currentUserId = req.session.user ? req.session.user.id : 315;
+      const currentUserId = req.session.user ? req.session.user.id : null;
 
       // Đưa trạng thái về 'in_stock', gỡ assignee_id
       await db.query(
