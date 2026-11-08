@@ -95,43 +95,47 @@
               </td>
               <td class="text-end pe-3">
                 {{#if (not (eq this.status "done"))}}
-                  <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#completeModal{{this.id}}">
-                    Hoàn thành
-                  </button>
+                  {{#if ../canMaintain}}
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#completeModal{{this.id}}">
+                      Hoàn thành
+                    </button>
+
+                    <!-- Modal Hoàn Thành Sửa Chữa (Chỉ dành cho Kỹ thuật viên / Quản lý CSVC / Admin) -->
+                    <div class="modal fade text-start" id="completeModal{{this.id}}" tabindex="-1">
+                      <div class="modal-dialog">
+                        <div class="modal-content">
+                          <form action="/maintenance/{{this.id}}/complete" method="POST">
+                            <div class="modal-header">
+                              <h6 class="modal-title fw-bold text-dark">Nghiệm thu sửa chữa: {{this.code}}</h6>
+                              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                              <div class="mb-3">
+                                <label class="form-label small fw-semibold">Chi phí sửa chữa (VNĐ)</label>
+                                <input type="number" class="form-control" name="cost" value="250000" min="0" required />
+                              </div>
+
+                              <div class="mb-3">
+                                <label class="form-label small fw-semibold">Kết quả kiểm tra</label>
+                                <textarea class="form-control" name="result" rows="3" placeholder="Ghi chú kết quả nghiệm thu..." required></textarea>
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Hủy</button>
+                              <button type="submit" class="btn btn-primary btn-sm">
+                                Xác nhận hoàn thành
+                              </button>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  {{else}}
+                    <span class="badge text-bg-light border text-secondary small">Chờ kỹ thuật xử lý</span>
+                  {{/if}}
                 {{else}}
                   <span class="text-muted small">Đã đóng</span>
                 {{/if}}
-
-                <!-- Modal Hoàn Thành Sửa Chữa -->
-                <div class="modal fade text-start" id="completeModal{{this.id}}" tabindex="-1">
-                  <div class="modal-dialog">
-                    <div class="modal-content">
-                      <form action="/maintenance/{{this.id}}/complete" method="POST">
-                        <div class="modal-header">
-                          <h6 class="modal-title fw-bold text-dark">Nghiệm thu sửa chữa: {{this.code}}</h6>
-                          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                          <div class="mb-3">
-                            <label class="form-label small fw-semibold">Chi phí sửa chữa (VNĐ)</label>
-                            <input type="number" class="form-control" name="cost" value="250000" min="0" required />
-                          </div>
-
-                          <div class="mb-3">
-                            <label class="form-label small fw-semibold">Kết quả kiểm tra</label>
-                            <textarea class="form-control" name="result" rows="3" placeholder="Ghi chú kết quả nghiệm thu..." required></textarea>
-                          </div>
-                        </div>
-                        <div class="modal-footer">
-                          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Hủy</button>
-                          <button type="submit" class="btn btn-primary btn-sm">
-                            Xác nhận hoàn thành
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                </div>
               </td>
             </tr>
           {{else}}

@@ -12,25 +12,27 @@
           </div>
         </div>
         <div class="col-md-6 d-flex flex-wrap justify-content-md-end gap-2">
-          {{#if (eq asset.status "in_use")}}
-            <form
-              action="/assets/{{asset.id}}/recall"
-              method="POST"
-              class="d-inline m-0 p-0"
-              onsubmit="return confirm('Bạn có chắc chắn muốn thu hồi tài sản này về lại kho trung tâm?');"
-            >
-              <button type="submit" class="btn btn-sm btn-secondary">
-                Thu hồi về kho
-              </button>
-            </form>
+          {{#if canManageAssets}}
+            {{#if (eq asset.status "in_use")}}
+              <form
+                action="/assets/{{asset.id}}/recall"
+                method="POST"
+                class="d-inline m-0 p-0"
+                onsubmit="return confirm('Bạn có chắc chắn muốn thu hồi tài sản này về lại kho trung tâm?');"
+              >
+                <button type="submit" class="btn btn-sm btn-secondary">
+                  Thu hồi về kho
+                </button>
+              </form>
+            {{/if}}
+
+            <a href="/assets/{{asset.id}}/edit" class="btn btn-sm btn-secondary">
+              Chỉnh sửa
+            </a>
           {{/if}}
 
           <a href="/maintenance/create?asset_id={{asset.id}}" class="btn btn-sm btn-secondary">
             Báo hỏng / Sửa chữa
-          </a>
-
-          <a href="/assets/{{asset.id}}/edit" class="btn btn-sm btn-secondary">
-            Chỉnh sửa
           </a>
 
           <button onclick="window.print()" class="btn btn-sm btn-dark">
