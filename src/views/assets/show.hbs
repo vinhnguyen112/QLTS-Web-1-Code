@@ -13,6 +13,17 @@
         </div>
         <div class="col-md-6 d-flex flex-wrap justify-content-md-end gap-2">
           {{#if canManageAssets}}
+            {{#if (eq asset.status "in_stock")}}
+              <button
+                type="button"
+                class="btn btn-sm btn-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#assignModal"
+              >
+                <i class="bi bi-person-check me-1"></i> Bàn giao / Cấp phát
+              </button>
+            {{/if}}
+
             {{#if (eq asset.status "in_use")}}
               <form
                 action="/assets/{{asset.id}}/recall"
@@ -20,8 +31,8 @@
                 class="d-inline m-0 p-0"
                 onsubmit="return confirm('Bạn có chắc chắn muốn thu hồi tài sản này về lại kho trung tâm?');"
               >
-                <button type="submit" class="btn btn-sm btn-secondary">
-                  Thu hồi về kho
+                <button type="submit" class="btn btn-sm btn-outline-danger">
+                  <i class="bi bi-box-arrow-in-left me-1"></i> Thu hồi về kho
                 </button>
               </form>
             {{/if}}
@@ -167,6 +178,71 @@
           </table>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Bàn giao / Cấp phát tài sản cho nhân sự -->
+<div class="modal fade" id="assignModal" tabindex="-1" aria-labelledby="assignModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="/assets/{{asset.id}}/assign" method="POST">
+        <div class="modal-header bg-light py-3">
+          <h5 class="modal-title fs-6 fw-bold text-dark" id="assignModalLabel">
+            <i class="bi bi-person-check me-1 text-primary"></i> Bàn giao tài sản cho nhân sự
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="form-label text-muted small">Tài sản bàn giao:</label>
+            <div class="p-2 bg-light border rounded fw-semibold text-dark">
+              {{asset.code}} - {{asset.name}}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Nhân viên tiếp nhận <span class="text-danger">*</span></label>
+            <select name="assignee_id" class="form-select" required>
+              <option value="">-- Chọn nhân viên tiếp nhận --</option>
+              {{#each formData.users}}
+                <option value="{{this.id}}">{{this.full_name}} ({{this.email}})</option>
+              {{/each}}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Đơn vị quản lý mới</label>
+            <select name="org_unit_id" class="form-select">
+              <option value="">-- Giữ nguyên: {{asset.org_unit_name}} --</option>
+              {{#each formData.orgUnits}}
+                <option value="{{this.id}}">{{this.name}}</option>
+              {{/each}}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Vị trí bàn giao mới</label>
+            <select name="location_id" class="form-select">
+              <option value="">-- Chọn vị trí / phòng máy --</option>
+              {{#each formData.locations}}
+                <option value="{{this.id}}">{{this.name}}</option>
+              {{/each}}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Ghi chú bàn giao</label>
+            <textarea name="note" class="form-control" rows="2" placeholder="Ghi chú tình trạng thiết bị khi bàn giao..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer bg-light py-2">
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
+          <button type="submit" class="btn btn-sm btn-primary">
+            <i class="bi bi-check2-circle me-1"></i> Xác nhận bàn giao
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>

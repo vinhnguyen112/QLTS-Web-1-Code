@@ -1,13 +1,23 @@
 const express = require("express");
 const router = express.Router();
-const warehouseController = require("../controllers/warehouseController");
-const { requireRole } = require("../middlewares/authMiddleware");
 
-// Xem danh sách kho: Quản lý hoặc Giám đốc hoặc Kế toán
-router.get("/", warehouseController.index);
+// Trang Kho cũ được hợp nhất hoàn toàn vào Hồ sơ tài sản với bộ lọc "Trong kho"
+router.get("/", (req, res) => {
+  res.redirect("/assets?status=in_stock");
+});
 
-// Nhập mới tài sản vào kho & Cấp phát: Chỉ SYS_ADMIN, ASSET_MANAGER
-router.post("/", requireRole("SYS_ADMIN", "ASSET_MANAGER"), warehouseController.create);
-router.post("/assign", requireRole("SYS_ADMIN", "ASSET_MANAGER"), warehouseController.assign);
+// Chuyển hướng các thao tác cũ sang route chuẩn của assets
+router.post("/", (req, res) => {
+  res.redirect(307, "/assets/create");
+});
+
+router.post("/assign", (req, res) => {
+  const assetId = req.body.asset_id;
+  if (assetId) {
+    res.redirect(307, `/assets/${assetId}/assign`);
+  } else {
+    res.redirect("/assets?status=in_stock");
+  }
+});
 
 module.exports = router;

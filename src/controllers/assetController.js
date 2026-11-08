@@ -3,7 +3,7 @@ const dayjs = require("dayjs");
 const QRCode = require("qrcode");
 const { recordEvent } = require("../utils/logger");
 
-// Câu SQL dùng chung lấy ra asset_categories , suppliers, org_units, locations, users
+// Câu SQL dùng chung lấy ra asset_categories, suppliers, org_units, locations, users
 const ASSET_SELECT_SQL = `
   SELECT a.*,
          c.name  AS category_name,
@@ -21,11 +21,13 @@ const ASSET_SELECT_SQL = `
 `;
 
 const assetController = {
-  // 1. Danh sách tài sản (tìm kiếm + phân trang)
+  // 1. Danh sách tài sản (bộ lọc đa tiêu chí + phân trang)
   async index(req, res) {
     try {
-      const search = req.query.name || "";
+      const search = (req.query.name || "").trim();
       const status = req.query.status || "";
+      const categoryId = req.query.category_id || "";
+      const orgUnitId = req.query.org_unit_id || "";
       const page = parseInt(req.query.page) || 1;
       const limit = 10;
       const offset = (page - 1) * limit;
@@ -41,8 +43,16 @@ const assetController = {
         whereClause += " AND a.status = ?";
         params.push(status);
       }
+      if (categoryId) {
+        whereClause += " AND a.category_id = ?";
+        params.push(categoryId);
+      }
+      if (orgUnitId) {
+        whereClause += " AND a.org_unit_id = ?";
+        params.push(orgUnitId);
+      }
 
-      // Đếm tổng số bản ghi
+      // Đếm tổng số bản ghi thỏa mãn điều kiện lọc
       const countSql = `SELECT COUNT(*) AS total FROM assets a ${whereClause}`;
       const [[{ total }]] = await db.query(countSql, params);
       const totalPages = Math.ceil(total / limit) || 1;
@@ -52,7 +62,19 @@ const assetController = {
         pages.push({ number: i, active: i === page });
       }
 
-      // Lấy danh sách tài sản
+      // Đếm số lượng theo các trạng thái chính để hiển thị tab nhanh
+      const [[statusCounts]] = await db.query(`
+        SELECT
+          COUNT(*) AS totalAll,
+          IFNULL(SUM(status = 'in_stock'), 0) AS inStockCount,
+          IFNULL(SUM(status = 'in_use'), 0) AS inUseCount,
+          IFNULL(SUM(status = 'maintenance'), 0) AS maintenanceCount,
+          IFNULL(SUM(status = 'disposed'), 0) AS disposedCount
+        FROM assets
+        WHERE deleted_at IS NULL
+      `);
+
+      // Lấy danh sách tài sản theo trang
       const listSql = `
         ${ASSET_SELECT_SQL}
         ${whereClause}
@@ -61,17 +83,27 @@ const assetController = {
       `;
       const [assets] = await db.query(listSql, params);
 
-      // Lấy danh mục để lọc
+      // Lấy các danh mục phục vụ bộ lọc và Modal thêm mới
       const [categories] = await db.query("SELECT id, name FROM asset_categories ORDER BY name");
+      const [orgUnits] = await db.query("SELECT id, name FROM org_units WHERE active = 1 ORDER BY name");
+      const [locations] = await db.query("SELECT id, name FROM locations WHERE active = 1 ORDER BY name");
+      const [suppliers] = await db.query("SELECT id, name FROM suppliers ORDER BY name");
+      const [users] = await db.query("SELECT id, full_name, email FROM users WHERE status = 'ACTIVE' ORDER BY full_name");
 
       res.render("assets/index", {
         title: "Hồ sơ tài sản",
         assets,
         searchName: search,
         status,
+        categoryId: categoryId ? Number(categoryId) : "",
+        orgUnitId: orgUnitId ? Number(orgUnitId) : "",
         totalPages,
+        page,
         pages,
         categories,
+        orgUnits,
+        statusCounts,
+        formData: { categories, orgUnits, locations, suppliers, users },
       });
     } catch (err) {
       console.error("Lỗi danh sách tài sản:", err);
@@ -79,7 +111,113 @@ const assetController = {
     }
   },
 
-  // 2. Chi tiết hồ sơ tài sản + Tem mã QR
+  // 2. Thêm mới hồ sơ tài sản (trực tiếp từ Modal tại trang /assets)
+  async create(req, res) {
+    try {
+      const {
+        code,
+        name,
+        category_id,
+        supplier_id,
+        org_unit_id,
+        location_id,
+        assignee_id,
+        original_cost,
+        purchase_date,
+        useful_life_months,
+        serial_no,
+        status,
+      } = req.body;
+
+      if (!name || !name.trim()) {
+        return res.status(400).send("Tên tài sản là bắt buộc");
+      }
+
+      // Sinh mã tự động nếu người dùng không nhập
+      const finalCode =
+        code && code.trim() !== ""
+          ? code.trim()
+          : `TS-${dayjs().format("YYYY")}-${Math.floor(10000 + Math.random() * 90000)}`;
+
+      // Trạng thái ban đầu:
+      // Nếu có chọn người tiếp nhận -> in_use (Đang sử dụng)
+      // Nếu không chọn người tiếp nhận -> in_stock (Trong kho) hoặc theo lựa chọn
+      let initialStatus = "in_stock";
+      const hasAssignee = assignee_id && String(assignee_id).trim() !== "";
+      if (hasAssignee) {
+        initialStatus = "in_use";
+      } else if (status) {
+        initialStatus = status;
+      }
+
+      const currentUserId = req.session.user ? req.session.user.id : 315;
+
+      const [result] = await db.query(
+        `
+        INSERT INTO assets (code, name, category_id, supplier_id, org_unit_id, location_id, assignee_id,
+                            original_cost, purchase_date, useful_life_months, status, serial_no, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+      `,
+        [
+          finalCode,
+          name.trim(),
+          category_id || null,
+          supplier_id || null,
+          org_unit_id || 227, // Mặc định Trụ sở chính nếu không chọn
+          location_id || null,
+          hasAssignee ? assignee_id : null,
+          original_cost || 0,
+          purchase_date || dayjs().format("YYYY-MM-DD"),
+          useful_life_months || 36,
+          initialStatus,
+          serial_no || null,
+        ]
+      );
+
+      const eventNote = hasAssignee
+        ? "Khai báo tài sản mới và bàn giao trực tiếp cho nhân viên"
+        : "Nhập mới tài sản vào kho lưu trữ";
+      const eventType = hasAssignee ? "ASSIGN" : "INITIAL_IMPORT";
+      await recordEvent(result.insertId, eventType, eventNote, currentUserId);
+
+      res.redirect(`/assets/${result.insertId}`);
+    } catch (err) {
+      console.error("Lỗi thêm tài sản mới:", err);
+      res.status(500).send("Không thể thêm tài sản: " + err.message);
+    }
+  },
+
+  // 3. Cấp phát / Bàn giao tài sản từ kho cho nhân viên
+  async assign(req, res) {
+    try {
+      const assetId = req.params.id || req.body.asset_id;
+      const { assignee_id, org_unit_id, location_id, note } = req.body;
+      const currentUserId = req.session.user ? req.session.user.id : 315;
+
+      if (!assignee_id) {
+        return res.status(400).send("Vui lòng chọn nhân viên tiếp nhận bàn giao!");
+      }
+
+      await db.query(
+        `
+        UPDATE assets
+        SET status = 'in_use', assignee_id = ?, org_unit_id = COALESCE(?, org_unit_id),
+            location_id = COALESCE(?, location_id), updated_at = NOW()
+        WHERE id = ?
+      `,
+        [assignee_id, org_unit_id || null, location_id || null, assetId]
+      );
+
+      await recordEvent(assetId, "ASSIGN", note || "Bàn giao / Cấp phát tài sản cho nhân sự", currentUserId);
+
+      res.redirect(`/assets/${assetId}`);
+    } catch (err) {
+      console.error("Lỗi cấp phát tài sản:", err);
+      res.redirect("/assets");
+    }
+  },
+
+  // 4. Chi tiết hồ sơ tài sản + Tem mã QR
   async show(req, res) {
     try {
       const [rows] = await db.query(`${ASSET_SELECT_SQL} WHERE a.id = ? AND a.deleted_at IS NULL`, [
@@ -109,11 +247,17 @@ const assetController = {
         [asset.id]
       ).catch(() => [[]]);
 
+      // Lấy danh sách phục vụ Modal Cấp phát nếu tài sản đang ở trong kho
+      const [orgUnits] = await db.query("SELECT id, name FROM org_units WHERE active = 1 ORDER BY name");
+      const [locations] = await db.query("SELECT id, name FROM locations WHERE active = 1 ORDER BY name");
+      const [users] = await db.query("SELECT id, full_name, email FROM users WHERE status = 'ACTIVE' ORDER BY full_name");
+
       res.render("assets/show", {
         title: `Chi tiết tài sản - ${asset.code}`,
         asset,
         qrCodeDataUrl,
         events: events || [],
+        formData: { orgUnits, locations, users },
       });
     } catch (err) {
       console.error("Lỗi xem chi tiết tài sản:", err);
@@ -121,7 +265,7 @@ const assetController = {
     }
   },
 
-  // 3. Form chỉnh sửa tài sản
+  // 5. Form chỉnh sửa tài sản
   async edit(req, res) {
     try {
       const [rows] = await db.query("SELECT * FROM assets WHERE id = ? AND deleted_at IS NULL", [
@@ -151,7 +295,7 @@ const assetController = {
     }
   },
 
-  // 4. Cập nhật thông tin tài sản
+  // 6. Cập nhật thông tin tài sản
   async update(req, res) {
     try {
       const {
@@ -202,7 +346,7 @@ const assetController = {
     }
   },
 
-  // 5. Thu hồi tài sản từ nhân viên về kho
+  // 7. Thu hồi tài sản từ nhân viên về kho
   async recall(req, res) {
     try {
       const assetId = req.params.id;
@@ -224,7 +368,7 @@ const assetController = {
     }
   },
 
-  // 6. Xóa logic tài sản (Soft Delete)
+  // 8. Xóa logic tài sản (Soft Delete)
   async delete(req, res) {
     try {
       await db.query("UPDATE assets SET deleted_at = NOW() WHERE id = ?", [req.params.id]);
