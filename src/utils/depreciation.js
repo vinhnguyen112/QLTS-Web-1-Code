@@ -46,5 +46,61 @@ function calcDepreciation(asset, now = dayjs()) {
   };
 }
 
-module.exports = { calcDepreciation };
+/**
+ * Tạo bảng kế hoạch phân bổ khấu hao chi tiết theo từng tháng
+ */
+function generateDepreciationSchedule(asset, now = dayjs()) {
+  const cost = Number(asset.original_cost) || 0;
+  const residual = Number(asset.residual_value) || 0;
+  const months = Number(asset.useful_life_months) || 0;
+  const depreciableAmount = Math.max(0, cost - residual);
+
+  if (months <= 0 || cost <= 0) {
+    return [];
+  }
+
+  const baseMonthly = Math.floor(depreciableAmount / months);
+  const startDate = dayjs(asset.depreciation_start || asset.purchase_date || now);
+
+  const schedule = [];
+  let currentAccumulated = 0;
+
+  for (let i = 1; i <= months; i++) {
+    const periodDate = startDate.add(i - 1, "month");
+    // Tháng cuối cùng làm tròn để bù phần dư cho chính xác tuyệt đối với depreciableAmount
+    const amount = (i === months) ? (depreciableAmount - baseMonthly * (months - 1)) : baseMonthly;
+    currentAccumulated += amount;
+    const remaining = Math.max(residual, cost - currentAccumulated);
+
+    const isPast = periodDate.isBefore(now, "month");
+    const isCurrent = periodDate.isSame(now, "month");
+
+    let status = "upcoming";
+    let statusLabel = "Dự kiến";
+    if (isPast) {
+      status = "completed";
+      statusLabel = "Đã trích";
+    } else if (isCurrent) {
+      status = "current";
+      statusLabel = "Kỳ hiện tại";
+    }
+
+    schedule.push({
+      index: i,
+      period: periodDate.format("MM/YYYY"),
+      date: periodDate.format("YYYY-MM-DD"),
+      amount,
+      accumulated: currentAccumulated,
+      remaining,
+      isPast,
+      isCurrent,
+      status,
+      statusLabel,
+    });
+  }
+
+  return schedule;
+}
+
+module.exports = { calcDepreciation, generateDepreciationSchedule };
 

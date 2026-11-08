@@ -99,9 +99,9 @@
                 <small class="text-muted fw-normal d-block">Đã trích {{this.percent}}%</small>
               </td>
               <td class="text-end pe-3 text-nowrap">
-                <div class="d-inline-flex gap-1">
-                  <a href="/assets/{{this.id}}" class="btn btn-primary text-nowrap">Chi tiết</a>
-                </div>
+                <button type="button" class="btn btn-primary text-nowrap" onclick="openScheduleModal({{this.id}})">
+                  Xem khấu hao
+                </button>
               </td>
             </tr>
           {{else}}
@@ -134,3 +134,170 @@
     {{/if}}
   </div>
 </div>
+
+<!-- Modal Kế hoạch trích khấu hao -->
+<div class="modal fade" id="depreciationScheduleModal" tabindex="-1" aria-labelledby="scheduleModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header border-bottom py-3">
+        <div>
+          <h6 class="modal-title fw-bold text-dark mb-0" id="scheduleModalTitle">Kế hoạch trích khấu hao</h6>
+          <small class="text-muted" id="scheduleModalSubtitle">Phân bổ khấu hao đường thẳng theo từng kỳ kế toán</small>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+      </div>
+      <div class="modal-body p-3">
+        <!-- Thẻ tóm tắt thông số -->
+        <div id="scheduleAssetInfo"></div>
+
+        <!-- Bảng phân bổ các kỳ -->
+        <div class="border rounded table-responsive" style="max-height: 400px; overflow-y: auto;">
+          <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light sticky-top">
+              <tr>
+                <th scope="col" class="ps-3 text-nowrap">Kỳ</th>
+                <th scope="col" class="text-nowrap">Kỳ trích (Tháng)</th>
+                <th scope="col" class="text-end text-nowrap">Mức trích kỳ này</th>
+                <th scope="col" class="text-end text-nowrap">Hao mòn lũy kế</th>
+                <th scope="col" class="text-end text-nowrap">Giá trị còn lại</th>
+                <th scope="col" class="text-center text-nowrap pe-3">Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody id="scheduleTableBody">
+              <tr>
+                <td colspan="6" class="text-center py-4 text-muted">Đang tải dữ liệu...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer border-top py-2 d-flex justify-content-between">
+        <a id="btnViewAssetDetail" href="#" target="_blank" class="btn btn-outline-secondary btn-sm">
+          Xem hồ sơ tài sản (tab mới)
+        </a>
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function formatVnd(val) {
+    return new Intl.NumberFormat('vi-VN').format(Math.round(val || 0)) + ' đ';
+  }
+
+  async function openScheduleModal(assetId) {
+    const modalEl = document.getElementById('depreciationScheduleModal');
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+    // Reset nội dung đang tải
+    document.getElementById('scheduleModalTitle').textContent = 'Kế hoạch trích khấu hao';
+    document.getElementById('scheduleModalSubtitle').textContent = 'Đang lấy dữ liệu...';
+    document.getElementById('scheduleAssetInfo').innerHTML = '<div class="text-center py-3 text-muted">Đang tải thông tin tài sản...</div>';
+    document.getElementById('scheduleTableBody').innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Đang tính toán các kỳ khấu hao...</td></tr>';
+    
+    modal.show();
+
+    try {
+      const res = await fetch(`/depreciation/${assetId}/schedule`);
+      const data = await res.json();
+
+      if (!data.success) {
+        alert(data.message || 'Không thể lấy thông tin khấu hao của tài sản này.');
+        modal.hide();
+        return;
+      }
+
+      const { asset, dep, schedule } = data;
+
+      document.getElementById('scheduleModalTitle').textContent = `Kế hoạch khấu hao: ${asset.code} - ${asset.name}`;
+      document.getElementById('scheduleModalSubtitle').textContent = `Đơn vị: ${asset.org_unit_name} | Danh mục: ${asset.category_name}`;
+
+      const btnAsset = document.getElementById('btnViewAssetDetail');
+      if (btnAsset) {
+        btnAsset.href = `/assets/${asset.id}`;
+      }
+
+      // Đổ dữ liệu tổng hợp
+      document.getElementById('scheduleAssetInfo').innerHTML = `
+        <div class="row g-2 mb-3">
+          <div class="col-6 col-md-3">
+            <div class="p-2 border rounded bg-light">
+              <small class="text-muted d-block">Nguyên giá</small>
+              <div class="fw-bold text-dark mt-1">${formatVnd(asset.original_cost)}</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-2 border rounded bg-light">
+              <small class="text-muted d-block">Thời gian sử dụng</small>
+              <div class="fw-bold text-dark mt-1">${asset.useful_life_months} tháng (${(asset.useful_life_months / 12).toFixed(1)} năm)</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-2 border rounded bg-light">
+              <small class="text-muted d-block">Đã trích lũy kế</small>
+              <div class="fw-bold text-dark mt-1">${formatVnd(dep.accumulated)} (${dep.percent}%)</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-2 border rounded bg-light">
+              <small class="text-muted d-block">Giá trị còn lại</small>
+              <div class="fw-bold text-success mt-1">${formatVnd(dep.remainingValue)}</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Đổ dữ liệu bảng các kỳ
+      if (!schedule || schedule.length === 0) {
+        document.getElementById('scheduleTableBody').innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center py-4 text-muted">
+              Tài sản chưa được thiết lập thời gian sử dụng hữu ích.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      let tbodyHtml = '';
+      schedule.forEach((row) => {
+        let trClass = '';
+        let badgeClass = 'text-bg-light border text-muted';
+        if (row.isCurrent) {
+          trClass = 'table-primary fw-semibold';
+          badgeClass = 'text-bg-primary';
+        } else if (row.isPast) {
+          badgeClass = 'text-bg-success';
+        }
+
+        tbodyHtml += `
+          <tr class="${trClass}">
+            <td class="ps-3 text-muted">${row.index}</td>
+            <td class="font-monospace">${row.period}</td>
+            <td class="text-end">${formatVnd(row.amount)}</td>
+            <td class="text-end">${formatVnd(row.accumulated)}</td>
+            <td class="text-end text-success fw-semibold">${formatVnd(row.remaining)}</td>
+            <td class="text-center pe-3">
+              <span class="badge ${badgeClass}">${row.statusLabel}</span>
+            </td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('scheduleTableBody').innerHTML = tbodyHtml;
+
+      // Cuộn tới kỳ hiện tại
+      setTimeout(() => {
+        const curRow = document.querySelector('#scheduleTableBody tr.table-primary');
+        if (curRow) {
+          curRow.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
+      }, 250);
+
+    } catch (err) {
+      console.error('Lỗi tải kế hoạch khấu hao:', err);
+      alert('Đã xảy ra lỗi khi lấy dữ liệu kế hoạch khấu hao.');
+    }
+  }
+</script>

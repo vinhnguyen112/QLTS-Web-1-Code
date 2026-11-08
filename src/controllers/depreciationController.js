@@ -1,5 +1,5 @@
 const db = require("../config/db");
-const { calcDepreciation } = require("../utils/depreciation");
+const { calcDepreciation, generateDepreciationSchedule } = require("../utils/depreciation");
 
 const depreciationController = {
   async index(req, res) {
@@ -99,6 +99,56 @@ const depreciationController = {
     } catch (err) {
       console.error("Lỗi khấu hao tài sản:", err);
       res.status(500).send("Lỗi: " + err.message);
+    }
+  },
+
+  async schedule(req, res) {
+    try {
+      const { id } = req.params;
+      const [rows] = await db.query(
+        `
+        SELECT a.id, a.code, a.name, a.original_cost, a.residual_value,
+               a.useful_life_months, a.purchase_date, a.depreciation_start,
+               a.opening_accumulated,
+               ou.name AS org_unit_name,
+               c.name  AS category_name
+        FROM assets a
+        LEFT JOIN org_units        ou ON a.org_unit_id = ou.id
+        LEFT JOIN asset_categories c  ON a.category_id = c.id
+        WHERE a.id = ? AND a.deleted_at IS NULL
+        LIMIT 1
+      `,
+        [id]
+      );
+
+      if (!rows.length) {
+        return res.status(404).json({ success: false, message: "Không tìm thấy tài sản." });
+      }
+
+      const asset = rows[0];
+      const dep = calcDepreciation(asset);
+      const schedule = generateDepreciationSchedule(asset);
+
+      return res.json({
+        success: true,
+        asset: {
+          id: asset.id,
+          code: asset.code,
+          name: asset.name,
+          category_name: asset.category_name || "Chưa phân loại",
+          org_unit_name: asset.org_unit_name || "Chưa gán",
+          original_cost: Number(asset.original_cost) || 0,
+          residual_value: Number(asset.residual_value) || 0,
+          useful_life_months: Number(asset.useful_life_months) || 0,
+          purchase_date: asset.purchase_date,
+          depreciation_start: asset.depreciation_start,
+        },
+        dep,
+        schedule,
+      });
+    } catch (err) {
+      console.error("Lỗi lấy kế hoạch khấu hao:", err);
+      return res.status(500).json({ success: false, message: "Lỗi hệ thống: " + err.message });
     }
   },
 };
