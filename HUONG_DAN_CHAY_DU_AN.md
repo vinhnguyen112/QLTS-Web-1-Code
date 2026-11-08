@@ -244,20 +244,23 @@ Stop-Process -Id <OwningProcess> -Force
 
 ## 10. Sao lưu & khôi phục
 
-### Tạo bản backup .zip (PowerShell)
+Bản backup có sẵn: **`D:\001\QLTS-Web-1-Code_backup_20261108.zip`** – gồm toàn bộ mã nguồn, `.env`, lịch sử Git (`.git`) và `node_modules` (chạy được ngay, không cần Internet để cài lại).
+
+### Tạo bản backup .zip mới (PowerShell)
 
 ```powershell
 cd D:\001
-Compress-Archive -Path QLTS-Web-1-Code\* -DestinationPath QLTS-Web-1-Code_backup.zip
+tar -a -c -f QLTS-Web-1-Code_backup_NGAY.zip QLTS-Web-1-Code
 ```
 
-> Nên loại bỏ `node_modules` khi nén để file nhẹ; khi khôi phục chỉ cần chạy lại `npm install`.
+> Dùng `tar` thay cho `Compress-Archive` vì `Compress-Archive` bỏ qua thư mục ẩn `.git`. Muốn file nhẹ hơn thì thêm `--exclude=node_modules` (khi khôi phục chạy lại `npm install`).
 
 ### Khôi phục từ bản backup
 
-1. Giải nén file `.zip` vào `D:\001\QLTS-Web-1-Code\`.
-2. Kiểm tra `package.json` nằm ngay trong thư mục đó (không bị lồng thư mục).
-3. Chạy `npm install` rồi `npm run dev`.
+1. Đổi tên hoặc xóa thư mục `D:\001\QLTS-Web-1-Code` hiện tại (nếu có).
+2. Giải nén file `.zip` **tại `D:\001\`** (chọn "Extract Here") – sẽ tạo ra `D:\001\QLTS-Web-1-Code\`.
+3. Kiểm tra `package.json` nằm ngay trong `D:\001\QLTS-Web-1-Code\` (không bị lồng thư mục).
+4. Chạy `npm run dev` (chạy `npm install` trước nếu bản backup không có `node_modules`).
 
 ---
 
