@@ -8,7 +8,7 @@ const authController = {
       return res.redirect("/");
     }
     res.render("auth/login", {
-      layout: false, // Dùng layout riêng cho trang login
+      layout: false,
       title: "Đăng nhập hệ thống",
       error: null,
     });
@@ -93,6 +93,17 @@ const authController = {
         user.id,
       ]);
 
+      // Ghi nhật ký hoạt động vào audit_logs
+      const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "127.0.0.1";
+      const userAgent = req.headers["user-agent"] || "";
+      await db.query(
+        `
+        INSERT INTO audit_logs (actor_id, action, entity, entity_id, ip_address, user_agent, performed_at)
+        VALUES (?, 'LOGIN_SUCCESS', 'users', ?, ?, ?, NOW())
+      `,
+        [user.id, String(user.id), ip, userAgent]
+      ).catch(() => {});
+
       res.redirect("/");
     } catch (err) {
       console.error("Lỗi đăng nhập:", err);
@@ -106,7 +117,20 @@ const authController = {
   },
 
   // 3. Đăng xuất
-  logout(req, res) {
+  async logout(req, res) {
+    const user = req.session.user;
+    if (user) {
+      const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "127.0.0.1";
+      const userAgent = req.headers["user-agent"] || "";
+      await db.query(
+        `
+        INSERT INTO audit_logs (actor_id, action, entity, entity_id, ip_address, user_agent, performed_at)
+        VALUES (?, 'LOGOUT', 'users', ?, ?, ?, NOW())
+      `,
+        [user.id, String(user.id), ip, userAgent]
+      ).catch(() => {});
+    }
+
     req.session.destroy(() => {
       res.redirect("/auth/login");
     });
@@ -114,4 +138,3 @@ const authController = {
 };
 
 module.exports = authController;
-

@@ -2,7 +2,7 @@ const db = require("../config/db");
 const dayjs = require("dayjs");
 const QRCode = require("qrcode");
 
-// Câu SQL chuẩn để lấy chi tiết tài sản kèm phòng ban, người dùng, vị trí, danh mục
+// Câu SQL dùng chung lấy ra asset_categories , suppliers, org_units, locations, users
 const ASSET_SELECT_SQL = `
   SELECT a.*,
          c.name  AS category_name,

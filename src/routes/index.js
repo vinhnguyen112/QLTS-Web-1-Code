@@ -20,7 +20,7 @@ router.use("/stocktakes", require("./stocktakeRoutes"));
 router.use("/maintenance", require("./maintenanceRoutes"));
 
 // 4. Phân hệ Danh mục & Cơ cấu tổ chức
-// Quản lý Nhân sự & Người dùng: CHỈ SYS_ADMIN mới được truy cập
+// Quản lý Người dùng & Vai trò: CHỈ SYS_ADMIN
 router.use("/employees", requireRole("SYS_ADMIN"), require("./employeeRoutes"));
 
 // Các danh mục dùng chung (Phòng ban, Loại tài sản, Vị trí, Nhà cung cấp)
@@ -31,5 +31,8 @@ router.use("/suppliers", require("./supplierRoutes"));
 
 // 5. Phân hệ Báo cáo & Thống kê
 router.use("/reports", require("./reportRoutes"));
+
+// 6. Phân hệ Nhật ký hoạt động (Audit Log) - Chỉ Quản trị viên & Giám đốc
+router.use("/audit", require("./auditRoutes"));
 
 module.exports = router;

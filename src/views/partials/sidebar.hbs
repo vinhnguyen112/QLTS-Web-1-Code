@@ -1,5 +1,5 @@
 <nav class="sidebar-menu p-2">
-  <!-- 1. TỔNG QUAN (Ai cũng xem được) -->
+  <!-- 1. TỔNG QUAN -->
   <a class="nav-link d-flex align-items-center" href="/">
     <i class="bi bi-speedometer2 me-2 text-secondary"></i>
     <span>Tổng quan (Dashboard)</span>
@@ -77,6 +77,17 @@
   <a class="nav-link d-flex align-items-center" href="/reports">
     <i class="bi bi-bar-chart me-2 text-secondary"></i>
     <span>Báo cáo thống kê</span>
+  </a>
+  {{/if}}
+
+  <!-- 5. AN NINH & GIÁM SÁT (Chỉ Quản trị viên & Ban Giám đốc) -->
+  {{#if (or isSysAdmin isDirector)}}
+  <div class="sidebar-heading">
+    An ninh & Giám sát
+  </div>
+  <a class="nav-link d-flex align-items-center" href="/audit">
+    <i class="bi bi-shield-check me-2 text-secondary"></i>
+    <span>Nhật ký hoạt động</span>
   </a>
   {{/if}}
 </nav>

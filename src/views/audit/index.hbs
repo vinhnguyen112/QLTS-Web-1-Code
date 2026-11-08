@@ -1,0 +1,102 @@
+<div class="container-fluid p-0">
+  <div class="card">
+    <div class="card-header bg-white py-3">
+      <div class="row align-items-center g-2">
+        <div class="col-md-6">
+          <h5 class="mb-0 fw-bold text-dark">Nhật ký hoạt động hệ thống (Audit Log)</h5>
+          <small class="text-muted">Ghi nhận chi tiết lịch sử đăng nhập, thao tác nghiệp vụ và bảo mật dữ liệu</small>
+        </div>
+
+        <div class="col-md-6 d-flex flex-wrap justify-content-md-end align-items-center gap-2">
+          <form action="/audit" method="get" class="m-0" role="search">
+            <div class="input-group input-group-sm" style="width: 240px;">
+              <input
+                type="text"
+                name="action"
+                class="form-control"
+                value="{{searchAction}}"
+                placeholder="Tìm hành động, bảng dữ liệu..."
+              />
+              <button class="btn btn-primary" type="submit">Tìm</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th scope="col" class="ps-3" style="width: 60px;">#</th>
+            <th scope="col" style="width: 170px;">Thời gian</th>
+            <th scope="col">Người thực hiện</th>
+            <th scope="col">Hành động</th>
+            <th scope="col">Đối tượng (Bảng)</th>
+            <th scope="col" style="width: 90px;">Mã bản ghi</th>
+            <th scope="col">Địa chỉ IP</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each logs}}
+            <tr>
+              <td class="ps-3 text-muted">{{addOne @index}}</td>
+              <td class="text-dark">{{formatDateTime this.performed_at}}</td>
+              <td>
+                {{#if this.actor_name}}
+                  <div class="fw-semibold text-dark">{{this.actor_name}}</div>
+                  <small class="text-muted font-monospace">@{{this.actor_username}}</small>
+                {{else}}
+                  <span class="text-muted fst-italic">Hệ thống</span>
+                {{/if}}
+              </td>
+              <td>
+                {{#if (eq this.action "LOGIN_SUCCESS")}}
+                  <span class="badge text-bg-success">Đăng nhập thành công</span>
+                {{else if (eq this.action "LOGOUT")}}
+                  <span class="badge text-bg-secondary">Đăng xuất</span>
+                {{else if (eq this.action "INSERT")}}
+                  <span class="badge text-bg-primary">Thêm mới</span>
+                {{else if (eq this.action "UPDATE")}}
+                  <span class="badge text-bg-warning text-dark">Cập nhật</span>
+                {{else if (eq this.action "DELETE")}}
+                  <span class="badge text-bg-danger">Xóa dữ liệu</span>
+                {{else}}
+                  <span class="badge text-bg-light border font-monospace">{{this.action}}</span>
+                {{/if}}
+              </td>
+              <td>
+                <span class="badge text-bg-light border font-monospace">{{this.entity}}</span>
+              </td>
+              <td class="font-monospace text-muted">#{{this.entity_id}}</td>
+              <td class="text-muted small font-monospace">{{this.ip_address}}</td>
+            </tr>
+          {{else}}
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">Chưa có nhật ký hoạt động nào được ghi nhận.</td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Phân trang Bootstrap 5 chuẩn -->
+    {{#if (gt totalPages 1)}}
+      <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+        <div class="small text-muted">Trang <b>{{page}}</b> / {{totalPages}}</div>
+        <nav aria-label="Phân trang">
+          <ul class="pagination pagination-sm mb-0">
+            {{#each pages}}
+              <li class="page-item {{#if this.active}}active{{/if}}">
+                <a class="page-link" href="/audit?page={{this.number}}&action={{../searchAction}}">
+                  {{this.number}}
+                </a>
+              </li>
+            {{/each}}
+          </ul>
+        </nav>
+      </div>
+    {{/if}}
+  </div>
+</div>
+
