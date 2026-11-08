@@ -1,7 +1,7 @@
 const db = require("../config/db");
 const dayjs = require("dayjs");
 const QRCode = require("qrcode");
-const { logAssetEvent, logAudit } = require("../utils/logger");
+const { recordEvent } = require("../utils/logger");
 
 // Câu SQL dùng chung lấy ra asset_categories , suppliers, org_units, locations, users
 const ASSET_SELECT_SQL = `
@@ -96,21 +96,12 @@ const assetController = {
         margin: 1,
       });
 
-      // Lấy lịch sử biến động tài sản từ asset_events chuẩn hóa
+      // Lấy lịch sử biến động tài sản
       const [events] = await db.query(
         `
-        SELECT ae.*,
-               u_perf.full_name  AS actor_name,
-               u_from.full_name  AS from_assignee_name,
-               u_to.full_name    AS to_assignee_name,
-               ou_from.name      AS from_org_unit_name,
-               ou_to.name        AS to_org_unit_name
+        SELECT ae.performed_at, ae.event_type, ae.note, u.full_name AS actor_name
         FROM asset_events ae
-        LEFT JOIN users u_perf      ON ae.performed_by     = u_perf.id
-        LEFT JOIN users u_from      ON ae.from_assignee_id = u_from.id
-        LEFT JOIN users u_to        ON ae.to_assignee_id   = u_to.id
-        LEFT JOIN org_units ou_from ON ae.from_org_unit_id = ou_from.id
-        LEFT JOIN org_units ou_to   ON ae.to_org_unit_id   = ou_to.id
+        LEFT JOIN users u ON ae.performed_by = u.id
         WHERE ae.asset_id = ?
         ORDER BY ae.id DESC
         LIMIT 20
@@ -217,37 +208,14 @@ const assetController = {
       const assetId = req.params.id;
       const currentUserId = req.session.user ? req.session.user.id : 315;
 
-      const [assets] = await db.query("SELECT * FROM assets WHERE id = ?", [assetId]);
-      if (assets.length === 0) return res.redirect("/assets");
-      const asset = assets[0];
-
       // Đưa trạng thái về 'in_stock', gỡ assignee_id
       await db.query(
         "UPDATE assets SET assignee_id = NULL, status = 'in_stock', updated_at = NOW() WHERE id = ?",
         [assetId]
       );
 
-      // Ghi nhận biến động vào asset_events chuẩn
-      await logAssetEvent(db, {
-        asset_id: assetId,
-        event_type: "RECALL",
-        from_org_unit_id: asset.org_unit_id,
-        to_org_unit_id: asset.org_unit_id,
-        from_assignee_id: asset.assignee_id,
-        to_assignee_id: null,
-        performed_by: currentUserId,
-        note: "Thu hồi tài sản về kho trung tâm",
-      });
-
-      // Ghi nhật ký kiểm toán audit
-      await logAudit(db, {
-        actor_id: currentUserId,
-        action: "ASSET_RECALL",
-        entity: "assets",
-        entity_id: assetId,
-        before: { status: asset.status, assignee_id: asset.assignee_id },
-        after: { status: "in_stock", assignee_id: null },
-      });
+      // Ghi nhận biến động (1 dòng duy nhất)
+      await recordEvent(assetId, "RECALL", "Thu hồi tài sản về kho trung tâm", currentUserId);
 
       res.redirect("/assets/" + assetId);
     } catch (err) {

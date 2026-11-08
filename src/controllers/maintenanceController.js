@@ -1,6 +1,6 @@
 const db = require("../config/db");
 const dayjs = require("dayjs");
-const { logAssetEvent, logAudit } = require("../utils/logger");
+const { recordEvent } = require("../utils/logger");
 
 const maintenanceController = {
   // 1. Danh sách các phiếu bảo trì & sửa chữa
@@ -97,22 +97,8 @@ const maintenanceController = {
         [asset_id]
       );
 
-      // 3. Ghi vết biến động chuẩn
-      await logAssetEvent(connection, {
-        asset_id,
-        event_type: "MAINTENANCE_START",
-        performed_by: currentUserId,
-        note: `Báo hỏng / Chuyển sửa chữa: ${cause}`,
-      });
-
-      // 4. Ghi nhật ký kiểm toán audit
-      await logAudit(connection, {
-        actor_id: currentUserId,
-        action: "MAINTENANCE_CREATE",
-        entity: "maintenance_orders",
-        entity_id: code,
-        after: { asset_id, type, cause, assigned_to },
-      });
+      // 3. Ghi vết biến động (1 dòng duy nhất)
+      await recordEvent(asset_id, "MAINTENANCE_START", "Báo hỏng: " + cause, currentUserId);
 
       await connection.commit();
       res.redirect("/maintenance");
@@ -158,24 +144,13 @@ const maintenanceController = {
         [returnStatus, order.asset_id]
       );
 
-      // 3. Ghi vết biến động chuẩn
-      await logAssetEvent(connection, {
-        asset_id: order.asset_id,
-        event_type: "MAINTENANCE_END",
-        to_assignee_id: assets[0]?.assignee_id || null,
-        performed_by: currentUserId,
-        note: `Hoàn thành sửa chữa (Chi phí: ${Number(cost || 0).toLocaleString('vi-VN')} đ). Kết quả: ${result || 'Tốt'}`,
-      });
-
-      // 4. Ghi nhật ký kiểm toán audit
-      await logAudit(connection, {
-        actor_id: currentUserId,
-        action: "MAINTENANCE_COMPLETE",
-        entity: "maintenance_orders",
-        entity_id: order.id,
-        before: { status: order.status },
-        after: { status: "done", cost, result },
-      });
+      // 3. Ghi vết biến động (1 dòng duy nhất)
+      await recordEvent(
+        order.asset_id,
+        "MAINTENANCE_END",
+        `Đã sửa xong (Chi phí: ${Number(cost || 0).toLocaleString("vi-VN")} đ)`,
+        currentUserId
+      );
 
       await connection.commit();
       res.redirect("/maintenance");

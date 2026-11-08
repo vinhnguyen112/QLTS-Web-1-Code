@@ -16,6 +16,35 @@
     </div>
 
     <div class="card-body">
+      <!-- Thanh tiến trình xét duyệt 3 bước trực quan -->
+      <div class="d-flex align-items-center justify-content-between p-3 bg-white rounded border mb-4">
+        <div class="d-flex align-items-center text-success">
+          <i class="bi bi-check-circle-fill fs-5 me-2"></i>
+          <div>
+            <div class="fw-bold small">1. Lập đề xuất</div>
+            <small class="text-muted">{{request.requester_name}}</small>
+          </div>
+        </div>
+        <i class="bi bi-chevron-right text-muted"></i>
+
+        <div class="d-flex align-items-center {{#if (eq request.status "pending_approval")}}text-primary fw-bold{{else}}text-success{{/if}}">
+          <i class="bi {{#if (eq request.status "pending_approval")}}bi-clock-fill{{else}}bi-check-circle-fill{{/if}} fs-5 me-2"></i>
+          <div>
+            <div class="fw-bold small">2. Xét duyệt</div>
+            <small class="text-muted">{{#if (eq request.status "pending_approval")}}Đang chờ phê duyệt{{else}}Đã xem xét{{/if}}</small>
+          </div>
+        </div>
+        <i class="bi bi-chevron-right text-muted"></i>
+
+        <div class="d-flex align-items-center {{#if (eq request.status "approved")}}text-success{{else if (eq request.status "rejected")}}text-danger{{else}}text-muted{{/if}}">
+          <i class="bi {{#if (eq request.status "approved")}}bi-check-circle-fill{{else if (eq request.status "rejected")}}bi-x-circle-fill{{else}}bi-circle{{/if}} fs-5 me-2"></i>
+          <div>
+            <div class="fw-bold small">3. Kết quả</div>
+            <small class="text-muted">{{#if (eq request.status "approved")}}Đã duyệt & Cập nhật kho{{else if (eq request.status "rejected")}}Đã từ chối{{else}}Chờ kết quả{{/if}}</small>
+          </div>
+        </div>
+      </div>
+
       <!-- Thông tin tổng quan phiếu -->
       <div class="bg-light p-3 rounded border mb-4">
         <div class="row g-3">

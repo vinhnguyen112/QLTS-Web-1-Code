@@ -1,6 +1,6 @@
 const db = require("../config/db");
 const dayjs = require("dayjs");
-const { logAssetEvent, logAudit } = require("../utils/logger");
+const { recordEvent } = require("../utils/logger");
 
 const ASSET_SQL = `
   SELECT a.*, 
@@ -109,23 +109,8 @@ const warehouseController = {
         ]
       );
 
-      // Ghi log biến động chuẩn
-      await logAssetEvent(db, {
-        asset_id: result.insertId,
-        event_type: "INITIAL_IMPORT",
-        to_org_unit_id: org_unit_id || 227,
-        performed_by: currentUserId,
-        note: "Nhập mới tài sản vào kho",
-      });
-
-      // Ghi audit
-      await logAudit(db, {
-        actor_id: currentUserId,
-        action: "ASSET_IMPORT",
-        entity: "assets",
-        entity_id: result.insertId,
-        after: { code, name, original_cost },
-      });
+      // Ghi log biến động (1 dòng duy nhất)
+      await recordEvent(result.insertId, "INITIAL_IMPORT", "Nhập mới tài sản vào kho", currentUserId);
 
       res.redirect("/warehouse");
     } catch (err) {
@@ -150,25 +135,8 @@ const warehouseController = {
         [assignee_id, org_unit_id || null, location_id || null, asset_id]
       );
 
-      // Ghi nhận biến động chuẩn
-      await logAssetEvent(db, {
-        asset_id,
-        event_type: "ASSIGN",
-        to_org_unit_id: org_unit_id || null,
-        to_assignee_id: assignee_id || null,
-        performed_by: currentUserId,
-        note: note || "Cấp phát trực tiếp từ kho",
-      });
-
-      // Ghi audit
-      await logAudit(db, {
-        actor_id: currentUserId,
-        action: "ASSET_ASSIGN",
-        entity: "assets",
-        entity_id: asset_id,
-        before: { status: "in_stock" },
-        after: { status: "in_use", assignee_id, org_unit_id },
-      });
+      // Ghi nhận biến động (1 dòng duy nhất)
+      await recordEvent(asset_id, "ASSIGN", note || "Cấp phát trực tiếp từ kho", currentUserId);
 
       res.redirect("/warehouse");
     } catch (err) {

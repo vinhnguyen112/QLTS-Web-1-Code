@@ -1,6 +1,6 @@
 const db = require("../config/db");
 const dayjs = require("dayjs");
-const { logAssetEvent, logAudit } = require("../utils/logger");
+const { recordEvent } = require("../utils/logger");
 
 const requestController = {
   // 1. Danh sách phiếu yêu cầu (Lọc theo loại phiếu, trạng thái, phân trang)
@@ -265,104 +265,56 @@ const requestController = {
       const [lines] = await connection.query("SELECT * FROM request_lines WHERE request_id = ?", [requestId]);
 
       for (const line of lines) {
-        // A. Nếu là Mua sắm (purchase) -> Tự động tạo tài sản mới trong kho (in_stock)
+        // A. Mua sắm -> Nhập tài sản mới vào kho
         if (request.type === "purchase") {
           const autoCode = `TS-${dayjs().format("YYYY")}-${Math.floor(10000 + Math.random() * 90000)}`;
           const [newAsset] = await connection.query(
-            `
-            INSERT INTO assets (code, name, category_id, org_unit_id, original_cost, purchase_date, useful_life_months, status, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, CURDATE(), 36, 'in_stock', NOW(), NOW())
-          `,
+            `INSERT INTO assets (code, name, category_id, org_unit_id, original_cost, purchase_date, useful_life_months, status, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, CURDATE(), 36, 'in_stock', NOW(), NOW())`,
             [autoCode, line.item_name, line.category_id, request.org_unit_id, line.estimated_cost]
           );
-
-          await logAssetEvent(connection, {
-            asset_id: newAsset.insertId,
-            event_type: "INITIAL_IMPORT",
-            to_org_unit_id: request.org_unit_id,
-            request_id: requestId,
-            performed_by: currentUserId,
-            note: `Tiếp nhận mua sắm theo phiếu ${request.code}`,
-          });
+          await recordEvent(newAsset.insertId, "INITIAL_IMPORT", `Tiếp nhận mua sắm theo phiếu ${request.code}`, currentUserId);
         }
 
-        // B. Nếu là Cấp phát (assign) -> Đổi trạng thái sang 'in_use', gán người nhận
+        // B. Cấp phát -> Chuyển sang 'in_use' và gán người giữ
         if (request.type === "assign" && line.asset_id) {
           await connection.query(
             "UPDATE assets SET status = 'in_use', assignee_id = ?, active_request_id = NULL, updated_at = NOW() WHERE id = ?",
             [request.requester_id, line.asset_id]
           );
-          await logAssetEvent(connection, {
-            asset_id: line.asset_id,
-            event_type: "ASSIGN",
-            to_org_unit_id: request.org_unit_id,
-            to_assignee_id: request.requester_id,
-            request_id: requestId,
-            performed_by: currentUserId,
-            note: `Cấp phát sử dụng theo phiếu ${request.code}`,
-          });
+          await recordEvent(line.asset_id, "ASSIGN", `Cấp phát sử dụng theo phiếu ${request.code}`, currentUserId);
         }
 
-        // C. Nếu là Thu hồi (recall) -> Trả về 'in_stock'
+        // C. Thu hồi -> Đưa về kho 'in_stock'
         if (request.type === "recall" && line.asset_id) {
           await connection.query(
             "UPDATE assets SET status = 'in_stock', assignee_id = NULL, active_request_id = NULL, updated_at = NOW() WHERE id = ?",
             [line.asset_id]
           );
-          await logAssetEvent(connection, {
-            asset_id: line.asset_id,
-            event_type: "RECALL",
-            to_org_unit_id: request.org_unit_id,
-            request_id: requestId,
-            performed_by: currentUserId,
-            note: `Thu hồi về kho theo phiếu ${request.code}`,
-          });
+          await recordEvent(line.asset_id, "RECALL", `Thu hồi về kho theo phiếu ${request.code}`, currentUserId);
         }
 
-        // D. Nếu là Điều chuyển (transfer)
+        // D. Điều chuyển đơn vị
         if (request.type === "transfer" && line.asset_id) {
           await connection.query(
             "UPDATE assets SET org_unit_id = ?, active_request_id = NULL, updated_at = NOW() WHERE id = ?",
             [request.org_unit_id, line.asset_id]
           );
-          await logAssetEvent(connection, {
-            asset_id: line.asset_id,
-            event_type: "TRANSFER",
-            to_org_unit_id: request.org_unit_id,
-            request_id: requestId,
-            performed_by: currentUserId,
-            note: `Điều chuyển đơn vị theo phiếu ${request.code}`,
-          });
+          await recordEvent(line.asset_id, "TRANSFER", `Điều chuyển đơn vị theo phiếu ${request.code}`, currentUserId);
         }
 
-        // E. Nếu là Thanh lý (disposal) -> Chuyển sang 'disposed'
+        // E. Thanh lý -> 'disposed'
         if (request.type === "disposal" && line.asset_id) {
           await connection.query(
             "UPDATE assets SET status = 'disposed', active_request_id = NULL, disposal_date = CURDATE(), updated_at = NOW() WHERE id = ?",
             [line.asset_id]
           );
-          await logAssetEvent(connection, {
-            asset_id: line.asset_id,
-            event_type: "DISPOSAL",
-            request_id: requestId,
-            performed_by: currentUserId,
-            note: `Thanh lý tài sản theo phiếu ${request.code}`,
-          });
+          await recordEvent(line.asset_id, "DISPOSAL", `Thanh lý tài sản theo phiếu ${request.code}`, currentUserId);
         }
       }
 
-      // Đảm bảo mở khóa toàn bộ tài sản gắn với phiếu này
+      // Mở khóa toàn bộ tài sản gắn với phiếu này
       await connection.query("UPDATE assets SET active_request_id = NULL WHERE active_request_id = ?", [requestId]);
-
-      // Ghi nhật ký kiểm toán audit
-      await logAudit(connection, {
-        actor_id: currentUserId,
-        action: "REQUEST_APPROVE",
-        entity: "requests",
-        entity_id: requestId,
-        before: { status: "pending_approval" },
-        after: { status: "approved" },
-      });
 
       await connection.commit();
       res.redirect("/requests/" + requestId);
@@ -380,7 +332,6 @@ const requestController = {
     try {
       const requestId = req.params.id;
       const { reject_reason } = req.body;
-      const currentUserId = req.session.user ? req.session.user.id : null;
 
       await db.query(
         "UPDATE requests SET status = 'rejected', reason = CONCAT(IFNULL(reason, ''), ' [LÝ DO TỪ CHỐI]: ', ?), updated_at = NOW() WHERE id = ?",
@@ -389,16 +340,6 @@ const requestController = {
 
       // Giải phóng khóa tài sản gắn với phiếu này
       await db.query("UPDATE assets SET active_request_id = NULL WHERE active_request_id = ?", [requestId]);
-
-      // Ghi audit
-      await logAudit(db, {
-        actor_id: currentUserId,
-        action: "REQUEST_REJECT",
-        entity: "requests",
-        entity_id: requestId,
-        before: { status: "pending_approval" },
-        after: { status: "rejected", reject_reason },
-      });
 
       res.redirect("/requests/" + requestId);
     } catch (err) {

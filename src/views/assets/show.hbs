@@ -141,15 +141,13 @@
       <div class="mt-4 pt-3 border-top">
         <h6 class="fw-bold text-dark mb-3">Nhật ký luân chuyển & Biến động</h6>
         <div class="table-responsive">
-          <table class="table table-sm table-hover align-middle mb-0">
+          <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
               <tr>
-                <th>Thời gian</th>
-                <th>Sự kiện</th>
-                <th>Đơn vị liên quan</th>
-                <th>Nhân sự liên quan</th>
-                <th>Người thực hiện</th>
-                <th>Ghi chú</th>
+                <th scope="col" style="width: 170px;">Thời gian</th>
+                <th scope="col" style="width: 160px;">Sự kiện</th>
+                <th scope="col" style="width: 180px;">Người thực hiện</th>
+                <th scope="col">Chi tiết & Ghi chú</th>
               </tr>
             </thead>
             <tbody>
@@ -157,30 +155,12 @@
               <tr>
                 <td class="text-muted small">{{formatDateTime this.performed_at}}</td>
                 <td><span class="badge text-bg-light border text-primary fw-semibold">{{this.event_type}}</span></td>
-                <td>
-                  {{#if this.to_org_unit_name}}
-                    <span class="text-dark">{{this.to_org_unit_name}}</span>
-                  {{else if this.from_org_unit_name}}
-                    <span class="text-dark">{{this.from_org_unit_name}}</span>
-                  {{else}}
-                    <span class="text-muted">—</span>
-                  {{/if}}
-                </td>
-                <td>
-                  {{#if this.to_assignee_name}}
-                    <span class="text-dark">{{this.to_assignee_name}}</span>
-                  {{else if this.from_assignee_name}}
-                    <span class="text-dark">{{this.from_assignee_name}}</span>
-                  {{else}}
-                    <span class="text-muted">—</span>
-                  {{/if}}
-                </td>
-                <td>{{#if this.actor_name}}{{this.actor_name}}{{else}}Hệ thống{{/if}}</td>
-                <td class="text-secondary small">{{this.note}}</td>
+                <td>{{#if this.actor_name}}<span class="text-dark fw-semibold">{{this.actor_name}}</span>{{else}}<span class="text-muted">Hệ thống</span>{{/if}}</td>
+                <td class="text-dark">{{this.note}}</td>
               </tr>
               {{else}}
               <tr>
-                <td colspan="6" class="text-center py-3 text-muted small">Chưa phát sinh biến động nào</td>
+                <td colspan="4" class="text-center py-4 text-muted small">Chưa phát sinh biến động nào</td>
               </tr>
               {{/each}}
             </tbody>
