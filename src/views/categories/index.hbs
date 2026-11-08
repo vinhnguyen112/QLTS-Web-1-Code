@@ -53,15 +53,16 @@
               <td><span class="badge text-bg-light border">{{this.default_life_months}} tháng</span></td>
               <td><span class="badge text-bg-light border">{{this.asset_count}} tài sản</span></td>
               <td class="text-end pe-3">
-                <form
-                  id="deleteCat{{this.id}}"
-                  action="/categories/{{this.id}}/delete"
-                  method="POST"
-                  onsubmit="return confirm('Bạn có chắc chắn muốn ngưng sử dụng danh mục này?');"
-                ></form>
-                <div class="btn-group" role="group" aria-label="Basic mixed styles example">
+                <div class="d-inline-flex gap-1">
                   <a href="/categories/{{this.id}}/edit" class="btn btn-warning">Sửa</a>
-                  <button type="submit" form="deleteCat{{this.id}}" class="btn btn-danger">Xóa</button>
+                  <form
+                    action="/categories/{{this.id}}/delete"
+                    method="POST"
+                    class="d-inline m-0"
+                    onsubmit="return confirm('Bạn có chắc chắn muốn ngưng sử dụng danh mục này?');"
+                  >
+                    <button type="submit" class="btn btn-danger">Xóa</button>
+                  </form>
                 </div>
               </td>
             </tr>

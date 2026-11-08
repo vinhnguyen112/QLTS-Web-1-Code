@@ -95,7 +95,7 @@
               <td class="text-dark fw-semibold">{{formatCurrency this.original_cost}}</td>
               <td class="text-center">{{{assetStatusBadge this.status}}}</td>
               <td class="text-end pe-3">
-                <div class="btn-group" role="group" aria-label="Basic mixed styles example">
+                <div class="d-inline-flex gap-1">
                   <a href="/assets/{{this.id}}" class="btn btn-primary">Chi tiết</a>
                   {{#if ../canManageAssets}}
                   <a href="/assets/{{this.id}}/edit" class="btn btn-warning">Sửa</a>

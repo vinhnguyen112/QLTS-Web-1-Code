@@ -61,7 +61,7 @@
               <td>{{#if this.location_name}}{{this.location_name}}{{else}}<span class="text-muted">Kho tổng</span>{{/if}}</td>
               <td class="text-dark">{{formatCurrency this.original_cost}}</td>
               <td class="text-end pe-3">
-                <div class="btn-group" role="group" aria-label="Basic mixed styles example">
+                <div class="d-inline-flex gap-1">
                   <!-- Chỉ Quản lý tài sản hoặc Admin mới có nút Cấp phát -->
                   {{#if ../canManageAssets}}
                   <button
