@@ -132,29 +132,39 @@
               <td class="text-nowrap">
                 {{#if this.useful_life_months}}
                   <div>{{this.useful_life_months}} tháng</div>
-                  <small class="text-muted">Đã trích: {{this.used_months}} th</small>
+                  <small class="text-muted">Đã trích: {{this.usedMonths}} th</small>
                 {{else}}
                   <span class="text-muted small">--</span>
                 {{/if}}
               </td>
               <td class="text-end fw-semibold text-dark">{{formatCurrency this.original_cost}}</td>
               <td class="text-end text-primary fw-semibold">
-                {{#if (eq this.depreciation_status "depreciating")}}
-                  {{formatCurrency this.monthly_amount}}
+                {{#if (not this.isDone)}}
+                  {{formatCurrency this.monthly}}
                 {{else}}
                   <span class="text-muted">0 đ</span>
                 {{/if}}
               </td>
-              <td class="text-end text-warning-emphasis fw-semibold">{{formatCurrency this.accumulated_amount}}</td>
-              <td class="text-end text-success fw-bold">{{formatCurrency this.remaining_value}}</td>
+              <td class="text-end text-warning-emphasis fw-semibold">{{formatCurrency this.accumulated}}</td>
+              <td class="text-end text-success fw-bold">{{formatCurrency this.remainingValue}}</td>
               <td class="text-center text-nowrap">
                 <div class="d-flex align-items-center justify-content-center gap-2">
                   <div class="progress flex-grow-1" style="height: 6px; min-width: 60px;">
-                    <div class="progress-bar bg-success" role="progressbar" style="width: {{this.depreciation_percent}}%;"></div>
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{this.percent}}%;"></div>
                   </div>
-                  <span class="small fw-semibold">{{this.depreciation_percent}}%</span>
+                  <span class="small fw-semibold">{{this.percent}}%</span>
                 </div>
-                <div class="mt-1">{{{this.status_badge}}}</div>
+                <div class="mt-1">
+                  {{#if this.hasDepreciation}}
+                    {{#if this.isDone}}
+                      <span class="badge text-bg-secondary">Đã hết KH</span>
+                    {{else}}
+                      <span class="badge text-bg-success">Đang trích</span>
+                    {{/if}}
+                  {{else}}
+                    <span class="badge text-bg-light border">Không trích</span>
+                  {{/if}}
+                </div>
               </td>
               <td class="text-end pe-3 text-nowrap">
                 <div class="d-inline-flex gap-1">
@@ -192,3 +202,4 @@
     {{/if}}
   </div>
 </div>
+

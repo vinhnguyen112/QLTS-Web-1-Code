@@ -2,6 +2,7 @@ const db = require("../config/db");
 const dayjs = require("dayjs");
 const QRCode = require("qrcode");
 const { recordEvent } = require("../utils/logger");
+const { calcDepreciation } = require("../utils/depreciation");
 
 // Câu SQL dùng chung lấy ra asset_categories, suppliers, org_units, locations, users
 const ASSET_SELECT_SQL = `
@@ -226,45 +227,7 @@ const assetController = {
       const [users] = await db.query("SELECT id, full_name, email FROM users WHERE status = 'ACTIVE' ORDER BY full_name");
 
       // Tính toán khấu hao đường thẳng
-      const cost = Number(asset.original_cost) || 0;
-      const residual = Number(asset.residual_value) || 0;
-      const months = Number(asset.useful_life_months) || 0;
-      const depreciableAmount = Math.max(0, cost - residual);
-
-      let monthly = 0;
-      let usedMonths = 0;
-      let remainingMonths = 0;
-      let accumulated = Number(asset.opening_accumulated) || 0;
-      let remainingValue = cost;
-      let percent = 0;
-
-      if (months > 0) {
-        monthly = Math.round(depreciableAmount / months);
-        const startDate = asset.depreciation_start
-          ? dayjs(asset.depreciation_start)
-          : asset.purchase_date
-          ? dayjs(asset.purchase_date)
-          : dayjs();
-
-        const elapsedMonths = Math.max(0, dayjs().diff(startDate, "month"));
-        usedMonths = Math.min(months, elapsedMonths);
-        remainingMonths = Math.max(0, months - usedMonths);
-
-        accumulated = Math.min(cost, Math.round(accumulated + monthly * usedMonths));
-        remainingValue = Math.max(0, cost - accumulated);
-        percent = cost > 0 ? Math.min(100, Math.round((accumulated / cost) * 100)) : 100;
-      }
-
-      const depreciation = {
-        hasDepreciation: months > 0,
-        monthly,
-        usedMonths,
-        remainingMonths,
-        accumulated,
-        remainingValue,
-        percent,
-        isFullyDepreciated: months > 0 && remainingMonths === 0,
-      };
+      const depreciation = calcDepreciation(asset);
 
       res.render("assets/show", {
         title: `Chi tiết tài sản - ${asset.code}`,
