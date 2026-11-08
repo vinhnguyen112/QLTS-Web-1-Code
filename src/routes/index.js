@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { requireAuth, requireRole } = require("../middlewares/authMiddleware");
+const { requireAuth, hasPermission } = require("../middlewares/authMiddleware");
 
 // 1. Phân hệ Xác thực (Công khai - không cần đăng nhập)
 router.use("/auth", require("./authRoutes"));
@@ -21,19 +21,19 @@ router.use("/maintenance", require("./maintenanceRoutes"));
 router.use("/depreciation", require("./depreciationRoutes"));
 
 // 4. Phân hệ Danh mục & Cơ cấu tổ chức
-// Quản lý Người dùng & Vai trò: CHỈ SYS_ADMIN
-router.use("/employees", requireRole("SYS_ADMIN"), require("./employeeRoutes"));
+// Quản lý Người dùng & Vai trò: Yêu cầu quyền MANAGE_SYSTEM
+router.use("/employees", hasPermission("MANAGE_SYSTEM"), require("./employeeRoutes"));
 
-// Các danh mục dùng chung (Phòng ban, Loại tài sản, Vị trí, Nhà cung cấp)
-router.use("/departments", require("./departmentRoutes"));
-router.use("/categories", require("./categoryRoutes"));
-router.use("/locations", require("./locationRoutes"));
-router.use("/suppliers", require("./supplierRoutes"));
+// Các danh mục dùng chung (Phòng ban, Loại tài sản, Vị trí, Nhà cung cấp): Yêu cầu quyền MANAGE_MASTER_DATA
+router.use("/departments", hasPermission("MANAGE_MASTER_DATA"), require("./departmentRoutes"));
+router.use("/categories", hasPermission("MANAGE_MASTER_DATA"), require("./categoryRoutes"));
+router.use("/locations", hasPermission("MANAGE_MASTER_DATA"), require("./locationRoutes"));
+router.use("/suppliers", hasPermission("MANAGE_MASTER_DATA"), require("./supplierRoutes"));
 
 // 5. Phân hệ Báo cáo & Thống kê
 router.use("/reports", require("./reportRoutes"));
 
-// 6. Phân hệ Nhật ký hoạt động (Audit Log) - Chỉ Quản trị viên & Giám đốc
+// 6. Phân hệ Nhật ký hoạt động (Audit Log)
 router.use("/audit", require("./auditRoutes"));
 
 module.exports = router;

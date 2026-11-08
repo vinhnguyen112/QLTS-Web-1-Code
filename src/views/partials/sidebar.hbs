@@ -14,18 +14,20 @@
     <span>Hồ sơ tài sản</span>
   </a>
 
+  {{#if can.viewDepreciation}}
   <a class="nav-link d-flex align-items-center" href="/depreciation">
     <i class="bi bi-calculator me-2 text-secondary"></i>
     <span>Khấu hao tài sản</span>
   </a>
+  {{/if}}
 
   <a class="nav-link d-flex align-items-center" href="/requests">
     <i class="bi bi-file-earmark-check me-2 text-secondary"></i>
     <span>Hộp phiếu & Duyệt</span>
   </a>
 
-  <!-- Kiểm kê tài sản: Chỉ cấp quản lý trở lên -->
-  {{#if canApproveRequests}}
+  <!-- Kiểm kê tài sản: Chỉ người có quyền kiểm kê mới thấy -->
+  {{#if can.manageStocktakes}}
   <a class="nav-link d-flex align-items-center" href="/stocktakes">
     <i class="bi bi-qr-code-scan me-2 text-secondary"></i>
     <span>Kiểm kê tài sản</span>
@@ -38,11 +40,11 @@
   </a>
 
   <!-- 3. HỆ THỐNG & CƠ CẤU (Ẩn hoàn toàn với nhân viên thường) -->
-  {{#if canManageMasterData}}
+  {{#if can.manageMasterData}}
   <div class="sidebar-heading">
     Hệ thống & Cơ cấu
   </div>
-  {{#if isSysAdmin}}
+  {{#if can.manageSystem}}
   <a class="nav-link d-flex align-items-center" href="/employees">
     <i class="bi bi-person me-2 text-secondary"></i>
     <span>Người dùng & Vai trò</span>
@@ -66,8 +68,8 @@
   </a>
   {{/if}}
 
-  <!-- 4. BÁO CÁO (Chỉ cấp quản lý hoặc kế toán) -->
-  {{#if (or canManageMasterData isAccountant)}}
+  <!-- 4. BÁO CÁO -->
+  {{#if can.viewReports}}
   <div class="sidebar-heading">
     Báo cáo
   </div>
@@ -77,8 +79,8 @@
   </a>
   {{/if}}
 
-  <!-- 5. AN NINH & GIÁM SÁT (Chỉ Quản trị viên & Ban Giám đốc) -->
-  {{#if (or isSysAdmin isDirector)}}
+  <!-- 5. AN NINH & GIÁM SÁT -->
+  {{#if can.viewAudit}}
   <div class="sidebar-heading">
     An ninh & Giám sát
   </div>

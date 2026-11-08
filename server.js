@@ -5,6 +5,7 @@ const { engine } = require("express-handlebars");
 const path = require("path");
 const dayjs = require("dayjs");
 const db = require("./src/config/db");
+const { checkPermission } = require("./src/config/permissions");
 
 const app = express();
 
@@ -114,30 +115,29 @@ app.use((req, res, next) => {
 
   res.locals.currentUser = user;
 
-  // 1. Nhóm quản trị tối cao
+  // Cờ quyền kiểm tra nhanh trong View: {{#if can.manageAssets}} ... {{/if}}
+  res.locals.can = {
+    manageSystem: checkPermission(role, "MANAGE_SYSTEM"),
+    manageMasterData: checkPermission(role, "MANAGE_MASTER_DATA"),
+    manageAssets: checkPermission(role, "MANAGE_ASSETS"),
+    viewDepreciation: checkPermission(role, "VIEW_DEPRECIATION"),
+    viewReports: checkPermission(role, "VIEW_REPORTS"),
+    manageStocktakes: checkPermission(role, "MANAGE_STOCKTAKES"),
+    resolveMaintenance: checkPermission(role, "RESOLVE_MAINTENANCE"),
+    approveRequests: checkPermission(role, "APPROVE_REQUESTS"),
+    viewAudit: checkPermission(role, "VIEW_AUDIT"),
+  };
+
+  // Giữ lại các biến tương thích ngược
   res.locals.isSysAdmin = role === "SYS_ADMIN";
-
-  // 2. Nhóm nghiệp vụ Quản lý tài sản (Cơ sở vật chất)
   res.locals.isAssetManager = role === "ASSET_MANAGER";
-  
-  // 3. Nhóm Kỹ thuật viên bảo trì
   res.locals.isTechnician = role === "TECHNICIAN";
-
-  // 4. Nhóm Ban Giám đốc & Kế toán
   res.locals.isDirector = role === "DIRECTOR";
   res.locals.isAccountant = ["CHIEF_ACCOUNTANT", "ASSET_ACCOUNTANT"].includes(role);
-
-  // 5. Quyền Quản lý Tài sản (Thêm, Sửa, Thu hồi tài sản & Kho)
-  res.locals.canManageAssets = ["SYS_ADMIN", "ASSET_MANAGER"].includes(role);
-
-  // 6. Quyền Quản lý danh mục chung (Phòng ban, Vị trí, Danh mục, Nhà cung cấp)
-  res.locals.canManageMasterData = ["SYS_ADMIN", "ASSET_MANAGER", "DIRECTOR"].includes(role);
-
-  // 7. Quyền Thao tác kỹ thuật / Nghiệm thu bảo trì
-  res.locals.canMaintain = ["SYS_ADMIN", "ASSET_MANAGER", "TECHNICIAN"].includes(role);
-
-  // 8. Quyền Phê duyệt đề xuất
-  res.locals.canApproveRequests = ["SYS_ADMIN", "DIRECTOR", "CHIEF_ACCOUNTANT", "ASSET_MANAGER", "DEPT_HEAD"].includes(role);
+  res.locals.canManageAssets = res.locals.can.manageAssets;
+  res.locals.canManageMasterData = res.locals.can.manageMasterData;
+  res.locals.canMaintain = res.locals.can.resolveMaintenance;
+  res.locals.canApproveRequests = res.locals.can.approveRequests;
 
   res.locals.currentPath = req.path;
   next();
