@@ -92,9 +92,9 @@
               <td class="text-dark">{{formatCurrency this.original_cost}}</td>
               <td>{{{assetStatusBadge this.status}}}</td>
               <td class="text-end pe-3">
-                <a href="/assets/{{this.id}}" class="btn btn-sm btn-secondary">
-                  Chi tiết
-                </a>
+                <div class="btn-group btn-group-sm" role="group">
+                  <a href="/assets/{{this.id}}" class="btn btn-outline-primary">Chi tiết</a>
+                </div>
               </td>
             </tr>
           {{else}}

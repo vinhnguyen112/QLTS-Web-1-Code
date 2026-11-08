@@ -36,13 +36,13 @@
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th scope="col" class="ps-3">#</th>
-            <th scope="col">Mã đơn vị</th>
+            <th scope="col" class="ps-3 text-nowrap">#</th>
+            <th scope="col" class="text-nowrap">Mã đơn vị</th>
             <th scope="col">Tên phòng ban / Khối</th>
             <th scope="col">Phân loại</th>
             <th scope="col">Số nhân sự</th>
             <th scope="col">Tài sản sở hữu</th>
-            <th scope="col" class="text-end pe-3" style="width: 140px;">Thao tác</th>
+            <th scope="col" class="text-end pe-3 text-nowrap">Thao tác</th>
           </tr>
         </thead>
         <tbody>
@@ -62,7 +62,7 @@
               <td><span class="badge text-bg-light border">{{this.asset_count}} tài sản</span></td>
               <td class="text-end pe-3">
                 <div class="btn-group btn-group-sm" role="group">
-                  <a href="/departments/{{this.id}}/edit" class="btn btn-warning text-dark">
+                  <a href="/departments/{{this.id}}/edit" class="btn btn-outline-secondary">
                     Sửa
                   </a>
                   <form
@@ -71,7 +71,7 @@
                     class="d-inline m-0"
                     onsubmit="return confirm('Bạn có chắc chắn muốn ngưng hoạt động phòng ban này?');"
                   >
-                    <button type="submit" class="btn btn-danger">
+                    <button type="submit" class="btn btn-outline-danger">
                       Xóa
                     </button>
                   </form>

@@ -36,15 +36,15 @@
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th scope="col" class="ps-3">#</th>
-            <th scope="col">Tên đăng nhập</th>
+            <th scope="col" class="ps-3 text-nowrap">#</th>
+            <th scope="col" class="text-nowrap">Tên đăng nhập</th>
             <th scope="col">Họ và tên</th>
             <th scope="col">Email</th>
             <th scope="col">Phòng ban</th>
             <th scope="col">Vai trò (Role)</th>
             <th scope="col">Tài sản đang giữ</th>
-            <th scope="col">Trạng thái</th>
-            <th scope="col" class="text-end pe-3" style="width: 100px;">Thao tác</th>
+            <th scope="col" class="text-center text-nowrap">Trạng thái</th>
+            <th scope="col" class="text-end pe-3 text-nowrap">Thao tác</th>
           </tr>
         </thead>
         <tbody>
@@ -75,9 +75,11 @@
                 {{/if}}
               </td>
               <td class="text-end pe-3">
-                <a href="/employees/{{this.id}}/edit" class="btn btn-sm btn-warning text-dark">
-                  Sửa
-                </a>
+                <div class="btn-group btn-group-sm" role="group">
+                  <a href="/employees/{{this.id}}/edit" class="btn btn-outline-secondary">
+                    Sửa
+                  </a>
+                </div>
               </td>
             </tr>
           {{else}}

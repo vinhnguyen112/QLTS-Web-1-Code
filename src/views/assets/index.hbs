@@ -51,15 +51,15 @@
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th scope="col" class="ps-3" style="width: 50px;">#</th>
-            <th scope="col" style="width: 140px;">Mã tài sản</th>
+            <th scope="col" class="ps-3 text-nowrap">#</th>
+            <th scope="col" class="text-nowrap">Mã tài sản</th>
             <th scope="col">Tên tài sản</th>
             <th scope="col">Loại tài sản</th>
             <th scope="col">Đơn vị quản lý</th>
             <th scope="col">Người sử dụng</th>
             <th scope="col">Nguyên giá</th>
-            <th scope="col" class="text-center">Trạng thái</th>
-            <th scope="col" class="text-end pe-3" style="width: 150px;">Thao tác</th>
+            <th scope="col" class="text-center text-nowrap">Trạng thái</th>
+            <th scope="col" class="text-end pe-3 text-nowrap">Thao tác</th>
           </tr>
         </thead>
         <tbody>
@@ -83,9 +83,9 @@
               <td>{{this.org_unit_name}}</td>
               <td>
                 {{#if this.current_employee_name}}
-                  <span class="text-dark fw-semibold"><i class="bi bi-person me-1 text-secondary"></i>{{this.current_employee_name}}</span>
+                  <span class="text-dark fw-semibold">{{this.current_employee_name}}</span>
                 {{else if (eq this.status "in_use")}}
-                  <span class="text-primary small fw-semibold"><i class="bi bi-people me-1"></i>Sử dụng chung</span>
+                  <span class="text-primary small fw-semibold">Sử dụng chung</span>
                 {{else if (eq this.status "in_stock")}}
                   <span class="badge text-bg-light text-muted border fst-italic">Lưu kho</span>
                 {{else}}
@@ -96,13 +96,9 @@
               <td class="text-center">{{{assetStatusBadge this.status}}}</td>
               <td class="text-end pe-3">
                 <div class="btn-group btn-group-sm" role="group">
-                  <a href="/assets/{{this.id}}" class="btn btn-outline-primary" title="Chi tiết">
-                    Chi tiết
-                  </a>
+                  <a href="/assets/{{this.id}}" class="btn btn-outline-primary">Chi tiết</a>
                   {{#if ../canManageAssets}}
-                  <a href="/assets/{{this.id}}/edit" class="btn btn-outline-secondary" title="Sửa">
-                    Sửa
-                  </a>
+                  <a href="/assets/{{this.id}}/edit" class="btn btn-outline-secondary">Sửa</a>
                   {{/if}}
                 </div>
               </td>
@@ -110,7 +106,6 @@
           {{else}}
             <tr>
               <td colspan="9" class="text-center py-5 text-muted">
-                <i class="bi bi-inbox fs-2 d-block text-secondary mb-2"></i>
                 Không tìm thấy tài sản nào phù hợp.
               </td>
             </tr>

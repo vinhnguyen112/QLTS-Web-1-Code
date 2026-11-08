@@ -96,9 +96,11 @@
               <td class="text-end pe-3">
                 {{#if (not (eq this.status "done"))}}
                   {{#if ../canMaintain}}
-                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#completeModal{{this.id}}">
-                      Hoàn thành
-                    </button>
+                    <div class="btn-group btn-group-sm" role="group">
+                      <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#completeModal{{this.id}}">
+                        Hoàn thành
+                      </button>
+                    </div>
 
                     <!-- Modal Hoàn Thành Sửa Chữa (Chỉ dành cho Kỹ thuật viên / Quản lý CSVC / Admin) -->
                     <div class="modal fade text-start" id="completeModal{{this.id}}" tabindex="-1">

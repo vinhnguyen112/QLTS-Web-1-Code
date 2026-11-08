@@ -29,7 +29,7 @@
             <th scope="col">Chưa quét / Thiếu</th>
             <th scope="col">Ngày tạo</th>
             <th scope="col">Trạng thái</th>
-            <th scope="col" class="text-center" style="width: 140px;">Hành động</th>
+            <th scope="col" class="text-center text-nowrap">Hành động</th>
           </tr>
         </thead>
         <tbody>
@@ -60,14 +60,15 @@
                 {{/if}}
               </td>
               <td class="text-center">
-                <div class="d-inline-flex gap-1">
+                <div class="btn-group btn-group-sm" role="group">
                   {{#if (eq this.status "in_progress")}}
-                  <a href="/stocktakes/{{this.id}}/scan" class="btn btn-sm btn-danger" title="Mở camera quét QR">
+                  <a href="/stocktakes/{{this.id}}/scan" class="btn btn-outline-danger">
                     Quét
                   </a>
                   {{/if}}
-                  <a href="/stocktakes/{{this.id}}" class="btn btn-sm btn-primary" title="Xem bảng đối chiếu">
-                    </a>
+                  <a href="/stocktakes/{{this.id}}" class="btn btn-outline-primary">
+                    Chi tiết
+                  </a>
                 </div>
               </td>
             </tr>

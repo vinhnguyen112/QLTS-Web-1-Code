@@ -60,9 +60,11 @@
               <td class="text-dark">{{formatCurrency this.total_estimated_cost}}</td>
               <td>{{{requestStatusBadge this.status}}}</td>
               <td class="text-end pe-3">
-                <a href="/requests/{{this.id}}" class="btn btn-sm btn-secondary">
-                  Xem chi tiết
-                </a>
+                <div class="btn-group btn-group-sm" role="group">
+                  <a href="/requests/{{this.id}}" class="btn btn-outline-primary">
+                    Chi tiết
+                  </a>
+                </div>
               </td>
             </tr>
           {{else}}
