@@ -103,4 +103,3 @@ function generateDepreciationSchedule(asset, now = dayjs()) {
 }
 
 module.exports = { calcDepreciation, generateDepreciationSchedule };
-
