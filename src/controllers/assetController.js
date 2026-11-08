@@ -2,7 +2,6 @@ const db = require("../config/db");
 const dayjs = require("dayjs");
 const QRCode = require("qrcode");
 const { logAssetEvent, logAudit } = require("../utils/logger");
-const { calculateStraightLineDepreciation } = require("../utils/depreciation");
 
 // Câu SQL dùng chung lấy ra asset_categories , suppliers, org_units, locations, users
 const ASSET_SELECT_SQL = `
@@ -62,22 +61,12 @@ const assetController = {
       `;
       const [assets] = await db.query(listSql, params);
 
-      // Tính toán giá trị còn lại (khấu hao) cho từng tài sản
-      const assetsWithDepreciation = assets.map((a) => {
-        const depr = calculateStraightLineDepreciation(a);
-        return {
-          ...a,
-          remaining_value: depr.remainingValue,
-          depreciation_percent: depr.depreciationPercent,
-        };
-      });
-
       // Lấy danh mục để lọc
       const [categories] = await db.query("SELECT id, name FROM asset_categories ORDER BY name");
 
       res.render("assets/index", {
         title: "Hồ sơ tài sản",
-        assets: assetsWithDepreciation,
+        assets,
         searchName: search,
         status,
         totalPages,
@@ -129,13 +118,9 @@ const assetController = {
         [asset.id]
       ).catch(() => [[]]);
 
-      // Tính toán giá trị khấu hao và giá trị còn lại theo chuẩn kế toán
-      const depreciation = calculateStraightLineDepreciation(asset);
-
       res.render("assets/show", {
         title: `Chi tiết tài sản - ${asset.code}`,
         asset,
-        depreciation,
         qrCodeDataUrl,
         events: events || [],
       });
