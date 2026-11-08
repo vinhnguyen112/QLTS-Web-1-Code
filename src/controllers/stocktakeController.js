@@ -11,7 +11,8 @@ const stocktakeController = {
                u.full_name AS created_by_name,
                (SELECT COUNT(*) FROM stocktake_items sti WHERE sti.stocktake_id = st.id) AS total_items,
                (SELECT COUNT(*) FROM stocktake_items sti WHERE sti.stocktake_id = st.id AND sti.result = 'matched') AS matched_count,
-               (SELECT COUNT(*) FROM stocktake_items sti WHERE sti.stocktake_id = st.id AND sti.result = 'missing') AS missing_count
+               (SELECT COUNT(*) FROM stocktake_items sti WHERE sti.stocktake_id = st.id AND sti.result = 'missing') AS missing_count,
+               (SELECT COUNT(*) FROM stocktake_items sti WHERE sti.stocktake_id = st.id AND sti.result = 'pending') AS pending_count
         FROM stocktakes st
         LEFT JOIN org_units ou ON st.scope_org_unit_id = ou.id
         LEFT JOIN users     u  ON st.created_by        = u.id
@@ -42,6 +43,9 @@ const stocktakeController = {
       const currentUserId = req.session.user ? req.session.user.id : 315;
       const code = `KK-${dayjs().format("YYYY")}-${Math.floor(1000 + Math.random() * 9000)}`;
 
+      const orgUnitId = scope_org_unit_id && scope_org_unit_id.trim() !== "" ? scope_org_unit_id.trim() : null;
+      const locationId = scope_location_id && scope_location_id.trim() !== "" ? scope_location_id.trim() : null;
+
       // Tạo đợt kiểm kê
       const [result] = await connection.query(
         `
@@ -50,9 +54,9 @@ const stocktakeController = {
       `,
         [
           code,
-          name,
-          scope_org_unit_id || null,
-          scope_location_id || null,
+          (name || `Đợt kiểm kê ${code}`).trim(),
+          orgUnitId,
+          locationId,
           currentUserId,
           notes || "Kiểm kê định kỳ",
         ]
@@ -60,15 +64,15 @@ const stocktakeController = {
       const stocktakeId = result.insertId;
 
       // Nạp danh sách tài sản nằm trong phạm vi kiểm kê vào stocktake_items với trạng thái 'pending'
-      let assetWhere = "WHERE a.deleted_at IS NULL AND a.status IN ('in_use', 'in_stock')";
+      let assetWhere = "WHERE a.deleted_at IS NULL AND a.status IN ('in_use', 'in_stock', 'maintenance')";
       const params = [];
-      if (scope_org_unit_id) {
+      if (orgUnitId) {
         assetWhere += " AND a.org_unit_id = ?";
-        params.push(scope_org_unit_id);
+        params.push(orgUnitId);
       }
-      if (scope_location_id) {
+      if (locationId) {
         assetWhere += " AND a.location_id = ?";
-        params.push(scope_location_id);
+        params.push(locationId);
       }
 
       const [assets] = await connection.query(`SELECT id, code, location_id FROM assets a ${assetWhere}`, params);
@@ -186,10 +190,16 @@ const stocktakeController = {
         return res.status(400).json({ success: false, message: "Không tìm thấy mã quét" });
       }
 
-      // Tìm tài sản theo code hoặc qr_token
+      let cleanCode = code.trim();
+      const urlMatch = cleanCode.match(/\/assets\/([^/?#]+)/i);
+      if (urlMatch) {
+        cleanCode = urlMatch[1];
+      }
+
+      // Tìm tài sản theo code hoặc qr_token hoặc id
       const [assets] = await db.query(
-        "SELECT * FROM assets WHERE code = ? OR qr_token = ?",
-        [code.trim(), code.trim()]
+        "SELECT * FROM assets WHERE code = ? OR qr_token = ? OR id = ?",
+        [cleanCode, cleanCode, isNaN(cleanCode) ? 0 : Number(cleanCode)]
       );
 
       if (assets.length === 0) {
@@ -208,18 +218,20 @@ const stocktakeController = {
 
       if (items.length > 0) {
         // Có trong danh sách kiểm kê -> cập nhật kết quả Khớp ('matched')
+        const item = items[0];
+        const newResult = item.result === "extra" ? "extra" : "matched";
         await db.query(
           `
           UPDATE stocktake_items
-          SET result = 'matched', scanned_at = NOW(), scanned_by = ?
+          SET result = ?, scanned_at = NOW(), scanned_by = ?
           WHERE id = ?
         `,
-          [currentUserId, items[0].id]
+          [newResult, currentUserId, item.id]
         );
 
         return res.json({
           success: true,
-          status: "matched",
+          status: newResult,
           asset_code: asset.code,
           asset_name: asset.name,
           message: `ĐÃ KHỚP: [${asset.code}] ${asset.name}`,
@@ -274,4 +286,3 @@ const stocktakeController = {
 };
 
 module.exports = stocktakeController;
-

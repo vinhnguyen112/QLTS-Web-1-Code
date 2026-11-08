@@ -21,7 +21,7 @@
       <div class="p-3 bg-light rounded border text-start">
         <label class="form-label small fw-semibold text-secondary">Hoặc nhập mã tài sản thủ công:</label>
         <div class="input-group">
-          <input type="text" id="manualCodeInput" class="form-control" placeholder="Nhập mã ví dụ: TS-2026-00001" />
+          <input type="text" id="manualCodeInput" class="form-control" placeholder="Nhập mã ví dụ: TS-2026-00001" onkeydown="if(event.key === 'Enter') submitManualCode()" />
           <button class="btn btn-primary" type="button" onclick="submitManualCode()">
             Ghi nhận
           </button>

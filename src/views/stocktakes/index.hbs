@@ -26,7 +26,7 @@
             <th scope="col">Phạm vi đơn vị</th>
             <th scope="col">Tổng tài sản</th>
             <th scope="col">Đã quét khớp</th>
-            <th scope="col">Chưa quét / Thiếu</th>
+            <th scope="col">Chờ quét / Thiếu</th>
             <th scope="col">Ngày tạo</th>
             <th scope="col">Trạng thái</th>
             <th scope="col" class="text-center text-nowrap">Hành động</th>
@@ -48,7 +48,13 @@
               <td>{{#if this.org_unit_name}}{{this.org_unit_name}}{{else}}<span class="badge bg-light text-dark border">Toàn công ty</span>{{/if}}</td>
               <td class="fw-semibold text-dark">{{this.total_items}}</td>
               <td><span class="badge bg-success-subtle text-success border border-success-subtle">{{this.matched_count}} khớp</span></td>
-              <td><span class="badge bg-danger-subtle text-danger border border-danger-subtle">{{this.missing_count}} thiếu</span></td>
+              <td>
+                {{#if (eq this.status "in_progress")}}
+                  <span class="badge bg-secondary-subtle text-secondary border">{{this.pending_count}} chờ quét</span>
+                {{else}}
+                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle">{{this.missing_count}} thiếu</span>
+                {{/if}}
+              </td>
               <td class="text-muted small">{{formatDate this.started_at}}</td>
               <td>
                 {{#if (eq this.status "in_progress")}}
