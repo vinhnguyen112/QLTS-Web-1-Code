@@ -21,13 +21,11 @@ const ASSET_SELECT_SQL = `
 `;
 
 const assetController = {
-  // 1. Danh sách tài sản (bộ lọc đa tiêu chí + phân trang)
+  // 1. Danh sách tài sản (tìm kiếm + lọc trạng thái tức thì)
   async index(req, res) {
     try {
       const search = (req.query.name || "").trim();
       const status = req.query.status || "";
-      const categoryId = req.query.category_id || "";
-      const orgUnitId = req.query.org_unit_id || "";
       const page = parseInt(req.query.page) || 1;
       const limit = 10;
       const offset = (page - 1) * limit;
@@ -43,14 +41,6 @@ const assetController = {
         whereClause += " AND a.status = ?";
         params.push(status);
       }
-      if (categoryId) {
-        whereClause += " AND a.category_id = ?";
-        params.push(categoryId);
-      }
-      if (orgUnitId) {
-        whereClause += " AND a.org_unit_id = ?";
-        params.push(orgUnitId);
-      }
 
       // Đếm tổng số bản ghi thỏa mãn điều kiện lọc
       const countSql = `SELECT COUNT(*) AS total FROM assets a ${whereClause}`;
@@ -62,18 +52,6 @@ const assetController = {
         pages.push({ number: i, active: i === page });
       }
 
-      // Đếm số lượng theo các trạng thái chính để hiển thị tab nhanh
-      const [[statusCounts]] = await db.query(`
-        SELECT
-          COUNT(*) AS totalAll,
-          IFNULL(SUM(status = 'in_stock'), 0) AS inStockCount,
-          IFNULL(SUM(status = 'in_use'), 0) AS inUseCount,
-          IFNULL(SUM(status = 'maintenance'), 0) AS maintenanceCount,
-          IFNULL(SUM(status = 'disposed'), 0) AS disposedCount
-        FROM assets
-        WHERE deleted_at IS NULL
-      `);
-
       // Lấy danh sách tài sản theo trang
       const listSql = `
         ${ASSET_SELECT_SQL}
@@ -83,7 +61,7 @@ const assetController = {
       `;
       const [assets] = await db.query(listSql, params);
 
-      // Lấy các danh mục phục vụ bộ lọc và Modal thêm mới
+      // Lấy danh mục phục vụ Modal thêm mới tại chỗ
       const [categories] = await db.query("SELECT id, name FROM asset_categories ORDER BY name");
       const [orgUnits] = await db.query("SELECT id, name FROM org_units WHERE active = 1 ORDER BY name");
       const [locations] = await db.query("SELECT id, name FROM locations WHERE active = 1 ORDER BY name");
@@ -95,14 +73,9 @@ const assetController = {
         assets,
         searchName: search,
         status,
-        categoryId: categoryId ? Number(categoryId) : "",
-        orgUnitId: orgUnitId ? Number(orgUnitId) : "",
         totalPages,
         page,
         pages,
-        categories,
-        orgUnits,
-        statusCounts,
         formData: { categories, orgUnits, locations, suppliers, users },
       });
     } catch (err) {

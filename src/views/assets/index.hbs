@@ -1,14 +1,36 @@
 <div class="container-fluid p-0">
-  <div class="card mb-4">
-    <!-- Tiêu đề & Nút Thao tác -->
+  <div class="card">
     <div class="card-header bg-white py-3">
       <div class="row align-items-center g-2">
-        <div class="col-md-6">
+        <div class="col-md-5">
           <h5 class="mb-0 fw-bold text-dark">Quản lý Hồ sơ Tài sản</h5>
           <small class="text-muted">Hồ sơ tài sản cố định và công cụ dụng cụ toàn hệ thống</small>
         </div>
 
-        <div class="col-md-6 d-flex justify-content-md-end align-items-center gap-2">
+        <div class="col-md-7 d-flex flex-wrap justify-content-md-end align-items-center gap-2">
+          <!-- Form tìm kiếm và lọc trạng thái tự động -->
+          <form action="/assets" method="get" class="d-flex align-items-center gap-2 m-0" role="search">
+            <div class="input-group input-group-sm" style="width: 250px;">
+              <span class="input-group-text bg-light text-muted"><i class="bi bi-search"></i></span>
+              <input
+                type="text"
+                name="name"
+                class="form-control"
+                value="{{searchName}}"
+                placeholder="Tìm theo mã, tên, số seri..."
+              />
+            </div>
+
+            <!-- Khi click chọn trạng thái, tự động chuyển danh sách ngay lập tức -->
+            <select name="status" class="form-select form-select-sm" style="width: 160px;" onchange="this.form.submit()">
+              <option value="">Tất cả trạng thái</option>
+              <option value="in_stock" {{#if (eq status "in_stock")}}selected{{/if}}>Trong kho</option>
+              <option value="in_use" {{#if (eq status "in_use")}}selected{{/if}}>Đang sử dụng</option>
+              <option value="maintenance" {{#if (eq status "maintenance")}}selected{{/if}}>Đang bảo trì</option>
+              <option value="disposed" {{#if (eq status "disposed")}}selected{{/if}}>Đã thanh lý</option>
+            </select>
+          </form>
+
           <!-- Chỉ Quản lý tài sản hoặc Admin mới có nút Thêm tài sản mới -->
           {{#if canManageAssets}}
           <button
@@ -22,100 +44,6 @@
           {{/if}}
         </div>
       </div>
-    </div>
-
-    <!-- Thanh chuyển nhanh trạng thái (Quick Status Tabs) -->
-    <div class="bg-light px-3 pt-3 border-bottom">
-      <ul class="nav nav-tabs card-header-tabs m-0">
-        <li class="nav-item">
-          <a class="nav-link {{#if (eq status "")}}active fw-bold text-primary{{else}}text-secondary{{/if}}" href="/assets">
-            Tất cả <span class="badge text-bg-secondary ms-1">{{statusCounts.totalAll}}</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link {{#if (eq status "in_stock")}}active fw-bold text-primary{{else}}text-secondary{{/if}}" href="/assets?status=in_stock">
-            <i class="bi bi-box-seam me-1"></i> Trong kho <span class="badge text-bg-info ms-1">{{statusCounts.inStockCount}}</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link {{#if (eq status "in_use")}}active fw-bold text-primary{{else}}text-secondary{{/if}}" href="/assets?status=in_use">
-            <i class="bi bi-person-check me-1"></i> Đang sử dụng <span class="badge text-bg-success ms-1">{{statusCounts.inUseCount}}</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link {{#if (eq status "maintenance")}}active fw-bold text-primary{{else}}text-secondary{{/if}}" href="/assets?status=maintenance">
-            <i class="bi bi-wrench-adjustable me-1"></i> Đang bảo trì <span class="badge text-bg-warning text-dark ms-1">{{statusCounts.maintenanceCount}}</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link {{#if (eq status "disposed")}}active fw-bold text-primary{{else}}text-secondary{{/if}}" href="/assets?status=disposed">
-            <i class="bi bi-archive me-1"></i> Đã thanh lý <span class="badge text-bg-dark ms-1">{{statusCounts.disposedCount}}</span>
-          </a>
-        </li>
-      </ul>
-    </div>
-
-    <!-- Thanh bộ lọc đa tiêu chí (Filter Bar) -->
-    <div class="card-body bg-white border-bottom py-3">
-      <form action="/assets" method="get" class="row g-2 align-items-center" role="search">
-        <!-- 1. Từ khóa tìm kiếm -->
-        <div class="col-md-3">
-          <div class="input-group input-group-sm">
-            <span class="input-group-text bg-light text-muted"><i class="bi bi-search"></i></span>
-            <input
-              type="text"
-              name="name"
-              class="form-control"
-              value="{{searchName}}"
-              placeholder="Tìm theo mã, tên, số seri..."
-            />
-          </div>
-        </div>
-
-        <!-- 2. Lọc trạng thái -->
-        <div class="col-md-2">
-          <select name="status" class="form-select form-select-sm">
-            <option value="">-- Tất cả trạng thái --</option>
-            <option value="in_stock" {{#if (eq status "in_stock")}}selected{{/if}}>Trong kho</option>
-            <option value="in_use" {{#if (eq status "in_use")}}selected{{/if}}>Đang sử dụng</option>
-            <option value="maintenance" {{#if (eq status "maintenance")}}selected{{/if}}>Đang bảo trì</option>
-            <option value="transferring" {{#if (eq status "transferring")}}selected{{/if}}>Đang điều chuyển</option>
-            <option value="disposing" {{#if (eq status "disposing")}}selected{{/if}}>Chờ thanh lý</option>
-            <option value="disposed" {{#if (eq status "disposed")}}selected{{/if}}>Đã thanh lý</option>
-            <option value="lost" {{#if (eq status "lost")}}selected{{/if}}>Thất lạc</option>
-          </select>
-        </div>
-
-        <!-- 3. Lọc theo Loại tài sản -->
-        <div class="col-md-2">
-          <select name="category_id" class="form-select form-select-sm">
-            <option value="">-- Loại tài sản --</option>
-            {{#each categories}}
-              <option value="{{this.id}}" {{#if (eq ../categoryId this.id)}}selected{{/if}}>{{this.name}}</option>
-            {{/each}}
-          </select>
-        </div>
-
-        <!-- 4. Lọc theo Đơn vị / Phòng ban -->
-        <div class="col-md-3">
-          <select name="org_unit_id" class="form-select form-select-sm">
-            <option value="">-- Đơn vị quản lý --</option>
-            {{#each orgUnits}}
-              <option value="{{this.id}}" {{#if (eq ../orgUnitId this.id)}}selected{{/if}}>{{this.name}}</option>
-            {{/each}}
-          </select>
-        </div>
-
-        <!-- 5. Nút bấm Lọc & Reset -->
-        <div class="col-md-2 d-flex gap-1 justify-content-end">
-          <button class="btn btn-sm btn-primary flex-grow-1" type="submit">
-            <i class="bi bi-funnel me-1"></i> Lọc
-          </button>
-          <a href="/assets" class="btn btn-sm btn-outline-secondary" title="Xóa bộ lọc">
-            <i class="bi bi-arrow-counterclockwise"></i>
-          </a>
-        </div>
-      </form>
     </div>
 
     <!-- Bảng danh sách tài sản -->
@@ -164,12 +92,11 @@
               <td class="text-center">{{{assetStatusBadge this.status}}}</td>
               <td class="text-end pe-3">
                 <div class="btn-group btn-group-sm" role="group">
-                  <a href="/assets/{{this.id}}" class="btn btn-outline-primary" title="Xem chi tiết hồ sơ">
+                  <a href="/assets/{{this.id}}" class="btn btn-outline-primary" title="Chi tiết">
                     Chi tiết
                   </a>
-                  <!-- Chỉ Admin hoặc Quản lý tài sản mới có nút Sửa -->
                   {{#if ../canManageAssets}}
-                  <a href="/assets/{{this.id}}/edit" class="btn btn-outline-secondary" title="Chỉnh sửa">
+                  <a href="/assets/{{this.id}}/edit" class="btn btn-outline-secondary" title="Sửa">
                     Sửa
                   </a>
                   {{/if}}
@@ -180,7 +107,7 @@
             <tr>
               <td colspan="9" class="text-center py-5 text-muted">
                 <i class="bi bi-inbox fs-2 d-block text-secondary mb-2"></i>
-                Không tìm thấy tài sản nào phù hợp với điều kiện tìm kiếm.
+                Không tìm thấy tài sản nào phù hợp.
               </td>
             </tr>
           {{/each}}
@@ -198,7 +125,7 @@
           <ul class="pagination pagination-sm mb-0">
             {{#each pages}}
               <li class="page-item {{#if this.active}}active{{/if}}">
-                <a class="page-link" href="/assets?page={{this.number}}&name={{../searchName}}&status={{../status}}&category_id={{../categoryId}}&org_unit_id={{../orgUnitId}}">
+                <a class="page-link" href="/assets?page={{this.number}}&name={{../searchName}}&status={{../status}}">
                   {{this.number}}
                 </a>
               </li>
@@ -210,7 +137,7 @@
   </div>
 </div>
 
-<!-- Modal: Thêm mới tài sản (Tích hợp tại chỗ theo chuẩn ERP) -->
+<!-- Modal: Thêm mới tài sản tại chỗ -->
 <div class="modal fade" id="addAssetModal" tabindex="-1" aria-labelledby="addAssetModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -223,20 +150,16 @@
         </div>
         <div class="modal-body p-4">
           <div class="row g-3">
-            <!-- Mã tài sản -->
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Mã tài sản</label>
-              <input type="text" name="code" class="form-control" placeholder="Để trống để hệ thống tự sinh mã (VD: TS-2026-xxxxx)">
-              <small class="text-muted" style="font-size: 0.8rem;">Để trống = Tự động sinh mã duy nhất</small>
+              <input type="text" name="code" class="form-control" placeholder="Để trống để tự sinh mã (VD: TS-2026-xxxxx)">
             </div>
 
-            <!-- Tên tài sản -->
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Tên tài sản <span class="text-danger">*</span></label>
-              <input type="text" name="name" class="form-control" placeholder="Ví dụ: Laptop Lenovo ThinkPad T14 Gen 4" required>
+              <input type="text" name="name" class="form-control" placeholder="Ví dụ: Laptop Lenovo ThinkPad T14" required>
             </div>
 
-            <!-- Loại tài sản -->
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Loại tài sản <span class="text-danger">*</span></label>
               <select name="category_id" class="form-select" required>
@@ -247,7 +170,6 @@
               </select>
             </div>
 
-            <!-- Nhà cung cấp -->
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Nhà cung cấp</label>
               <select name="supplier_id" class="form-select">
@@ -258,7 +180,6 @@
               </select>
             </div>
 
-            <!-- Đơn vị quản lý -->
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Đơn vị / Phòng ban quản lý <span class="text-danger">*</span></label>
               <select name="org_unit_id" class="form-select" required>
@@ -268,7 +189,6 @@
               </select>
             </div>
 
-            <!-- Vị trí phòng máy -->
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Vị trí phòng / Kệ lưu trữ</label>
               <select name="location_id" class="form-select">
@@ -279,7 +199,7 @@
               </select>
             </div>
 
-            <!-- Người tiếp nhận (Bàn giao trực tiếp hoặc Lưu kho) -->
+            <!-- Người tiếp nhận (Nếu chọn -> in_use, để trống -> in_stock) -->
             <div class="col-md-12">
               <div class="p-3 bg-light rounded border">
                 <label class="form-label small fw-semibold mb-1">
@@ -297,25 +217,21 @@
               </div>
             </div>
 
-            <!-- Nguyên giá -->
             <div class="col-md-4">
               <label class="form-label small fw-semibold">Nguyên giá (VNĐ)</label>
               <input type="number" name="original_cost" class="form-control" placeholder="0" min="0" step="1000">
             </div>
 
-            <!-- Ngày mua -->
             <div class="col-md-4">
               <label class="form-label small fw-semibold">Ngày mua / Tiếp nhận</label>
               <input type="date" name="purchase_date" class="form-control">
             </div>
 
-            <!-- Thời hạn sử dụng -->
             <div class="col-md-4">
               <label class="form-label small fw-semibold">Thời hạn sử dụng (Tháng)</label>
               <input type="number" name="useful_life_months" class="form-control" value="36" min="1">
             </div>
 
-            <!-- Số sê-ri -->
             <div class="col-md-12">
               <label class="form-label small fw-semibold">Số sê-ri (Serial Number) / IMEI</label>
               <input type="text" name="serial_no" class="form-control" placeholder="Ví dụ: SN-9482048123">
