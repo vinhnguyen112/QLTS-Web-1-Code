@@ -53,3 +53,18 @@ body {
   font-size: 0.85rem;
   color: #6c757d;
 }
+
+/* Đảm bảo liên kết liền mạch chuẩn Bootstrap 5 cho .btn-group */
+.btn-group > form {
+  display: inline-flex;
+  margin: 0;
+}
+.btn-group > .btn:first-child:not(:last-child) {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+.btn-group > form:last-child > .btn,
+.btn-group > .btn:last-child {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+}

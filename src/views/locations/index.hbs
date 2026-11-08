@@ -59,17 +59,14 @@
                 {{/if}}
               </td>
               <td class="text-end pe-3">
+                <form
+                  id="deleteLoc{{this.id}}"
+                  action="/locations/{{this.id}}/delete"
+                  method="POST"
+                  onsubmit="return confirm('Bạn có chắc chắn muốn ngưng hoạt động vị trí này?');"
+                ></form>
                 <div class="btn-group" role="group" aria-label="Basic mixed styles example">
-                  <form
-                    action="/locations/{{this.id}}/delete"
-                    method="POST"
-                    class="d-inline m-0"
-                    onsubmit="return confirm('Bạn có chắc chắn muốn ngưng hoạt động vị trí này?');"
-                  >
-                    <button type="submit" class="btn btn-danger">
-                      Xóa
-                    </button>
-                  </form>
+                  <button type="submit" form="deleteLoc{{this.id}}" class="btn btn-danger">Xóa</button>
                 </div>
               </td>
             </tr>
