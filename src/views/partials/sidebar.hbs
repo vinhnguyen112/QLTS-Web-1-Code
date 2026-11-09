@@ -26,7 +26,6 @@
     <span>Hộp phiếu & Duyệt</span>
   </a>
 
-  <!-- Kiểm kê tài sản: Chỉ người có quyền kiểm kê mới thấy -->
   {{#if can.manageStocktakes}}
   <a class="nav-link d-flex align-items-center" href="/stocktakes">
     <i class="bi bi-qr-code-scan me-2 text-secondary"></i>
@@ -39,7 +38,7 @@
     <span>Bảo trì & Báo hỏng</span>
   </a>
 
-  <!-- 3. HỆ THỐNG & CƠ CẤU (Ẩn hoàn toàn với nhân viên thường) -->
+  <!-- 3. HỆ THỐNG & CƠ CẤU -->
   {{#if can.manageMasterData}}
   <div class="sidebar-heading">
     Hệ thống & Cơ cấu

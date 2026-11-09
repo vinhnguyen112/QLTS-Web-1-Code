@@ -8,14 +8,12 @@ router.use("/auth", require("./authRoutes"));
 // Áp dụng middleware kiểm tra đăng nhập cho tất cả các chức năng bên dưới
 router.use(requireAuth);
 
-// 2. Phân hệ Trang chủ & Dashboard (Ai đã đăng nhập cũng xem được)
+// 2. Phân hệ Trang chủ & Dashboard
 router.use("/", require("./homeRoutes"));
 
 // 3. Phân hệ Quản lý Tài sản & Vòng đời
 router.use("/assets", require("./assetRoutes"));
-router.use("/warehouse", require("./warehouseRoutes"));
 router.use("/requests", require("./requestRoutes"));
-router.use("/procurement", (req, res) => res.redirect("/requests")); // Alias
 router.use("/stocktakes", require("./stocktakeRoutes"));
 router.use("/maintenance", require("./maintenanceRoutes"));
 router.use("/depreciation", require("./depreciationRoutes"));

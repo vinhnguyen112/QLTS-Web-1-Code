@@ -1,9 +1,6 @@
 const dayjs = require("dayjs");
 
-/**
- * Tính toán khấu hao đường thẳng (Straight-Line Depreciation) cho 1 tài sản
- * Tuân thủ VAS & Thông tư 45/2013/TT-BTC
- */
+// Tính khấu hao đường thẳng theo Thông tư 45/2013/TT-BTC
 function calcDepreciation(asset, now = dayjs()) {
   const cost = Number(asset.original_cost) || 0;
   const residual = Number(asset.residual_value) || 0;
@@ -46,9 +43,7 @@ function calcDepreciation(asset, now = dayjs()) {
   };
 }
 
-/**
- * Tạo bảng kế hoạch phân bổ khấu hao chi tiết theo từng tháng
- */
+// Bảng kế hoạch phân bổ khấu hao từng tháng
 function generateDepreciationSchedule(asset, now = dayjs()) {
   const cost = Number(asset.original_cost) || 0;
   const residual = Number(asset.residual_value) || 0;

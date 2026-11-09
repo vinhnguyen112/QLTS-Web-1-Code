@@ -21,7 +21,7 @@
               />
             </div>
 
-            <!-- Khi click chọn trạng thái, tự động chuyển danh sách ngay lập tức -->
+            <!-- Lọc theo trạng thái -->
             <select name="status" class="form-select form-select-sm" style="width: 160px;" onchange="this.form.submit()">
               <option value="">Tất cả trạng thái</option>
               <option value="in_stock" {{#if (eq status "in_stock")}}selected{{/if}}>Trong kho</option>
@@ -31,7 +31,7 @@
             </select>
           </form>
 
-          <!-- Chỉ Quản lý tài sản hoặc Admin mới có nút Thêm tài sản mới -->
+          <!-- Thêm tài sản mới -->
           {{#if canManageAssets}}
           <button
             type="button"
@@ -198,7 +198,7 @@
               </select>
             </div>
 
-            <!-- Người tiếp nhận (Nếu chọn -> in_use, để trống -> in_stock) -->
+            <!-- Người tiếp nhận -->
             <div class="col-md-12">
               <div class="p-3 bg-light rounded border">
                 <label class="form-label small fw-semibold mb-1">
