@@ -114,6 +114,8 @@ app.use((req, res, next) => {
   const role = user?.role_code || "";
 
   res.locals.currentUser = user;
+  res.locals.errorMessage = req.query.error || null;
+  res.locals.successMessage = req.query.msg || null;
 
   // Cờ quyền kiểm tra nhanh trong View: {{#if can.manageAssets}} ... {{/if}}
   res.locals.can = {
