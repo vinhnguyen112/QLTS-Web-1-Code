@@ -1,4 +1,12 @@
 node_modules
 .env
-.md
 ~$*
+
+# Bỏ qua toàn bộ file .md, .docx, .doc
+*.md
+*.docx
+*.doc
+
+# Ngoại lệ: Giữ lại file hướng dẫn chạy dự án
+!HUONG_DAN_CHAY_DU_AN.md
+!HUONG_DAN_CHAY_DU_AN.docx
