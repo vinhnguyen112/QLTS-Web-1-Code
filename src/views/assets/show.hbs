@@ -32,7 +32,8 @@
             action="/assets/{{asset.id}}/recall"
             method="POST"
             class="d-inline m-0 p-0"
-            onsubmit="return confirm('Bạn có chắc chắn muốn thu hồi tài sản này về lại kho trung tâm?');"
+            data-confirm="Bạn có chắc chắn muốn thu hồi tài sản này về lại kho trung tâm?"
+            data-title="Xác nhận thu hồi tài sản"
           >
             <button type="submit" class="btn btn-sm btn-warning text-nowrap">
               Thu hồi về kho

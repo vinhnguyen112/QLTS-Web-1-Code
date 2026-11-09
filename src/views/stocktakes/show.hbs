@@ -16,7 +16,7 @@
             Mở Camera Quét Mã QR
           </a>
 
-          <form action="/stocktakes/{{stocktake.id}}/close" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn chốt kết quả kiểm kê? Toàn bộ tài sản chưa quét sẽ chuyển thành Thiếu (Missing)');">
+          <form action="/stocktakes/{{stocktake.id}}/close" method="POST" data-confirm="Bạn có chắc chắn muốn chốt kết quả kiểm kê? Toàn bộ tài sản chưa quét sẽ chuyển thành Thiếu (Missing)" data-title="Chốt kết quả kiểm kê">
             <button type="submit" class="btn btn-success btn-sm px-3 fw-semibold">
               Chốt & Đóng đợt kiểm kê
             </button>
