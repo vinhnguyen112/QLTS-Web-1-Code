@@ -119,7 +119,7 @@
             </button>
 
             <!-- Nút Duyệt -->
-            <form action="/requests/{{request.id}}/approve" method="POST" data-confirm="Bạn có chắc chắn muốn phê duyệt phiếu này?" data-title="Xác nhận phê duyệt" data-danger="false">
+            <form action="/requests/{{request.id}}/approve" method="POST" onsubmit="confirmAction(event, 'Bạn có chắc chắn muốn phê duyệt phiếu này?');">
               <button type="submit" class="btn btn-success btn-sm px-3">
                 Phê duyệt
               </button>

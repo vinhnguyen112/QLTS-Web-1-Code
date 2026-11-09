@@ -59,7 +59,7 @@
                     action="/categories/{{this.id}}/delete"
                     method="POST"
                     class="d-inline m-0"
-                    data-confirm="Bạn có chắc chắn muốn ngưng sử dụng danh mục này?"
+                    onsubmit="confirmAction(event, 'Bạn có chắc chắn muốn ngưng sử dụng danh mục này?');"
                   >
                     <button type="submit" class="btn btn-danger">Xóa</button>
                   </form>

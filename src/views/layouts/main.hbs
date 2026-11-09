@@ -48,7 +48,7 @@
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-      // 1. Khởi tạo Toast dùng chung theo chuẩn SweetAlert2
+      // 1. Cấu hình Toast thông báo góc trên bên phải
       const Toast = Swal.mixin({
         toast: true,
         position: "top-end",
@@ -57,13 +57,14 @@
         timerProgressBar: true,
       });
 
-      // 2. Hàm xác nhận hành động toàn hệ thống
-      function confirmAction(e, message, title = "Bạn có chắc chắn?") {
-        e.preventDefault();
-        const form = e.target.closest("form") || e.target;
+      // 2. Hộp thoại xác nhận hành động (Xóa, Thu hồi, Duyệt...)
+      function confirmAction(event, message) {
+        event.preventDefault(); // Dừng không cho form gửi đi ngay
+        const form = event.target.closest("form");
+
         Swal.fire({
-          title: title,
-          text: message || "Hành động này sẽ được thực hiện ngay lập tức!",
+          title: "Bạn có chắc chắn?",
+          text: message,
           icon: "warning",
           showCancelButton: true,
           confirmButtonColor: "#d33",
@@ -72,36 +73,10 @@
           cancelButtonText: "Hủy bỏ"
         }).then((result) => {
           if (result.isConfirmed) {
-            form.submit();
+            form.submit(); // Bấm Đồng ý -> gửi form lên server
           }
         });
       }
-
-      // 3. Tự động bắt mọi form có thuộc tính data-confirm
-      document.addEventListener("submit", function (e) {
-        const form = e.target;
-        const msg = form.getAttribute("data-confirm");
-        if (msg && !form.dataset.confirmed) {
-          e.preventDefault();
-          const title = form.getAttribute("data-title") || "Bạn có chắc chắn?";
-          const isDanger = form.getAttribute("data-danger") !== "false";
-          Swal.fire({
-            title: title,
-            text: msg,
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: isDanger ? "#d33" : "#198754",
-            cancelButtonColor: "#6c757d",
-            confirmButtonText: "Đồng ý",
-            cancelButtonText: "Hủy bỏ"
-          }).then((result) => {
-            if (result.isConfirmed) {
-              form.dataset.confirmed = "true";
-              form.submit();
-            }
-          });
-        }
-      });
     </script>
 
     {{#if (or errorMessage error)}}
