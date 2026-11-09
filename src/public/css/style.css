@@ -1,9 +1,8 @@
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif;
   background-color: #f8f9fa;
-  color: #212529;
+  color: #2c3e50;
 }
 
 /* Header */
@@ -22,21 +21,22 @@ body {
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
-  color: #6c757d;
+  color: #7b8a8b;
   letter-spacing: 0.5px;
 }
 
 .sidebar-menu .nav-link {
-  color: #212529;
+  color: #2c3e50;
   font-size: 0.9rem;
   padding: 8px 16px;
   border-radius: 4px;
   margin-bottom: 2px;
+  transition: all 0.15s ease-in-out;
 }
 
 .sidebar-menu .nav-link:hover {
-  background-color: #e9ecef;
-  color: #000000;
+  background-color: #ecf0f1;
+  color: #18bc9c;
 }
 
 /* Main Content Wrapper */
