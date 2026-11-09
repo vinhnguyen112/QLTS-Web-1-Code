@@ -1,10 +1,4 @@
 <div class="container-fluid p-0">
-  <!-- Tiêu đề trang -->
-  <div class="mb-3">
-    <h5 class="mb-0 fw-bold text-dark">Khấu hao tài sản</h5>
-    <small class="text-muted">Theo dõi phân bổ khấu hao đường thẳng và giá trị còn lại của tài sản toàn hệ thống</small>
-  </div>
-
   <!-- 3 Thẻ chỉ số tài chính cốt lõi -->
   <div class="row g-3 mb-3">
     <div class="col-md-4">
@@ -27,17 +21,17 @@
     </div>
   </div>
 
-  <!-- Bảng dữ liệu chính -->
+  <!-- Bảng dữ liệu chính với Card Header đồng bộ chuẩn hệ thống -->
   <div class="card">
     <div class="card-header bg-white py-3">
       <div class="row align-items-center g-2">
         <div class="col-md-5">
-          <h6 class="mb-0 fw-bold text-dark">Danh sách trích khấu hao</h6>
-          <small class="text-muted">Kế hoạch phân bổ và mức trích hàng tháng theo tài sản</small>
+          <h5 class="mb-0 fw-bold text-dark">Quản lý Khấu hao Tài sản</h5>
+          <small class="text-muted">Theo dõi phân bổ khấu hao đường thẳng và giá trị còn lại toàn hệ thống</small>
         </div>
 
         <div class="col-md-7 d-flex flex-wrap justify-content-md-end align-items-center gap-2">
-          <!-- Form tìm kiếm và lọc đơn vị đồng nhất với các trang khác -->
+          <!-- Form tìm kiếm và lọc đơn vị đồng bộ theo chuẩn trang Quản lý tài sản -->
           <form action="/depreciation" method="get" class="d-flex align-items-center gap-2 m-0" role="search">
             <div class="input-group input-group-sm" style="width: 250px;">
               <span class="input-group-text bg-light text-muted"><i class="bi bi-search"></i></span>
@@ -51,7 +45,7 @@
             </div>
 
             <!-- Tự động lọc khi chọn đơn vị -->
-            <select name="org_unit_id" class="form-select form-select-sm" style="width: 190px;" onchange="this.form.submit()">
+            <select name="org_unit_id" class="form-select form-select-sm" style="width: 180px;" onchange="this.form.submit()">
               <option value="">Tất cả đơn vị quản lý</option>
               {{#each orgUnits}}
                 <option value="{{this.id}}" {{#if (eq this.id ../orgUnitId)}}selected{{/if}}>{{this.name}}</option>
@@ -62,6 +56,10 @@
               <a href="/depreciation" class="btn btn-sm btn-outline-secondary text-nowrap">Đặt lại</a>
             {{/if}}
           </form>
+
+          <button type="button" onclick="window.print()" class="btn btn-sm btn-primary text-nowrap">
+            <i class="bi bi-printer me-1"></i> In bảng kê
+          </button>
         </div>
       </div>
     </div>
@@ -119,7 +117,7 @@
       </table>
     </div>
 
-    <!-- Phân trang Bootstrap chuẩn đồng bộ -->
+    <!-- Phân trang Bootstrap chuẩn -->
     {{#if (gt totalPages 1)}}
       <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
         <div class="small text-muted">
