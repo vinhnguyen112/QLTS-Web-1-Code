@@ -84,7 +84,7 @@ app.engine(
         };
         return map[type] || `<span class="badge text-bg-light border">${type}</span>`;
       },
-      json: (context) => JSON.stringify(context),
+      json: (context) => JSON.stringify(context === undefined ? null : context),
     },
   })
 );
