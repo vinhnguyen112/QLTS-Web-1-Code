@@ -54,4 +54,41 @@ body {
   color: #6c757d;
 }
 
+/* Khung Thông báo (Alerts) mềm mại, dịu mắt chuẩn phong cách Flatly */
+.alert {
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+}
+
+.alert-success {
+  background-color: #d1f2eb;
+  color: #0e6655;
+  border-color: #a3e4d7;
+  border-left: 4px solid #18bc9c;
+}
+
+.alert-danger {
+  background-color: #fadbd8;
+  color: #78281f;
+  border-color: #f5b7b1;
+  border-left: 4px solid #e74c3c;
+}
+
+.alert-warning {
+  background-color: #fdebd0;
+  color: #7e5109;
+  border-color: #f8c471;
+  border-left: 4px solid #f39c12;
+}
+
+.alert-info {
+  background-color: #d4e6f1;
+  color: #1b4f72;
+  border-color: #a9cce3;
+  border-left: 4px solid #3498db;
+}
+
 

@@ -78,7 +78,10 @@
   function submitManualCode() {
     const input = document.getElementById('manualCodeInput');
     const val = input.value.trim();
-    if (!val) return alert('Vui lòng nhập mã tài sản');
+    if (!val) {
+      showMessage('warning', 'Vui lòng nhập mã tài sản trước khi nhấn Ghi nhận!');
+      return;
+    }
     processCode(val);
     input.value = '';
   }
