@@ -89,7 +89,6 @@ const assetController = {
   async create(req, res) {
     try {
       const {
-        code,
         name,
         category_id,
         supplier_id,
@@ -100,30 +99,11 @@ const assetController = {
         purchase_date,
         useful_life_months,
         serial_no,
-        status,
       } = req.body;
 
-      if (!name || !name.trim()) {
-        return res.status(400).send("Tên tài sản là bắt buộc");
-      }
-
-      // Sinh mã tự động nếu người dùng không nhập
-      const finalCode =
-        code && code.trim() !== ""
-          ? code.trim()
-          : `TS-${dayjs().format("YYYY")}-${Math.floor(10000 + Math.random() * 90000)}`;
-
-      // Trạng thái ban đầu:
-      // Nếu có chọn người tiếp nhận -> in_use (Đang sử dụng)
-      // Nếu không chọn người tiếp nhận -> in_stock (Trong kho) hoặc theo lựa chọn
-      let initialStatus = "in_stock";
-      const hasAssignee = assignee_id && String(assignee_id).trim() !== "";
-      if (hasAssignee) {
-        initialStatus = "in_use";
-      } else if (status) {
-        initialStatus = status;
-      }
-
+      // Sinh mã tài sản tự động
+      const code = `TS-${dayjs().format("YYYY")}-${Math.floor(10000 + Math.random() * 90000)}`;
+      const status = assignee_id ? "in_use" : "in_stock";
       const currentUserId = req.session.user ? req.session.user.id : null;
 
       const [result] = await db.query(
@@ -133,25 +113,25 @@ const assetController = {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
       `,
         [
-          finalCode,
-          name.trim(),
-          category_id || null,
+          code,
+          name,
+          category_id,
           supplier_id || null,
-          org_unit_id || 227, // Mặc định Trụ sở chính nếu không chọn
+          org_unit_id,
           location_id || null,
-          hasAssignee ? assignee_id : null,
+          assignee_id || null,
           original_cost || 0,
-          purchase_date || dayjs().format("YYYY-MM-DD"),
-          useful_life_months || 36,
-          initialStatus,
+          purchase_date || null,
+          useful_life_months || 0,
+          status,
           serial_no || null,
         ]
       );
 
-      const eventNote = hasAssignee
+      const eventType = assignee_id ? "ASSIGN" : "INITIAL_IMPORT";
+      const eventNote = assignee_id
         ? "Khai báo tài sản mới và bàn giao trực tiếp cho nhân viên"
         : "Nhập mới tài sản vào kho lưu trữ";
-      const eventType = hasAssignee ? "ASSIGN" : "INITIAL_IMPORT";
       await recordEvent(result.insertId, eventType, eventNote, currentUserId);
 
       res.redirect(`/assets/${result.insertId}`);
