@@ -60,6 +60,31 @@ const employeeController = {
   async create(req, res) {
     try {
       const { username, full_name, email, org_unit_id, role_id, password } = req.body;
+      const cleanUsername = (username || "").trim();
+      const cleanEmail = (email || "").trim();
+      const cleanFullName = (full_name || "").trim();
+
+      if (!cleanUsername || !cleanFullName || !cleanEmail) {
+        return res.redirect("/employees?error=" + encodeURIComponent("Vui lòng điền đầy đủ thông tin nhân sự!"));
+      }
+
+      // Kiểm tra trùng username hoặc email trong DB
+      const [existing] = await db.query(
+        "SELECT id, username, email FROM users WHERE username = ? OR email = ? LIMIT 1",
+        [cleanUsername, cleanEmail]
+      );
+      if (existing.length > 0) {
+        const isUserMatch = existing[0].username.toLowerCase() === cleanUsername.toLowerCase();
+        return res.redirect(
+          "/employees?error=" +
+            encodeURIComponent(
+              isUserMatch
+                ? `Tên đăng nhập '${cleanUsername}' đã tồn tại, vui lòng chọn tên khác!`
+                : `Email '${cleanEmail}' đã tồn tại trong hệ thống, vui lòng chọn email khác!`
+            )
+        );
+      }
+
       const defaultPass = password || "Devmaster@2026!";
       const hash = await argon2.hash(defaultPass);
 
@@ -68,7 +93,7 @@ const employeeController = {
         INSERT INTO users (username, password_hash, full_name, email, org_unit_id, status, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, 'ACTIVE', NOW(), NOW())
       `,
-        [username.trim(), hash, full_name.trim(), email.trim(), org_unit_id || 227]
+        [cleanUsername, hash, cleanFullName, cleanEmail, org_unit_id || 227]
       );
 
       // Gán vai trò
@@ -79,10 +104,15 @@ const employeeController = {
         ]);
       }
 
-      res.redirect("/employees");
+      res.redirect("/employees?msg=" + encodeURIComponent("Thêm nhân sự mới thành công!"));
     } catch (err) {
       console.error("Lỗi thêm nhân sự:", err);
-      res.redirect("/employees");
+      if (err.code === "ER_DUP_ENTRY") {
+        return res.redirect(
+          "/employees?error=" + encodeURIComponent("Tên đăng nhập hoặc email đã tồn tại!")
+        );
+      }
+      res.redirect("/employees?error=" + encodeURIComponent("Lỗi thêm nhân sự: " + err.message));
     }
   },
 
@@ -118,6 +148,19 @@ const employeeController = {
   async update(req, res) {
     try {
       const { full_name, email, org_unit_id, role_id, status } = req.body;
+      const cleanFullName = (full_name || "").trim();
+      const cleanEmail = (email || "").trim();
+
+      // Kiểm tra trùng email với tài khoản khác
+      const [duplicate] = await db.query(
+        "SELECT id FROM users WHERE email = ? AND id != ? LIMIT 1",
+        [cleanEmail, req.params.id]
+      );
+      if (duplicate.length > 0) {
+        return res.redirect(
+          "/employees?error=" + encodeURIComponent(`Email '${cleanEmail}' đã được dùng bởi tài khoản khác!`)
+        );
+      }
 
       await db.query(
         `
@@ -125,7 +168,7 @@ const employeeController = {
         SET full_name = ?, email = ?, org_unit_id = ?, status = ?, updated_at = NOW()
         WHERE id = ?
       `,
-        [full_name, email, org_unit_id, status || "ACTIVE", req.params.id]
+        [cleanFullName, cleanEmail, org_unit_id, status || "ACTIVE", req.params.id]
       );
 
       if (role_id) {
@@ -136,10 +179,15 @@ const employeeController = {
         ]);
       }
 
-      res.redirect("/employees");
+      res.redirect("/employees?msg=" + encodeURIComponent("Cập nhật thông tin nhân sự thành công!"));
     } catch (err) {
       console.error("Lỗi cập nhật nhân sự:", err);
-      res.redirect("/employees");
+      if (err.code === "ER_DUP_ENTRY") {
+        return res.redirect(
+          "/employees?error=" + encodeURIComponent("Email đã tồn tại ở tài khoản khác!")
+        );
+      }
+      res.redirect("/employees?error=" + encodeURIComponent("Lỗi cập nhật: " + err.message));
     }
   },
 };

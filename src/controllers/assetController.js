@@ -134,10 +134,10 @@ const assetController = {
         : "Nhập mới tài sản vào kho lưu trữ";
       await recordEvent(result.insertId, eventType, eventNote, currentUserId);
 
-      res.redirect(`/assets/${result.insertId}`);
+      res.redirect(`/assets/${result.insertId}?msg=` + encodeURIComponent("Thêm tài sản mới thành công!"));
     } catch (err) {
       console.error("Lỗi thêm tài sản mới:", err);
-      res.status(500).send("Không thể thêm tài sản: " + err.message);
+      res.redirect("/assets?error=" + encodeURIComponent("Không thể thêm tài sản: " + err.message));
     }
   },
 
@@ -330,9 +330,9 @@ const assetController = {
   async delete(req, res) {
     try {
       await db.query("UPDATE assets SET deleted_at = NOW() WHERE id = ?", [req.params.id]);
-      res.redirect("/assets");
+      res.redirect("/assets?msg=" + encodeURIComponent("Đã xóa tài sản thành công!"));
     } catch (err) {
-      res.status(500).send("Không thể xóa tài sản: " + err.message);
+      res.redirect("/assets?error=" + encodeURIComponent("Không thể xóa tài sản: " + err.message));
     }
   },
 };

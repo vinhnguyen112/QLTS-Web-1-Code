@@ -51,14 +51,38 @@ const supplierController = {
   async create(req, res) {
     try {
       const { code, name, tax_code, phone, email, address } = req.body;
+      const cleanCode = (code || "").trim().toUpperCase();
+      const cleanName = (name || "").trim();
+
+      if (!cleanCode || !cleanName) {
+        return res.redirect("/suppliers?error=" + encodeURIComponent("Vui lòng nhập đầy đủ mã và tên nhà cung cấp!"));
+      }
+
+      // Kiểm tra trùng mã trong DB (kể cả bản ghi đã xóa mềm)
+      const [existing] = await db.query(
+        "SELECT id FROM suppliers WHERE code = ? LIMIT 1",
+        [cleanCode]
+      );
+      if (existing.length > 0) {
+        return res.redirect(
+          "/suppliers?error=" +
+            encodeURIComponent(`Mã nhà cung cấp '${cleanCode}' đã tồn tại, vui lòng nhập mã khác!`)
+        );
+      }
+
       await db.query(
         "INSERT INTO suppliers (code, name, tax_code, phone, email, address, active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), NOW())",
-        [code, name, tax_code, phone, email, address]
+        [cleanCode, cleanName, tax_code, phone, email, address]
       );
-      res.redirect("/suppliers");
+      res.redirect("/suppliers?msg=" + encodeURIComponent("Thêm nhà cung cấp mới thành công!"));
     } catch (err) {
       console.error("Lỗi thêm nhà cung cấp:", err);
-      res.redirect("/suppliers");
+      if (err.code === "ER_DUP_ENTRY") {
+        return res.redirect(
+          "/suppliers?error=" + encodeURIComponent("Mã nhà cung cấp đã tồn tại, vui lòng nhập mã khác!")
+        );
+      }
+      res.redirect("/suppliers?error=" + encodeURIComponent("Lỗi thêm nhà cung cấp: " + err.message));
     }
   },
 
@@ -77,13 +101,34 @@ const supplierController = {
   async update(req, res) {
     try {
       const { code, name, tax_code, phone, email, address } = req.body;
+      const cleanCode = (code || "").trim().toUpperCase();
+      const cleanName = (name || "").trim();
+
+      // Kiểm tra trùng mã với nhà cung cấp khác trong DB
+      const [duplicate] = await db.query(
+        "SELECT id FROM suppliers WHERE code = ? AND id != ? LIMIT 1",
+        [cleanCode, req.params.id]
+      );
+      if (duplicate.length > 0) {
+        return res.redirect(
+          "/suppliers?error=" +
+            encodeURIComponent(`Mã nhà cung cấp '${cleanCode}' đã tồn tại, vui lòng nhập mã khác!`)
+        );
+      }
+
       await db.query(
         "UPDATE suppliers SET code = ?, name = ?, tax_code = ?, phone = ?, email = ?, address = ?, updated_at = NOW() WHERE id = ?",
-        [code, name, tax_code, phone, email, address, req.params.id]
+        [cleanCode, cleanName, tax_code, phone, email, address, req.params.id]
       );
-      res.redirect("/suppliers");
+      res.redirect("/suppliers?msg=" + encodeURIComponent("Cập nhật nhà cung cấp thành công!"));
     } catch (err) {
-      res.redirect("/suppliers");
+      console.error("Lỗi cập nhật nhà cung cấp:", err);
+      if (err.code === "ER_DUP_ENTRY") {
+        return res.redirect(
+          "/suppliers?error=" + encodeURIComponent("Mã nhà cung cấp đã tồn tại, vui lòng nhập mã khác!")
+        );
+      }
+      res.redirect("/suppliers?error=" + encodeURIComponent("Lỗi cập nhật: " + err.message));
     }
   },
 
@@ -91,9 +136,9 @@ const supplierController = {
   async delete(req, res) {
     try {
       await db.query("UPDATE suppliers SET active = 0, updated_at = NOW() WHERE id = ?", [req.params.id]);
-      res.redirect("/suppliers");
+      res.redirect("/suppliers?msg=" + encodeURIComponent("Đã ngưng hoạt động nhà cung cấp thành công!"));
     } catch (err) {
-      res.status(500).send("Không thể xóa nhà cung cấp: " + err.message);
+      res.redirect("/suppliers?error=" + encodeURIComponent("Không thể xóa nhà cung cấp: " + err.message));
     }
   },
 };

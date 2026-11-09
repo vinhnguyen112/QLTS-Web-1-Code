@@ -68,14 +68,39 @@ const locationController = {
   async create(req, res) {
     try {
       const { code, name, org_unit_id } = req.body;
+      const cleanCode = (code || "").trim().toUpperCase();
+      const cleanName = (name || "").trim();
+      const unitId = org_unit_id || 227;
+
+      if (!cleanCode || !cleanName) {
+        return res.redirect("/locations?error=" + encodeURIComponent("Vui lòng nhập đầy đủ mã và tên vị trí!"));
+      }
+
+      // Kiểm tra trùng mã vị trí trong đơn vị (kể cả bản ghi đã xóa mềm)
+      const [existing] = await db.query(
+        "SELECT id FROM locations WHERE code = ? AND org_unit_id = ? LIMIT 1",
+        [cleanCode, unitId]
+      );
+      if (existing.length > 0) {
+        return res.redirect(
+          "/locations?error=" +
+            encodeURIComponent(`Mã vị trí '${cleanCode}' đã tồn tại trong đơn vị này, vui lòng nhập mã khác!`)
+        );
+      }
+
       await db.query(
         "INSERT INTO locations (code, name, org_unit_id, active, created_at, updated_at) VALUES (?, ?, ?, 1, NOW(), NOW())",
-        [code.trim(), name.trim(), org_unit_id || 227]
+        [cleanCode, cleanName, unitId]
       );
-      res.redirect("/locations");
+      res.redirect("/locations?msg=" + encodeURIComponent("Thêm vị trí mới thành công!"));
     } catch (err) {
       console.error("Lỗi thêm vị trí:", err);
-      res.redirect("/locations");
+      if (err.code === "ER_DUP_ENTRY") {
+        return res.redirect(
+          "/locations?error=" + encodeURIComponent("Mã vị trí đã tồn tại trong đơn vị này, vui lòng nhập mã khác!")
+        );
+      }
+      res.redirect("/locations?error=" + encodeURIComponent("Lỗi thêm vị trí: " + err.message));
     }
   },
 
@@ -102,17 +127,37 @@ const locationController = {
   async update(req, res) {
     try {
       const { code, name, org_unit_id, active } = req.body;
+      const cleanCode = (code || "").trim().toUpperCase();
+      const cleanName = (name || "").trim();
+      const unitId = org_unit_id || 227;
       const isActive = active === undefined ? 1 : (active === "1" || active === 1 ? 1 : 0);
+
+      // Kiểm tra trùng mã vị trí với bản ghi khác trong cùng đơn vị
+      const [duplicate] = await db.query(
+        "SELECT id FROM locations WHERE code = ? AND org_unit_id = ? AND id != ? LIMIT 1",
+        [cleanCode, unitId, req.params.id]
+      );
+      if (duplicate.length > 0) {
+        return res.redirect(
+          "/locations?error=" +
+            encodeURIComponent(`Mã vị trí '${cleanCode}' đã tồn tại trong đơn vị này, vui lòng nhập mã khác!`)
+        );
+      }
 
       await db.query(
         "UPDATE locations SET code = ?, name = ?, org_unit_id = ?, active = ?, updated_at = NOW() WHERE id = ?",
-        [code.trim(), name.trim(), org_unit_id, isActive, req.params.id]
+        [cleanCode, cleanName, unitId, isActive, req.params.id]
       );
 
-      res.redirect("/locations");
+      res.redirect("/locations?msg=" + encodeURIComponent("Cập nhật vị trí thành công!"));
     } catch (err) {
       console.error("Lỗi cập nhật vị trí:", err);
-      res.redirect("/locations");
+      if (err.code === "ER_DUP_ENTRY") {
+        return res.redirect(
+          "/locations?error=" + encodeURIComponent("Mã vị trí đã tồn tại trong đơn vị này, vui lòng nhập mã khác!")
+        );
+      }
+      res.redirect("/locations?error=" + encodeURIComponent("Lỗi cập nhật: " + err.message));
     }
   },
 
@@ -120,10 +165,10 @@ const locationController = {
   async delete(req, res) {
     try {
       await db.query("UPDATE locations SET active = 0, updated_at = NOW() WHERE id = ?", [req.params.id]);
-      res.redirect("/locations");
+      res.redirect("/locations?msg=" + encodeURIComponent("Đã ngưng hoạt động vị trí thành công!"));
     } catch (err) {
       console.error("Lỗi xóa vị trí:", err);
-      res.redirect("/locations");
+      res.redirect("/locations?error=" + encodeURIComponent("Không thể xóa vị trí: " + err.message));
     }
   },
 };

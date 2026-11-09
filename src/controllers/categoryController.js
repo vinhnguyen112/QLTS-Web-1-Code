@@ -51,16 +51,39 @@ const categoryController = {
   async create(req, res) {
     try {
       const { code, name, default_life_months } = req.body;
+      const cleanCode = (code || "").trim().toUpperCase();
+      const cleanName = (name || "").trim();
+
+      if (!cleanCode || !cleanName) {
+        return res.redirect("/categories?error=" + encodeURIComponent("Vui lòng nhập đầy đủ mã và tên danh mục!"));
+      }
+
+      // Kiểm tra trùng mã trong DB (kể cả bản ghi đã xóa mềm)
+      const [existing] = await db.query(
+        "SELECT id FROM asset_categories WHERE code = ? LIMIT 1",
+        [cleanCode]
+      );
+      if (existing.length > 0) {
+        return res.redirect(
+          "/categories?error=" +
+            encodeURIComponent(`Mã danh mục '${cleanCode}' đã tồn tại, vui lòng nhập mã khác!`)
+        );
+      }
 
       await db.query(
         "INSERT INTO asset_categories (code, name, default_life_months, active, created_at, updated_at) VALUES (?, ?, ?, 1, NOW(), NOW())",
-        [code, name, default_life_months || 36]
+        [cleanCode, cleanName, default_life_months || 36]
       );
 
-      res.redirect("/categories");
+      res.redirect("/categories?msg=" + encodeURIComponent("Thêm danh mục mới thành công!"));
     } catch (err) {
       console.error("Lỗi thêm danh mục:", err);
-      res.redirect("/categories");
+      if (err.code === "ER_DUP_ENTRY") {
+        return res.redirect(
+          "/categories?error=" + encodeURIComponent("Mã danh mục đã tồn tại, vui lòng nhập mã khác!")
+        );
+      }
+      res.redirect("/categories?error=" + encodeURIComponent("Lỗi thêm danh mục: " + err.message));
     }
   },
 
@@ -83,26 +106,45 @@ const categoryController = {
   async update(req, res) {
     try {
       const { code, name, default_life_months } = req.body;
+      const cleanCode = (code || "").trim().toUpperCase();
+      const cleanName = (name || "").trim();
+
+      // Kiểm tra trùng mã với danh mục khác trong DB
+      const [duplicate] = await db.query(
+        "SELECT id FROM asset_categories WHERE code = ? AND id != ? LIMIT 1",
+        [cleanCode, req.params.id]
+      );
+      if (duplicate.length > 0) {
+        return res.redirect(
+          "/categories?error=" +
+            encodeURIComponent(`Mã danh mục '${cleanCode}' đã tồn tại, vui lòng nhập mã khác!`)
+        );
+      }
 
       await db.query(
         "UPDATE asset_categories SET code = ?, name = ?, default_life_months = ?, updated_at = NOW() WHERE id = ?",
-        [code, name, default_life_months || 36, req.params.id]
+        [cleanCode, cleanName, default_life_months || 36, req.params.id]
       );
 
-      res.redirect("/categories");
+      res.redirect("/categories?msg=" + encodeURIComponent("Cập nhật danh mục thành công!"));
     } catch (err) {
       console.error("Lỗi cập nhật danh mục:", err);
-      res.redirect("/categories");
+      if (err.code === "ER_DUP_ENTRY") {
+        return res.redirect(
+          "/categories?error=" + encodeURIComponent("Mã danh mục đã tồn tại, vui lòng nhập mã khác!")
+        );
+      }
+      res.redirect("/categories?error=" + encodeURIComponent("Lỗi cập nhật: " + err.message));
     }
   },
 
-  // 5. Xóa danh mục
+  // 5. Xóa danh mục (Soft delete)
   async delete(req, res) {
     try {
       await db.query("UPDATE asset_categories SET active = 0, updated_at = NOW() WHERE id = ?", [req.params.id]);
-      res.redirect("/categories");
+      res.redirect("/categories?msg=" + encodeURIComponent("Đã ngưng hoạt động danh mục thành công!"));
     } catch (err) {
-      res.status(500).send("Không thể xóa danh mục: " + err.message);
+      res.redirect("/categories?error=" + encodeURIComponent("Không thể xóa danh mục: " + err.message));
     }
   },
 };
