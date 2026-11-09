@@ -1,67 +1,32 @@
-﻿<div class="container-fluid p-0">
-  <div class="card border shadow-none" style="max-width: 800px; margin: auto;">
-    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-      <div>
-        <h5 class="mb-0 fw-bold text-dark">Lập phiếu báo hỏng / Sửa chữa thiết bị</h5>
-        <small class="text-muted">Ghi nhận sự cố để chuyển giao cho bộ phận kỹ thuật kiểm tra và khắc phục</small>
-      </div>
-      <a href="/maintenance" class="btn btn-secondary btn-sm">
-        Quay lại
-      </a>
+<div class="container-fluid p-0">
+  <div class="card border shadow-none" style="max-width: 650px; margin: auto;">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+      <h5 class="mb-0 fw-bold text-dark">Báo hỏng thiết bị</h5>
+      <a href="/maintenance" class="btn btn-secondary btn-sm">Quay lại</a>
     </div>
 
     <form action="/maintenance/create" method="POST">
-      <div class="card-body">
-        <div class="row g-3 mb-4">
-          <div class="col-12">
-            <label class="form-label small fw-semibold">Chọn tài sản gặp sự cố <span class="text-danger">*</span></label>
-            <select class="form-select" name="asset_id" required>
-              <option value="">-- Chọn tài sản cần sửa chữa --</option>
-              {{#each assets}}
-                <option value="{{this.id}}" {{#if (eq this.id ../selectedAssetId)}}selected{{/if}}>
-                  [{{this.code}}] {{this.name}} - Hiện trạng: {{this.status}}
-                </option>
-              {{/each}}
-            </select>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label small fw-semibold">Loại hình bảo trì <span class="text-danger">*</span></label>
-            <select class="form-select" name="type" required>
-              <option value="corrective">Sửa chữa đột xuất (Khắc phục sự cố hỏng hóc)</option>
-              <option value="preventive">Bảo dưỡng định kỳ (Vệ sinh, bảo trì phòng ngừa)</option>
-            </select>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label small fw-semibold">Phân công kỹ thuật viên phụ trách</label>
-            <select class="form-select" name="assigned_to">
-              <option value="">-- Chọn kỹ thuật viên --</option>
-              {{#each technicians}}
-                <option value="{{this.id}}">{{this.full_name}} ({{this.role_name}})</option>
-              {{/each}}
-            </select>
-          </div>
-
-          <div class="col-12">
-            <label class="form-label small fw-semibold">Mô tả chi tiết triệu chứng hỏng hóc <span class="text-danger">*</span></label>
-            <textarea class="form-control" name="cause" rows="4" placeholder="Ví dụ: Máy tính bật không lên nguồn, quạt kêu to hoặc màn hình bị sọc ngang..." required></textarea>
-          </div>
+      <div class="card-body p-4">
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Chọn tài sản gặp sự cố <span class="text-danger">*</span></label>
+          <select class="form-select" name="asset_id" required>
+            <option value="">-- Chọn tài sản --</option>
+            {{#each assets}}
+              <option value="{{this.id}}">[{{this.code}}] {{this.name}}</option>
+            {{/each}}
+          </select>
         </div>
 
-        <div class="alert alert-warning py-2 px-3 small d-flex align-items-center mb-3">
-          <i class="bi bi-exclamation-triangle-fill me-2 fs-6"></i>
-          <div>Sau khi lưu, trạng thái tài sản sẽ tự động được chuyển sang <b>Đang bảo trì (maintenance)</b> và ngăn chặn các thao tác cấp phát khác.</div>
+        <div class="mb-4">
+          <label class="form-label small fw-semibold">Mô tả triệu chứng hỏng hóc <span class="text-danger">*</span></label>
+          <textarea class="form-control" name="cause" rows="4" placeholder="Ví dụ: Máy không lên nguồn, quạt kêu to..." required></textarea>
         </div>
 
         <div class="d-flex justify-content-end gap-2 border-top pt-3">
-          <a href="/maintenance" class="btn btn-secondary px-3">Hủy bỏ</a>
-          <button type="submit" class="btn btn-danger px-4 fw-semibold">
-            Xác nhận lập phiếu sửa chữa
-          </button>
+          <a href="/maintenance" class="btn btn-secondary btn-sm">Hủy bỏ</a>
+          <button type="submit" class="btn btn-danger btn-sm px-4">Xác nhận báo hỏng</button>
         </div>
       </div>
     </form>
   </div>
 </div>
-

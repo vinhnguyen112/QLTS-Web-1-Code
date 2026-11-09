@@ -1,36 +1,13 @@
 <div class="container-fluid p-0">
   <div class="card">
-    <div class="card-header bg-white py-3">
-      <div class="row align-items-center g-2">
-        <div class="col-md-5">
-          <h5 class="mb-0 fw-bold text-dark">Phiếu đề xuất & Phê duyệt</h5>
-          <small class="text-muted">Quản lý luồng mua sắm, cấp phát, điều chuyển, thu hồi và thanh lý</small>
-        </div>
-
-        <div class="col-md-7 d-flex flex-wrap justify-content-md-end align-items-center gap-2">
-          <form action="/requests" method="get" class="d-flex align-items-center gap-2 m-0">
-            <select name="type" class="form-select form-select-sm" style="width: 140px;" onchange="this.form.submit()">
-              <option value="">Tất cả loại phiếu</option>
-              <option value="purchase" {{#if (eq type "purchase")}}selected{{/if}}>Mua sắm</option>
-              <option value="assign" {{#if (eq type "assign")}}selected{{/if}}>Cấp phát</option>
-              <option value="transfer" {{#if (eq type "transfer")}}selected{{/if}}>Điều chuyển</option>
-              <option value="recall" {{#if (eq type "recall")}}selected{{/if}}>Thu hồi</option>
-              <option value="disposal" {{#if (eq type "disposal")}}selected{{/if}}>Thanh lý</option>
-            </select>
-
-            <select name="status" class="form-select form-select-sm" style="width: 140px;" onchange="this.form.submit()">
-              <option value="">Tất cả trạng thái</option>
-              <option value="pending_approval" {{#if (eq status "pending_approval")}}selected{{/if}}>Chờ duyệt</option>
-              <option value="approved" {{#if (eq status "approved")}}selected{{/if}}>Đã duyệt</option>
-              <option value="rejected" {{#if (eq status "rejected")}}selected{{/if}}>Từ chối</option>
-            </select>
-          </form>
-
-          <a href="/requests/create" class="btn btn-sm btn-primary">
-            Lập đề xuất mới
-          </a>
-        </div>
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="mb-0 fw-bold text-dark">Phiếu đề xuất & Phê duyệt</h5>
+        <small class="text-muted">Quản lý các đề xuất mua sắm và cấp phát tài sản</small>
       </div>
+      <a href="/requests/create" class="btn btn-sm btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> Lập đề xuất mới
+      </a>
     </div>
 
     <div class="table-responsive">
@@ -39,11 +16,10 @@
           <tr>
             <th scope="col" class="ps-3">#</th>
             <th scope="col">Mã phiếu</th>
-            <th scope="col">Loại phiếu</th>
-            <th scope="col">Tiêu đề yêu cầu</th>
+            <th scope="col">Loại đề xuất</th>
+            <th scope="col">Tiêu đề</th>
             <th scope="col">Người lập</th>
             <th scope="col">Ngày tạo</th>
-            <th scope="col">Ước tính</th>
             <th scope="col">Trạng thái</th>
             <th scope="col" class="text-end pe-3">Thao tác</th>
           </tr>
@@ -52,45 +28,23 @@
           {{#each requests}}
             <tr>
               <td class="ps-3 text-muted">{{addOne @index}}</td>
-              <td class="fw-semibold text-dark">#REQ-{{this.id}}</td>
+              <td class="fw-semibold text-dark">{{this.code}}</td>
               <td>{{{requestTypeBadge this.type}}}</td>
-              <td>{{this.title}}</td>
+              <td class="fw-semibold text-dark">{{this.title}}</td>
               <td>{{this.requester_name}}</td>
-              <td>{{formatDate this.created_at}}</td>
-              <td class="text-dark">{{formatCurrency this.total_estimated_cost}}</td>
+              <td class="text-muted small">{{formatDate this.created_at}}</td>
               <td>{{{requestStatusBadge this.status}}}</td>
-              <td class="text-end pe-3 text-nowrap">
-                <div class="d-inline-flex gap-1">
-                  <a href="/requests/{{this.id}}" class="btn btn-primary text-nowrap">
-                    Chi tiết
-                  </a>
-                </div>
+              <td class="text-end pe-3">
+                <a href="/requests/{{this.id}}" class="btn btn-primary btn-sm">Chi tiết</a>
               </td>
             </tr>
           {{else}}
             <tr>
-              <td colspan="9" class="text-center py-4 text-muted">Chưa có phiếu yêu cầu nào</td>
+              <td colspan="8" class="text-center py-4 text-muted">Chưa có phiếu đề xuất nào</td>
             </tr>
           {{/each}}
         </tbody>
       </table>
     </div>
-
-    {{#if (gt totalPages 1)}}
-      <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
-        <div class="small text-muted">Trang <b>{{page}}</b> / {{totalPages}}</div>
-        <nav aria-label="Phân trang">
-          <ul class="pagination pagination-sm mb-0">
-            {{#each pages}}
-              <li class="page-item {{#if this.active}}active{{/if}}">
-                <a class="page-link" href="/requests?page={{this.number}}&type={{../type}}&status={{../status}}">
-                  {{this.number}}
-                </a>
-              </li>
-            {{/each}}
-          </ul>
-        </nav>
-      </div>
-    {{/if}}
   </div>
 </div>

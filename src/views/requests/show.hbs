@@ -1,160 +1,76 @@
 <div class="container-fluid p-0">
-  <div class="card" style="max-width: 950px; margin: auto;">
-    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-      <div class="d-flex align-items-center gap-2">
-        <a href="/requests" class="btn btn-secondary btn-sm">Quay lại</a>
-        <div>
-          <h5 class="mb-0 fw-bold text-dark">
-            Phiếu: {{request.code}}
-          </h5>
-          <small class="text-muted">Đề xuất bởi: {{request.requester_name}} ({{request.org_unit_name}})</small>
-        </div>
-      </div>
+  <div class="card border shadow-none" style="max-width: 800px; margin: auto;">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
       <div>
-        {{{requestStatusBadge request.status}}}
+        <div class="d-flex align-items-center gap-2">
+          <h5 class="mb-0 fw-bold text-dark">{{request.title}}</h5>
+          {{{requestStatusBadge request.status}}}
+        </div>
+        <small class="text-muted font-monospace">{{request.code}}</small>
       </div>
+      <a href="/requests" class="btn btn-secondary btn-sm">Quay lại</a>
     </div>
 
-    <div class="card-body">
-      <!-- Thanh tiến trình xét duyệt 3 bước trực quan -->
-      <div class="d-flex align-items-center justify-content-between p-3 bg-white rounded border mb-4">
-        <div class="d-flex align-items-center text-success">
-          <i class="bi bi-check-circle-fill fs-5 me-2"></i>
-          <div>
-            <div class="fw-bold small">1. Lập đề xuất</div>
-            <small class="text-muted">{{request.requester_name}}</small>
-          </div>
-        </div>
-        <i class="bi bi-chevron-right text-muted"></i>
+    <div class="card-body p-4">
+      <!-- Bảng thông tin chi tiết -->
+      <table class="table table-borderless align-middle mb-4">
+        <tbody>
+          <tr class="border-bottom">
+            <td class="text-muted py-2" style="width: 30%;">Loại đề xuất</td>
+            <td class="fw-semibold text-dark py-2">{{{requestTypeBadge request.type}}}</td>
+          </tr>
+          <tr class="border-bottom">
+            <td class="text-muted py-2">Người đề xuất</td>
+            <td class="fw-semibold text-dark py-2">{{request.requester_name}}</td>
+          </tr>
+          <tr class="border-bottom">
+            <td class="text-muted py-2">Ngày lập phiếu</td>
+            <td class="text-dark py-2">{{formatDate request.created_at}}</td>
+          </tr>
+          {{#if (eq request.type "purchase")}}
+          <tr class="border-bottom">
+            <td class="text-muted py-2">Thiết bị mua mới</td>
+            <td class="fw-bold text-primary py-2">{{request.item_name}}</td>
+          </tr>
+          <tr class="border-bottom">
+            <td class="text-muted py-2">Danh mục phân loại</td>
+            <td class="text-dark py-2">{{request.category_name}}</td>
+          </tr>
+          <tr class="border-bottom">
+            <td class="text-muted py-2">Chi phí ước tính</td>
+            <td class="fw-bold text-dark py-2">{{formatCurrency request.total_estimated_cost}}</td>
+          </tr>
+          {{/if}}
+          {{#if (eq request.type "assign")}}
+          <tr class="border-bottom">
+            <td class="text-muted py-2">Tài sản cấp phát từ kho</td>
+            <td class="fw-bold text-primary py-2">[{{request.asset_code}}] {{request.asset_name}}</td>
+          </tr>
+          {{/if}}
+          <tr>
+            <td class="text-muted py-2 align-top">Lý do đề xuất</td>
+            <td class="text-dark py-2">{{request.reason}}</td>
+          </tr>
+        </tbody>
+      </table>
 
-        <div class="d-flex align-items-center {{#if (eq request.status "pending_approval")}}text-primary fw-bold{{else}}text-success{{/if}}">
-          <i class="bi {{#if (eq request.status "pending_approval")}}bi-clock-fill{{else}}bi-check-circle-fill{{/if}} fs-5 me-2"></i>
-          <div>
-            <div class="fw-bold small">2. Xét duyệt</div>
-            <small class="text-muted">{{#if (eq request.status "pending_approval")}}Đang chờ phê duyệt{{else}}Đã xem xét{{/if}}</small>
-          </div>
-        </div>
-        <i class="bi bi-chevron-right text-muted"></i>
-
-        <div class="d-flex align-items-center {{#if (eq request.status "approved")}}text-success{{else if (eq request.status "rejected")}}text-danger{{else}}text-muted{{/if}}">
-          <i class="bi {{#if (eq request.status "approved")}}bi-check-circle-fill{{else if (eq request.status "rejected")}}bi-x-circle-fill{{else}}bi-circle{{/if}} fs-5 me-2"></i>
-          <div>
-            <div class="fw-bold small">3. Kết quả</div>
-            <small class="text-muted">{{#if (eq request.status "approved")}}Đã duyệt & Cập nhật kho{{else if (eq request.status "rejected")}}Đã từ chối{{else}}Chờ kết quả{{/if}}</small>
-          </div>
-        </div>
-      </div>
-
-      <!-- Thông tin tổng quan phiếu -->
-      <div class="bg-light p-3 rounded border mb-4">
-        <div class="row g-3">
-          <div class="col-sm-6">
-            <span class="text-muted small d-block">Loại đề xuất:</span>
-            <div class="mt-1">{{{requestTypeBadge request.type}}}</div>
-          </div>
-          <div class="col-sm-6">
-            <span class="text-muted small d-block">Ngày lập phiếu:</span>
-            <span class="text-dark">{{formatDateTime request.created_at}}</span>
-          </div>
-          <div class="col-12">
-            <span class="text-muted small d-block">Tiêu đề:</span>
-            <span class="fs-6 fw-bold text-dark">{{request.title}}</span>
-          </div>
-          <div class="col-12">
-            <span class="text-muted small d-block">Lý do & Căn cứ đề xuất:</span>
-            <div class="p-2 bg-white rounded border small mt-1 text-dark">{{request.reason}}</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Bảng danh mục thiết bị / Dòng chi tiết -->
-      <h6 class="fw-bold text-dark mb-3">Danh mục thiết bị trong đề xuất</h6>
-      <div class="table-responsive mb-4">
-        <table class="table table-bordered align-middle">
-          <thead class="table-light">
-            <tr>
-              <th scope="col" class="text-nowrap">#</th>
-              <th scope="col">Tên thiết bị / Tài sản</th>
-              <th scope="col">Danh mục</th>
-              <th scope="col" class="text-center text-nowrap">Số lượng</th>
-              <th scope="col" class="text-end text-nowrap">Đơn giá ước tính</th>
-              <th scope="col" class="text-end text-nowrap">Thành tiền</th>
-            </tr>
-          </thead>
-          <tbody>
-            {{#each lines}}
-              <tr>
-                <td class="text-center text-muted">{{addOne @index}}</td>
-                <td>
-                  <div class="text-dark">
-                    {{#if this.asset_code}}
-                      <span>[{{this.asset_code}}]</span>
-                    {{/if}}
-                    {{this.item_name}}
-                  </div>
-                  {{#if this.notes}}<small class="text-muted">{{this.notes}}</small>{{/if}}
-                </td>
-                <td>{{#if this.category_name}}<span class="badge text-bg-light border">{{this.category_name}}</span>{{else}}—{{/if}}</td>
-                <td class="text-center">{{this.quantity}}</td>
-                <td class="text-end text-dark">{{formatCurrency this.estimated_cost}}</td>
-                <td class="text-end fw-semibold text-dark">{{formatCurrency (or ../request.total_estimated_cost this.estimated_cost)}}</td>
-              </tr>
-            {{/each}}
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Hành động Phê duyệt (Dành cho cấp quản lý) -->
+      <!-- Thao tác phê duyệt dành cho lãnh đạo/quản lý -->
       {{#if canApprove}}
-      <div class="card p-3 mb-3 bg-light">
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-          <div>
-            <h6 class="fw-bold text-dark mb-1">Xét duyệt đề xuất</h6>
-            <small class="text-muted">Bạn có thẩm quyền xem xét duyệt hoặc từ chối phiếu này</small>
-          </div>
-          <div class="d-flex gap-2">
-            <!-- Nút Từ chối -->
-            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal">
-              Từ chối
-            </button>
-
-            <!-- Nút Duyệt -->
-            <form action="/requests/{{request.id}}/approve" method="POST" onsubmit="confirmAction(event, 'Bạn có chắc chắn muốn phê duyệt phiếu này?');">
-              <button type="submit" class="btn btn-success btn-sm px-3">
-                Phê duyệt
-              </button>
-            </form>
-          </div>
+      <div class="p-3 bg-light rounded border d-flex justify-content-between align-items-center">
+        <div>
+          <span class="fw-bold text-dark d-block">Xét duyệt đề xuất này</span>
+          <small class="text-muted">Bạn có quyền phê duyệt hoặc từ chối phiếu yêu cầu</small>
+        </div>
+        <div class="d-flex gap-2">
+          <form action="/requests/{{request.id}}/reject" method="POST" onsubmit="confirmAction(event, 'Bạn có chắc chắn muốn từ chối đề xuất này?');">
+            <button type="submit" class="btn btn-danger btn-sm">Từ chối</button>
+          </form>
+          <form action="/requests/{{request.id}}/approve" method="POST" onsubmit="confirmAction(event, 'Xác nhận phê duyệt đề xuất này?');">
+            <button type="submit" class="btn btn-success btn-sm px-3">Phê duyệt</button>
+          </form>
         </div>
       </div>
       {{/if}}
-
-      <div class="d-flex justify-content-between align-items-center border-top pt-3">
-        <a href="/requests" class="btn btn-secondary btn-sm">Danh sách phiếu</a>
-        <button onclick="window.print()" class="btn btn-secondary btn-sm">In phiếu</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Từ Chối -->
-<div class="modal fade" id="rejectModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <form action="/requests/{{request.id}}/reject" method="POST">
-        <div class="modal-header">
-          <h5 class="modal-title fs-6 fw-bold text-dark">Từ chối đề xuất</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <label class="form-label small fw-semibold">Lý do từ chối <span class="text-danger">*</span></label>
-          <textarea name="reason" class="form-control" rows="3" placeholder="Nhập lý do không phê duyệt..." required></textarea>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Hủy</button>
-          <button type="submit" class="btn btn-danger btn-sm">Xác nhận từ chối</button>
-        </div>
-      </form>
     </div>
   </div>
 </div>

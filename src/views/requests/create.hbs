@@ -1,95 +1,69 @@
-﻿<div class="container-fluid p-0">
-  <div class="card border shadow-none" style="max-width: 900px; margin: auto;">
-    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-      <div>
-        <h5 class="mb-0 fw-bold text-dark">Lập phiếu đề xuất mới</h5>
-        <small class="text-muted">Khởi tạo quy trình mua sắm, cấp phát, điều chuyển, thu hồi hoặc thanh lý</small>
-      </div>
-      <a href="/requests" class="btn btn-secondary btn-sm">
-        Quay lại
-      </a>
+<div class="container-fluid p-0">
+  <div class="card border shadow-none" style="max-width: 700px; margin: auto;">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+      <h5 class="mb-0 fw-bold text-dark">Lập phiếu đề xuất</h5>
+      <a href="/requests" class="btn btn-secondary btn-sm">Quay lại</a>
     </div>
 
     <form action="/requests/create" method="POST">
-      <div class="card-body">
-        <div class="row g-3 mb-4">
-          <div class="col-md-6">
-            <label class="form-label small fw-semibold">Loại nghiệp vụ / Đề xuất <span class="text-danger">*</span></label>
-            <select class="form-select" name="type" id="requestTypeSelect" onchange="toggleFormFields()" required>
-              <option value="purchase">1. Đề xuất Mua sắm tài sản mới</option>
-              <option value="assign">2. Đề xuất Cấp phát tài sản từ kho</option>
-              <option value="transfer">3. Đề xuất Điều chuyển tài sản</option>
-              <option value="recall">4. Đề xuất Thu hồi tài sản về kho</option>
-              <option value="maintenance">5. Đề xuất Báo hỏng & Sửa chữa</option>
-              <option value="disposal">6. Đề xuất Thanh lý tài sản</option>
-            </select>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label small fw-semibold">Tiêu đề phiếu đề xuất <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" name="title" id="titleInput" placeholder="Ví dụ: Đề xuất mua 5 màn hình Dell cho phòng Kỹ thuật" required />
-          </div>
-
-          <div class="col-12">
-            <label class="form-label small fw-semibold">Lý do / Mục đích chi tiết <span class="text-danger">*</span></label>
-            <textarea class="form-control" name="reason" rows="3" placeholder="Nêu rõ lý do cần trang bị, thay thế hoặc thanh lý thiết bị..." required></textarea>
-          </div>
+      <div class="card-body p-4">
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Loại đề xuất <span class="text-danger">*</span></label>
+          <select class="form-select" name="type" id="typeSelect" onchange="toggleType()" required>
+            <option value="purchase">1. Mua sắm tài sản mới</option>
+            <option value="assign">2. Cấp phát tài sản từ kho</option>
+          </select>
         </div>
 
-        <!-- Khối 1: Dành cho Mua sắm (purchase) -->
-        <div id="purchaseFields" class="p-3 bg-light rounded border mb-4">
-          <h6 class="fw-bold text-primary mb-3">Thông tin thiết bị cần mua sắm</h6>
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Tên thiết bị / Hàng hóa <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" name="item_name" placeholder="Ví dụ: Màn hình Dell P2422H 24 inch" />
-            </div>
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Tiêu đề đề xuất <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" name="title" placeholder="Ví dụ: Đề xuất mua máy tính làm việc" required />
+        </div>
 
+        <!-- Khối Mua sắm mới -->
+        <div id="purchaseBlock">
+          <div class="row g-2 mb-3">
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Danh mục phân loại <span class="text-danger">*</span></label>
+              <label class="form-label small fw-semibold">Tên thiết bị</label>
+              <input type="text" class="form-control" name="item_name" placeholder="Ví dụ: Laptop Dell Vostro 3520" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Loại danh mục</label>
               <select class="form-select" name="category_id">
-                <option value="">-- Chọn danh mục --</option>
-                {{#each formData.categories}}
+                <option value="">-- Chọn loại danh mục --</option>
+                {{#each categories}}
                   <option value="{{this.id}}">{{this.name}}</option>
                 {{/each}}
               </select>
             </div>
-
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Số lượng cần mua</label>
-              <input type="number" class="form-control" name="quantity" value="1" min="1" />
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Đơn giá ước tính (VNĐ)</label>
-              <input type="number" class="form-control" name="estimated_cost" value="4500000" min="0" />
-            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Đơn giá ước tính (VNĐ)</label>
+            <input type="number" class="form-control" name="estimated_cost" placeholder="Ví dụ: 15000000" />
           </div>
         </div>
 
-        <!-- Khối 2: Dành cho Cấp phát, Điều chuyển, Thu hồi, Bảo trì, Thanh lý (Chọn tài sản đã có) -->
-        <div id="existingAssetFields" class="p-3 bg-light rounded border mb-4" style="display: none;">
-          <h6 class="fw-bold text-primary mb-3">Chọn tài sản áp dụng</h6>
-          <div class="row g-3">
-            <div class="col-12">
-              <label class="form-label small fw-semibold">Chọn tài sản trong danh sách <span class="text-danger">*</span></label>
-              <select class="form-select" name="target_asset_id" id="targetAssetSelect">
-                <option value="">-- Chọn tài sản cần thao tác --</option>
-                {{#each formData.assets}}
-                  <option value="{{this.id}}">
-                    [{{this.code}}] {{this.name}} - Hiện trạng: {{this.status}}
-                  </option>
-                {{/each}}
-              </select>
-            </div>
+        <!-- Khối Cấp phát từ kho -->
+        <div id="assignBlock" style="display: none;">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Chọn tài sản trong kho cần cấp phát</label>
+            <select class="form-select" name="asset_id">
+              <option value="">-- Chọn tài sản đang trong kho --</option>
+              {{#each assets}}
+                <option value="{{this.id}}">[{{this.code}}] {{this.name}} ({{formatCurrency this.original_cost}})</option>
+              {{/each}}
+            </select>
           </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label small fw-semibold">Lý do đề xuất <span class="text-danger">*</span></label>
+          <textarea class="form-control" name="reason" rows="3" placeholder="Nêu rõ mục đích và lý do cần trang bị..." required></textarea>
         </div>
 
         <div class="d-flex justify-content-end gap-2 border-top pt-3">
-          <a href="/requests" class="btn btn-secondary px-3">Hủy bỏ</a>
-          <button type="submit" class="btn btn-primary px-4 fw-semibold">
-            Gửi phiếu phê duyệt
-          </button>
+          <a href="/requests" class="btn btn-secondary btn-sm">Hủy</a>
+          <button type="submit" class="btn btn-primary btn-sm px-4">Gửi đề xuất</button>
         </div>
       </div>
     </form>
@@ -97,18 +71,9 @@
 </div>
 
 <script>
-  function toggleFormFields() {
-    const type = document.getElementById('requestTypeSelect').value;
-    const purchaseFields = document.getElementById('purchaseFields');
-    const existingAssetFields = document.getElementById('existingAssetFields');
-
-    if (type === 'purchase') {
-      purchaseFields.style.display = 'block';
-      existingAssetFields.style.display = 'none';
-    } else {
-      purchaseFields.style.display = 'none';
-      existingAssetFields.style.display = 'block';
-    }
+  function toggleType() {
+    const isPurchase = document.getElementById('typeSelect').value === 'purchase';
+    document.getElementById('purchaseBlock').style.display = isPurchase ? 'block' : 'none';
+    document.getElementById('assignBlock').style.display = isPurchase ? 'none' : 'block';
   }
 </script>
-

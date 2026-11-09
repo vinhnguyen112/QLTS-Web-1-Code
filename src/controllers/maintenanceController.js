@@ -1,168 +1,80 @@
 const db = require("../config/db");
-const dayjs = require("dayjs");
-const { recordEvent } = require("../utils/logger");
 
 const maintenanceController = {
-  // 1. Danh sách các phiếu bảo trì & sửa chữa
+  // 1. Danh sách phiếu bảo trì
   async index(req, res) {
     try {
       const [orders] = await db.query(`
-        SELECT mo.*,
-               a.code AS asset_code,
-               a.name AS asset_name,
-               u_rep.full_name AS reported_by_name,
-               u_tech.full_name AS technician_name
+        SELECT mo.*, a.code AS asset_code, a.name AS asset_name
         FROM maintenance_orders mo
-        JOIN assets a               ON mo.asset_id    = a.id
-        LEFT JOIN users u_rep       ON mo.reported_by = u_rep.id
-        LEFT JOIN users u_tech      ON mo.assigned_to = u_tech.id
+        JOIN assets a ON mo.asset_id = a.id
         ORDER BY mo.id DESC
       `);
-
-      // Thống kê chi phí & số lượng
-      const summary = {
-        total: orders.length,
-        inProgress: orders.filter((o) => ["open", "in_progress", "pending_receive"].includes(o.status)).length,
-        completed: orders.filter((o) => o.status === "done").length,
-        totalCost: orders.reduce((sum, o) => sum + (Number(o.cost) || 0), 0),
-      };
-
-      res.render("maintenance/index", {
-        title: "Bảo trì & Sửa chữa tài sản",
-        orders,
-        summary,
-      });
+      res.render("maintenance/index", { title: "Bảo trì & Sửa chữa", orders });
     } catch (err) {
       console.error("Lỗi danh sách bảo trì:", err);
       res.status(500).send("Lỗi: " + err.message);
     }
   },
 
-  // 2. Form báo hỏng / đề xuất bảo trì
+  // 2. Form báo hỏng thiết bị
   async createForm(req, res) {
     try {
-      const selectedAssetId = req.query.asset_id || null;
-
-      // Danh sách tài sản chưa bị thanh lý
       const [assets] = await db.query(
-        "SELECT id, code, name, status FROM assets WHERE deleted_at IS NULL AND status != 'disposed' ORDER BY code"
+        "SELECT id, code, name FROM assets WHERE deleted_at IS NULL AND status != 'disposed' ORDER BY code"
       );
-
-      // Danh sách kỹ thuật viên
-      const [technicians] = await db.query(
-        `
-        SELECT u.id, u.full_name, r.name AS role_name
-        FROM users u
-        JOIN user_roles ur ON u.id = ur.user_id
-        JOIN roles r ON ur.role_id = r.id
-        WHERE r.code IN ('TECHNICIAN', 'ASSET_MANAGER', 'SYS_ADMIN')
-        ORDER BY u.full_name
-      `
-      );
-
-      res.render("maintenance/create", {
-        title: "Lập phiếu báo hỏng / Bảo trì thiết bị",
-        assets,
-        technicians,
-        selectedAssetId: Number(selectedAssetId),
-      });
+      res.render("maintenance/create", { title: "Báo hỏng thiết bị", assets });
     } catch (err) {
       console.error("Lỗi form tạo bảo trì:", err);
       res.redirect("/maintenance");
     }
   },
 
-  // 3. Xử lý tạo phiếu bảo trì & chuyển trạng thái tài sản sang 'maintenance'
+  // 3. Xử lý báo hỏng (chuyển tài sản sang 'maintenance')
   async create(req, res) {
-    const connection = await db.getConnection();
     try {
-      await connection.beginTransaction();
+      const { asset_id, cause } = req.body;
+      const code = "BT-" + Date.now().toString().slice(-6);
+      const userId = req.session.user?.id || 315;
 
-      const { asset_id, cause, assigned_to, type } = req.body;
-      const currentUserId = req.session.user ? req.session.user.id : null;
-      const code = `BT-${dayjs().format("YYYY")}-${Math.floor(1000 + Math.random() * 9000)}`;
-
-      // 1. Lưu đơn bảo trì
-      await connection.query(
-        `
-        INSERT INTO maintenance_orders (code, asset_id, type, source, status, reported_by, assigned_to, cause, started_at, created_at, updated_at)
-        VALUES (?, ?, ?, 'manual', 'in_progress', ?, ?, ?, CURDATE(), NOW(), NOW())
-      `,
-        [code, asset_id, type || "corrective", currentUserId, assigned_to || null, cause]
+      await db.query(
+        `INSERT INTO maintenance_orders (code, asset_id, cause, reported_by, status, started_at, created_at, updated_at)
+         VALUES (?, ?, ?, ?, 'in_progress', CURDATE(), NOW(), NOW())`,
+        [code, asset_id, cause || "Báo hỏng thiết bị", userId]
       );
 
-      // 2. Chuyển trạng thái tài sản sang 'maintenance'
-      await connection.query(
-        "UPDATE assets SET status = 'maintenance', updated_at = NOW() WHERE id = ?",
-        [asset_id]
-      );
+      await db.query("UPDATE assets SET status = 'maintenance', updated_at = NOW() WHERE id = ?", [asset_id]);
 
-      // 3. Ghi vết biến động (1 dòng duy nhất)
-      await recordEvent(asset_id, "MAINTENANCE_START", "Báo hỏng: " + cause, currentUserId);
-
-      await connection.commit();
       res.redirect("/maintenance");
     } catch (err) {
-      await connection.rollback();
       console.error("Lỗi tạo phiếu bảo trì:", err);
-      res.status(500).send("Lỗi: " + err.message);
-    } finally {
-      connection.release();
+      res.redirect("/maintenance");
     }
   },
 
-  // 4. Hoàn thành sửa chữa -> trả tài sản về sử dụng
+  // 4. Hoàn thành sửa chữa (trả tài sản về trạng thái cũ)
   async complete(req, res) {
-    const connection = await db.getConnection();
     try {
-      await connection.beginTransaction();
+      const { cost } = req.body;
+      const [orders] = await db.query("SELECT asset_id FROM maintenance_orders WHERE id = ?", [req.params.id]);
+      
+      if (orders.length > 0) {
+        const [assets] = await db.query("SELECT assignee_id FROM assets WHERE id = ?", [orders[0].asset_id]);
+        const returnStatus = (assets.length > 0 && assets[0].assignee_id) ? "in_use" : "in_stock";
 
-      const orderId = req.params.id;
-      const { cost, result } = req.body;
-      const currentUserId = req.session.user ? req.session.user.id : null;
+        await db.query("UPDATE assets SET status = ?, updated_at = NOW() WHERE id = ?", [returnStatus, orders[0].asset_id]);
+        await db.query(
+          "UPDATE maintenance_orders SET status = 'done', cost = ?, finished_at = CURDATE(), updated_at = NOW() WHERE id = ?",
+          [Number(cost) || 0, req.params.id]
+        );
+      }
 
-      const [orders] = await connection.query("SELECT * FROM maintenance_orders WHERE id = ?", [orderId]);
-      if (orders.length === 0) return res.redirect("/maintenance");
-      const order = orders[0];
-
-      // 1. Cập nhật phiếu bảo trì sang 'done'
-      await connection.query(
-        `
-        UPDATE maintenance_orders
-        SET status = 'done', cost = ?, result = ?, outcome = 'repaired', finished_at = CURDATE(), updated_at = NOW()
-        WHERE id = ?
-      `,
-        [cost || 0, result || "Đã sửa chữa và kiểm tra hoạt động tốt", orderId]
-      );
-
-      // 2. Trả tài sản về lại 'in_use' (nếu có người giữ) hoặc 'in_stock'
-      const [assets] = await connection.query("SELECT assignee_id FROM assets WHERE id = ?", [order.asset_id]);
-      const returnStatus = assets[0]?.assignee_id ? "in_use" : "in_stock";
-
-      await connection.query(
-        "UPDATE assets SET status = ?, updated_at = NOW() WHERE id = ?",
-        [returnStatus, order.asset_id]
-      );
-
-      // 3. Ghi vết biến động (1 dòng duy nhất)
-      await recordEvent(
-        order.asset_id,
-        "MAINTENANCE_END",
-        `Đã sửa xong (Chi phí: ${Number(cost || 0).toLocaleString("vi-VN")} đ)`,
-        currentUserId
-      );
-
-      await connection.commit();
       res.redirect("/maintenance");
     } catch (err) {
-      await connection.rollback();
       console.error("Lỗi hoàn thành bảo trì:", err);
       res.redirect("/maintenance");
-    } finally {
-      connection.release();
     }
   },
 };
 
 module.exports = maintenanceController;
-
