@@ -1,4 +1,18 @@
 <div class="container-fluid p-0">
+  {{#if errorMessage}}
+  <div class="alert alert-danger d-flex align-items-center mb-3">
+    <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
+    <div>{{errorMessage}}</div>
+  </div>
+  {{/if}}
+
+  {{#if successMessage}}
+  <div class="alert alert-success d-flex align-items-center mb-3">
+    <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+    <div>{{successMessage}}</div>
+  </div>
+  {{/if}}
+
   <div class="card">
     <div class="card-header bg-white py-3">
       <div class="row align-items-center g-2">

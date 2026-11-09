@@ -5,6 +5,8 @@ const departmentController = {
   async index(req, res) {
     try {
       const searchName = req.query.name || "";
+      const errorMessage = req.query.error || null;
+      const successMessage = req.query.msg || null;
       const page = parseInt(req.query.page) || 1;
       const limit = 10;
       const offset = (page - 1) * limit;
@@ -40,6 +42,8 @@ const departmentController = {
         title: "Cơ cấu phòng ban & Đơn vị",
         departments,
         searchName,
+        errorMessage,
+        successMessage,
         totalPages,
         pages,
       });
@@ -56,38 +60,40 @@ const departmentController = {
       const cleanCode = (code || "").trim().toUpperCase();
       const cleanName = (name || "").trim();
 
-      // Kiểm tra xem mã phòng ban đã tồn tại chưa
+      if (!cleanCode || !cleanName) {
+        return res.redirect("/departments?error=" + encodeURIComponent("Vui lòng nhập đầy đủ mã và tên phòng ban!"));
+      }
+
+      // 1. Kiểm tra trong DB xem mã phòng ban đã tồn tại chưa
       const [existing] = await db.query(
-        "SELECT id, active FROM org_units WHERE code = ? LIMIT 1",
+        "SELECT id, name FROM org_units WHERE code = ? LIMIT 1",
         [cleanCode]
       );
 
+      // Nếu mã đã tồn tại -> Báo lỗi cho người dùng, không cho tạo
       if (existing.length > 0) {
-        if (existing[0].active === 0) {
-          // Nếu mã đã có nhưng trước đó bị xóa mềm (active = 0) -> Phục hồi lại với tên mới
-          await db.query(
-            "UPDATE org_units SET name = ?, type = ?, active = 1, updated_at = NOW() WHERE id = ?",
-            [cleanName, type || "DEPARTMENT", existing[0].id]
-          );
-          return res.redirect("/departments");
-        } else {
-          // Mã đã tồn tại và đang hoạt động
-          return res.status(400).send(`Mã phòng ban '${cleanCode}' đã tồn tại trong hệ thống. Vui lòng chọn mã khác!`);
-        }
+        return res.redirect(
+          "/departments?error=" +
+            encodeURIComponent(`Mã phòng ban '${cleanCode}' đã tồn tại trong hệ thống, vui lòng nhập mã khác!`)
+        );
       }
 
+      // 2. Nếu mã chưa tồn tại -> Mới cho phép tạo mới
       await db.query(
         "INSERT INTO org_units (code, name, type, parent_id, active, created_at, updated_at) VALUES (?, ?, ?, 227, 1, NOW(), NOW())",
         [cleanCode, cleanName, type || "DEPARTMENT"]
       );
 
-      res.redirect("/departments");
+      res.redirect("/departments?msg=" + encodeURIComponent("Thêm phòng ban mới thành công!"));
     } catch (err) {
       console.error("Lỗi thêm phòng ban:", err);
       if (err.code === "ER_DUP_ENTRY") {
-        return res.status(400).send("Mã phòng ban đã tồn tại trong hệ thống. Vui lòng chọn mã khác!");
+        return res.redirect(
+          "/departments?error=" +
+            encodeURIComponent("Mã phòng ban đã tồn tại trong hệ thống, vui lòng nhập mã khác!")
+        );
       }
-      res.status(500).send("Lỗi thêm phòng ban: " + err.message);
+      res.redirect("/departments?error=" + encodeURIComponent("Lỗi thêm phòng ban: " + err.message));
     }
   },
 
@@ -113,13 +119,17 @@ const departmentController = {
       const cleanCode = (code || "").trim().toUpperCase();
       const cleanName = (name || "").trim();
 
-      // Kiểm tra trùng mã với phòng ban khác
+      // Kiểm tra trùng mã với phòng ban khác trong DB
       const [duplicate] = await db.query(
         "SELECT id FROM org_units WHERE code = ? AND id != ? LIMIT 1",
         [cleanCode, req.params.id]
       );
       if (duplicate.length > 0) {
-        return res.status(400).send(`Mã phòng ban '${cleanCode}' đã được sử dụng bởi phòng ban khác!`);
+        return res.render("departments/departments-edit", {
+          title: "Sửa phòng ban",
+          department: { id: req.params.id, code: cleanCode, name: cleanName, type },
+          error: `Mã phòng ban '${cleanCode}' đã tồn tại, vui lòng nhập mã khác!`,
+        });
       }
 
       await db.query(
@@ -127,13 +137,17 @@ const departmentController = {
         [cleanCode, cleanName, type || "DEPARTMENT", req.params.id]
       );
 
-      res.redirect("/departments");
+      res.redirect("/departments?msg=" + encodeURIComponent("Cập nhật phòng ban thành công!"));
     } catch (err) {
       console.error("Lỗi cập nhật phòng ban:", err);
       if (err.code === "ER_DUP_ENTRY") {
-        return res.status(400).send("Mã phòng ban đã tồn tại trong hệ thống!");
+        return res.render("departments/departments-edit", {
+          title: "Sửa phòng ban",
+          department: { id: req.params.id, code: req.body.code, name: req.body.name, type: req.body.type },
+          error: "Mã phòng ban đã tồn tại, vui lòng nhập mã khác!",
+        });
       }
-      res.status(500).send("Lỗi cập nhật phòng ban: " + err.message);
+      res.redirect("/departments");
     }
   },
 
@@ -141,7 +155,7 @@ const departmentController = {
   async delete(req, res) {
     try {
       await db.query("UPDATE org_units SET active = 0, updated_at = NOW() WHERE id = ?", [req.params.id]);
-      res.redirect("/departments");
+      res.redirect("/departments?msg=" + encodeURIComponent("Đã ngưng hoạt động phòng ban thành công!"));
     } catch (err) {
       res.status(500).send("Không thể xóa: " + err.message);
     }
