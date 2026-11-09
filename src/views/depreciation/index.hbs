@@ -2,14 +2,14 @@
   <!-- Tiêu đề trang -->
   <div class="mb-3">
     <h5 class="mb-0 fw-bold text-dark">Khấu hao tài sản</h5>
-    <small class="text-muted">Theo dõi phân bổ khấu hao đường thẳng và giá trị còn lại của tài sản</small>
+    <small class="text-muted">Theo dõi phân bổ khấu hao đường thẳng và giá trị còn lại của tài sản toàn hệ thống</small>
   </div>
 
-  <!-- 3 Thẻ chỉ số tài chính -->
+  <!-- 3 Thẻ chỉ số tài chính cốt lõi -->
   <div class="row g-3 mb-3">
     <div class="col-md-4">
       <div class="card p-3 border shadow-none bg-white">
-        <small class="text-muted d-block">Tổng nguyên giá</small>
+        <small class="text-muted d-block">Tổng nguyên giá tài sản</small>
         <div class="fs-5 fw-bold text-dark mt-1">{{formatCurrency summary.totalCost}}</div>
       </div>
     </div>
@@ -27,39 +27,43 @@
     </div>
   </div>
 
-  <div class="card border shadow-none">
-    <!-- Bộ lọc tìm kiếm & Đơn vị -->
-    <div class="card-header bg-white py-3 border-0">
-      <form action="/depreciation" method="get" class="row g-2 align-items-center">
-        <div class="col-md-4">
-          <div class="input-group input-group-sm">
-            <span class="input-group-text bg-light text-muted"><i class="bi bi-search"></i></span>
-            <input
-              type="text"
-              name="search"
-              class="form-control"
-              value="{{search}}"
-              placeholder="Tìm theo mã hoặc tên tài sản..."
-            />
-          </div>
+  <!-- Bảng dữ liệu chính -->
+  <div class="card">
+    <div class="card-header bg-white py-3">
+      <div class="row align-items-center g-2">
+        <div class="col-md-5">
+          <h6 class="mb-0 fw-bold text-dark">Danh sách trích khấu hao</h6>
+          <small class="text-muted">Kế hoạch phân bổ và mức trích hàng tháng theo tài sản</small>
         </div>
 
-        <div class="col-md-4">
-          <select name="org_unit_id" class="form-select form-select-sm" onchange="this.form.submit()">
-            <option value="">-- Tất cả đơn vị quản lý --</option>
-            {{#each orgUnits}}
-              <option value="{{this.id}}" {{#if (eq this.id ../orgUnitId)}}selected{{/if}}>{{this.name}}</option>
-            {{/each}}
-          </select>
-        </div>
+        <div class="col-md-7 d-flex flex-wrap justify-content-md-end align-items-center gap-2">
+          <!-- Form tìm kiếm và lọc đơn vị đồng nhất với các trang khác -->
+          <form action="/depreciation" method="get" class="d-flex align-items-center gap-2 m-0" role="search">
+            <div class="input-group input-group-sm" style="width: 250px;">
+              <span class="input-group-text bg-light text-muted"><i class="bi bi-search"></i></span>
+              <input
+                type="text"
+                name="search"
+                class="form-control"
+                value="{{search}}"
+                placeholder="Tìm theo mã, tên tài sản..."
+              />
+            </div>
 
-        <div class="col-md-4 text-md-end">
-          {{#if (or search orgUnitId)}}
-            <a href="/depreciation" class="btn btn-secondary btn-sm me-1">Đặt lại</a>
-          {{/if}}
-          <button type="submit" class="btn btn-primary btn-sm">Tìm kiếm</button>
+            <!-- Tự động lọc khi chọn đơn vị -->
+            <select name="org_unit_id" class="form-select form-select-sm" style="width: 190px;" onchange="this.form.submit()">
+              <option value="">Tất cả đơn vị quản lý</option>
+              {{#each orgUnits}}
+                <option value="{{this.id}}" {{#if (eq this.id ../orgUnitId)}}selected{{/if}}>{{this.name}}</option>
+              {{/each}}
+            </select>
+
+            {{#if (or search orgUnitId)}}
+              <a href="/depreciation" class="btn btn-sm btn-outline-secondary text-nowrap">Đặt lại</a>
+            {{/if}}
+          </form>
         </div>
-      </form>
+      </div>
     </div>
 
     <!-- Bảng danh sách tài sản trích khấu hao -->
@@ -115,19 +119,23 @@
       </table>
     </div>
 
-    <!-- Phân trang Bootstrap -->
+    <!-- Phân trang Bootstrap chuẩn đồng bộ -->
     {{#if (gt totalPages 1)}}
-      <div class="card-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center">
-        <small class="text-muted">Trang <b>{{currentPage}}</b> / {{totalPages}}</small>
-        <ul class="pagination pagination-sm mb-0">
-          {{#each pages}}
-            <li class="page-item {{#if this.active}}active{{/if}}">
-              <a class="page-link" href="/depreciation?page={{this.number}}&search={{../search}}&org_unit_id={{../orgUnitId}}">
-                {{this.number}}
-              </a>
-            </li>
-          {{/each}}
-        </ul>
+      <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+        <div class="small text-muted">
+          Trang <b>{{currentPage}}</b> / {{totalPages}}
+        </div>
+        <nav aria-label="Phân trang">
+          <ul class="pagination pagination-sm mb-0">
+            {{#each pages}}
+              <li class="page-item {{#if this.active}}active{{/if}}">
+                <a class="page-link" href="/depreciation?page={{this.number}}&search={{../search}}&org_unit_id={{../orgUnitId}}">
+                  {{this.number}}
+                </a>
+              </li>
+            {{/each}}
+          </ul>
+        </nav>
       </div>
     {{/if}}
   </div>
