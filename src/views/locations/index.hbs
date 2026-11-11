@@ -128,8 +128,9 @@
           </div>
 
           <div class="mb-3">
-            <label class="form-label small fw-semibold">Đơn vị quản lý khu vực này</label>
-            <select class="form-select" name="org_unit_id">
+            <label class="form-label small fw-semibold">Đơn vị quản lý khu vực này <span class="text-danger">*</span></label>
+            <select class="form-select" name="org_unit_id" required>
+              <option value="">-- Chọn đơn vị quản lý --</option>
               {{#each orgUnits}}
                 <option value="{{this.id}}">{{this.name}}</option>
               {{/each}}

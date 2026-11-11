@@ -1,5 +1,6 @@
 const db = require("../config/db");
 const dayjs = require("dayjs");
+const crypto = require("crypto");
 
 const requestController = {
   // 1. Danh sách phiếu đề xuất
@@ -37,21 +38,22 @@ const requestController = {
     try {
       const { type, title, reason, item_name, category_id, estimated_cost, asset_id } = req.body;
       const code = (type === "assign" ? "DX-CP-" : "DX-MS-") + Date.now().toString().slice(-6);
-      const userId = req.session.user ? req.session.user.id : null;
-      const orgUnitId = req.session.user ? req.session.user.org_unit_id : 227;
+      const userId = req.session.user?.id || 315;
+      const orgUnitId = req.session.user?.org_unit_id || 227;
       const cost = type === "purchase" ? Number(estimated_cost) || 0 : 0;
+      const titleVal = title || item_name || (type === "purchase" ? "Đề xuất mua sắm mới" : "Đề xuất cấp phát từ kho");
 
       const [result] = await db.query(
         `INSERT INTO requests (code, type, requester_id, org_unit_id, title, reason, status, total_estimated_cost, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, 'pending_approval', ?, NOW(), NOW())`,
-        [code, type, userId, orgUnitId, title, reason, cost]
+        [code, type, userId, orgUnitId, titleVal, reason || "", cost]
       );
 
       // Lưu chi tiết yêu cầu
       await db.query(
         `INSERT INTO request_lines (request_id, asset_id, item_name, category_id, quantity, estimated_cost, notes, created_at)
          VALUES (?, ?, ?, ?, 1, ?, ?, NOW())`,
-        [result.insertId, type === "assign" ? asset_id : null, item_name || title, category_id || null, cost, reason]
+        [result.insertId, type === "assign" ? asset_id : null, item_name || titleVal, category_id || null, cost, reason || ""]
       );
 
       res.redirect("/requests/" + result.insertId);
@@ -118,10 +120,16 @@ const requestController = {
       // Mua sắm -> Tự tạo tài sản mới vào kho
       if (request.type === "purchase") {
         const autoCode = `TS-${dayjs().format("YYYY")}-${Math.floor(1000 + Math.random() * 9000)}`;
+        const qrToken = crypto.randomBytes(32).toString("hex");
+        let catId = request.category_id;
+        if (!catId) {
+          const [[firstCat]] = await db.query("SELECT id FROM asset_categories WHERE active = 1 LIMIT 1");
+          catId = firstCat ? firstCat.id : 1;
+        }
         await db.query(
-          `INSERT INTO assets (code, name, category_id, org_unit_id, original_cost, purchase_date, useful_life_months, status, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, CURDATE(), 36, 'in_stock', NOW(), NOW())`,
-          [autoCode, request.item_name || request.title, request.category_id, request.org_unit_id, request.estimated_cost]
+          `INSERT INTO assets (code, qr_token, name, category_id, org_unit_id, original_cost, purchase_date, useful_life_months, status, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, CURDATE(), 36, 'in_stock', NOW(), NOW())`,
+          [autoCode, qrToken, request.item_name || request.title, catId, request.org_unit_id, Number(request.estimated_cost) || 0]
         );
       }
 

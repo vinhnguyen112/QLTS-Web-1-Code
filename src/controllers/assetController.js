@@ -1,5 +1,6 @@
 const db = require("../config/db");
 const dayjs = require("dayjs");
+const crypto = require("crypto");
 const QRCode = require("qrcode");
 const { recordEvent } = require("../utils/logger");
 const { calcDepreciation } = require("../utils/depreciation");
@@ -85,7 +86,7 @@ const assetController = {
     }
   },
 
-  // 2. Thêm mới hồ sơ tài sản (trực tiếp từ Modal tại trang /assets)
+  // 2. Thêm mới hồ sơ tài sản
   async create(req, res) {
     try {
       const {
@@ -101,43 +102,37 @@ const assetController = {
         serial_no,
       } = req.body;
 
-      // Sinh mã tài sản tự động
+      // Sinh mã tài sản tự động & mã token QR
       const code = `TS-${dayjs().format("YYYY")}-${Math.floor(10000 + Math.random() * 90000)}`;
+      const qr_token = crypto.randomBytes(32).toString("hex");
       const status = assignee_id ? "in_use" : "in_stock";
-      const currentUserId = req.session.user ? req.session.user.id : null;
 
       const [result] = await db.query(
-        `
-        INSERT INTO assets (code, name, category_id, supplier_id, org_unit_id, location_id, assignee_id,
+        `INSERT INTO assets (code, qr_token, name, category_id, supplier_id, org_unit_id, location_id, assignee_id,
                             original_cost, purchase_date, useful_life_months, status, serial_no, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-      `,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
         [
           code,
+          qr_token,
           name,
           category_id,
-          supplier_id || null,
+          supplier_id,
           org_unit_id,
-          location_id || null,
+          location_id,
           assignee_id || null,
-          original_cost || 0,
-          purchase_date || null,
-          useful_life_months || 0,
+          original_cost,
+          purchase_date,
+          useful_life_months,
           status,
           serial_no || null,
         ]
       );
 
-      const eventType = assignee_id ? "ASSIGN" : "INITIAL_IMPORT";
-      const eventNote = assignee_id
-        ? "Khai báo tài sản mới và bàn giao trực tiếp cho nhân viên"
-        : "Nhập mới tài sản vào kho lưu trữ";
-      await recordEvent(result.insertId, eventType, eventNote, currentUserId);
-
+      await recordEvent(result.insertId, assignee_id ? "ASSIGN" : "INITIAL_IMPORT", assignee_id ? "Bàn giao sử dụng" : "Nhập kho", req.session.user?.id);
       res.redirect(`/assets/${result.insertId}?msg=` + encodeURIComponent("Thêm tài sản mới thành công!"));
     } catch (err) {
       console.error("Lỗi thêm tài sản mới:", err);
-      res.redirect("/assets?error=" + encodeURIComponent("Không thể thêm tài sản: " + err.message));
+      res.redirect("/assets?error=" + encodeURIComponent("Lỗi: " + err.message));
     }
   },
 
@@ -272,27 +267,23 @@ const assetController = {
       } = req.body;
 
       await db.query(
-        `
-        UPDATE assets
-        SET code = ?, name = ?, category_id = ?, supplier_id = ?,
-            org_unit_id = ?, location_id = ?, assignee_id = ?,
-            original_cost = ?, purchase_date = ?, useful_life_months = ?,
-            serial_no = ?, status = ?, updated_at = NOW()
-        WHERE id = ?
-      `,
+        `UPDATE assets
+         SET code = ?, name = ?, category_id = ?, supplier_id = ?, org_unit_id = ?, location_id = ?,
+             assignee_id = ?, original_cost = ?, purchase_date = ?, useful_life_months = ?, serial_no = ?, status = ?, updated_at = NOW()
+         WHERE id = ?`,
         [
           code,
           name,
-          category_id || null,
-          supplier_id || null,
-          org_unit_id || null,
-          location_id || null,
+          category_id,
+          supplier_id,
+          org_unit_id,
+          location_id,
           assignee_id || null,
-          original_cost || 0,
-          purchase_date || null,
-          useful_life_months || 0,
+          original_cost,
+          purchase_date,
+          useful_life_months,
           serial_no || null,
-          status || "in_stock",
+          status,
           req.params.id,
         ]
       );
@@ -300,7 +291,7 @@ const assetController = {
       res.redirect(`/assets/${req.params.id}`);
     } catch (err) {
       console.error("Lỗi cập nhật tài sản:", err);
-      res.status(500).send("Không thể cập nhật tài sản: " + err.message);
+      res.redirect(`/assets/${req.params.id}?error=` + encodeURIComponent("Lỗi: " + err.message));
     }
   },
 

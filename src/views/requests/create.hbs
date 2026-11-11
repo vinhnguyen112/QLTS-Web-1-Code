@@ -24,12 +24,12 @@
         <div id="purchaseBlock">
           <div class="row g-2 mb-3">
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Tên thiết bị</label>
-              <input type="text" class="form-control" name="item_name" placeholder="Ví dụ: Laptop Dell Vostro 3520" />
+              <label class="form-label small fw-semibold">Tên thiết bị <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="item_name" id="purchaseItem" placeholder="Ví dụ: Laptop Dell Vostro 3520" required />
             </div>
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Loại danh mục</label>
-              <select class="form-select" name="category_id">
+              <label class="form-label small fw-semibold">Loại danh mục <span class="text-danger">*</span></label>
+              <select class="form-select" name="category_id" id="purchaseCat" required>
                 <option value="">-- Chọn loại danh mục --</option>
                 {{#each categories}}
                   <option value="{{this.id}}">{{this.name}}</option>
@@ -38,16 +38,16 @@
             </div>
           </div>
           <div class="mb-3">
-            <label class="form-label small fw-semibold">Đơn giá ước tính (VNĐ)</label>
-            <input type="number" class="form-control" name="estimated_cost" placeholder="Ví dụ: 15000000" />
+            <label class="form-label small fw-semibold">Đơn giá ước tính (VNĐ) <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" name="estimated_cost" id="purchaseCost" placeholder="Ví dụ: 15000000" min="0" required />
           </div>
         </div>
 
         <!-- Khối Cấp phát từ kho -->
         <div id="assignBlock" style="display: none;">
           <div class="mb-3">
-            <label class="form-label small fw-semibold">Chọn tài sản trong kho cần cấp phát</label>
-            <select class="form-select" name="asset_id">
+            <label class="form-label small fw-semibold">Chọn tài sản trong kho cần cấp phát <span class="text-danger">*</span></label>
+            <select class="form-select" name="asset_id" id="assignAsset">
               <option value="">-- Chọn tài sản đang trong kho --</option>
               {{#each assets}}
                 <option value="{{this.id}}">[{{this.code}}] {{this.name}} ({{formatCurrency this.original_cost}})</option>
@@ -75,5 +75,10 @@
     const isPurchase = document.getElementById('typeSelect').value === 'purchase';
     document.getElementById('purchaseBlock').style.display = isPurchase ? 'block' : 'none';
     document.getElementById('assignBlock').style.display = isPurchase ? 'none' : 'block';
+
+    document.getElementById('purchaseItem').required = isPurchase;
+    document.getElementById('purchaseCat').required = isPurchase;
+    document.getElementById('purchaseCost').required = isPurchase;
+    document.getElementById('assignAsset').required = !isPurchase;
   }
 </script>

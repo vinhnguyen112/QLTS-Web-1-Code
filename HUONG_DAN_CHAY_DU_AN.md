@@ -1,274 +1,145 @@
-# HƯỚNG DẪN CÀI ĐẶT & CHẠY DỰ ÁN QLTS-Web-1-Code
+# HƯỚNG DẪN CÀI ĐẶT & CHẠY DỰ ÁN QUẢN LÝ TÀI SẢN (QLTS)
 
-**Hệ thống Quản lý Tài sản Doanh nghiệp** – Node.js + Express 5 + Handlebars + MySQL 8.
-
----
-
-## 1. Yêu cầu phần mềm
-
-| Phần mềm | Phiên bản khuyến nghị | Lệnh kiểm tra | Tải về |
-|---|---|---|---|
-| Node.js | 20 LTS hoặc 22 LTS (tối thiểu 18) | `node -v` | https://nodejs.org |
-| npm | đi kèm Node.js (10.x) | `npm -v` | – |
-| MySQL Server | 8.x | `mysql --version` | https://dev.mysql.com/downloads hoặc XAMPP / Laragon |
-| Git | bất kỳ | `git --version` | https://git-scm.com |
-| Trình duyệt | Chrome / Edge / Firefox mới | – | – |
-
-> Máy phát triển hiện tại: Node.js v22.13.0, npm 10.9.2.
+> **Hệ thống Quản lý Tài sản Doanh nghiệp**  
+> Công nghệ: **Node.js (Express 5)** + **Handlebars View Engine** + **MySQL 8** + **Bootstrap 5**
 
 ---
 
-## 2. Cấu trúc thư mục dự án
+## 1. Yêu cầu môi trường
 
-`package.json` phải nằm ngay trong thư mục bạn chạy lệnh `npm`:
+Trước khi chạy, máy tính cần cài sẵn:
+1. **Node.js**: Phiên bản 18, 20 LTS hoặc 22 LTS (Tải tại [nodejs.org](https://nodejs.org/)).
+2. **MySQL Server**: Phiên bản 8.x hoặc dùng thông qua **XAMPP / Laragon** (bật cổng MySQL 3306).
+3. **Trình duyệt web**: Chrome, Edge, Firefox hoặc trình duyệt bất kỳ.
 
-```
-D:\001\QLTS-Web-1-Code\
-├── node_modules\          # Thư viện (sinh ra sau khi npm install)
-├── src\
-│   ├── config\            # Kết nối MySQL
-│   ├── controllers\       # Xử lý nghiệp vụ
-│   ├── middlewares\       # Kiểm tra đăng nhập, phân quyền
-│   ├── routes\            # Định tuyến URL
-│   ├── views\             # Giao diện Handlebars (.hbs)
-│   └── public\            # CSS, JS tĩnh
-├── .env                   # Biến môi trường (DB, cổng, session)
-├── package.json           # Khai báo thư viện & lệnh chạy
-├── package-lock.json      # Khóa phiên bản thư viện
-└── server.js              # Điểm khởi chạy ứng dụng
-```
-
-> **Lưu ý khi giải nén file .rar / .zip:** phần mềm giải nén thường tạo thêm thư mục lồng, ví dụ `D:\001\QLTS-Web-1-Code\QLTS-Web-1-Code\package.json`. Khi đó chạy `npm run dev` ở thư mục ngoài sẽ báo lỗi `ENOENT: Could not read package.json`. Hãy `cd` vào đúng thư mục chứa `package.json`.
-
----
-
-## 3. Danh sách thư viện sử dụng
-
-### 3.1. Thư viện chính (dependencies)
-
-| Thư viện | Phiên bản | Công dụng |
-|---|---|---|
-| express | 5.2.1 | Web framework, xử lý route và request/response |
-| express-handlebars | 8.0.1 | Template engine render giao diện `.hbs` |
-| express-session | 1.19.0 | Quản lý phiên đăng nhập (session) |
-| mysql2 | 3.24.4 | Kết nối và truy vấn cơ sở dữ liệu MySQL |
-| dotenv | 17.4.2 | Đọc biến môi trường từ file `.env` |
-| argon2 | 0.45.1 | Băm và xác thực mật khẩu (Argon2id) |
-| bcryptjs | 3.0.3 | Băm mật khẩu dự phòng |
-| qrcode | 1.5.4 | Sinh mã QR cho tem tài sản |
-| bwip-js | 4.11.4 | Sinh mã vạch (barcode) |
-| chart.js | 4.5.1 | Vẽ biểu đồ báo cáo thống kê |
-| dayjs | 1.11.23 | Xử lý, định dạng ngày giờ |
-
-### 3.2. Thư viện phát triển (devDependencies)
-
-| Thư viện | Phiên bản | Công dụng |
-|---|---|---|
-| nodemon | 3.1.14 | Tự khởi động lại server khi sửa code (`npm run dev`) |
-
-### 3.3. Thư viện nạp qua CDN (không cần cài)
-
-| Thư viện | Phiên bản | Công dụng |
-|---|---|---|
-| Bootstrap | 5.3.3 | Khung giao diện, bảng, form, modal |
-| Bootstrap Icons | 1.11.3 | Bộ icon đơn sắc |
-| html5-qrcode | – | Quét mã QR bằng camera khi kiểm kê |
-
-> Các thư viện CDN cần máy có kết nối Internet khi mở giao diện.
-
----
-
-## 4. Cài đặt thư viện
-
-### Cách 1 – Cài toàn bộ theo package.json (khuyến nghị)
-
+Kiểm tra nhanh trong Terminal (PowerShell hoặc CMD):
 ```bash
-cd /d/001/QLTS-Web-1-Code
-npm install
+node -v      # Yêu cầu >= v18.x (khuyến nghị v20.x hoặc v22.x)
+npm -v       # Đi kèm Node.js
 ```
-
-Lệnh này đọc `package.json` + `package-lock.json` và cài đúng phiên bản vào thư mục `node_modules`.
-
-### Cách 2 – Cài thủ công từng thư viện (khi tạo dự án mới hoặc package.json bị mất)
-
-```bash
-npm init -y
-npm install express@5.2.1 express-handlebars@8.0.1 express-session@1.19.0 mysql2@3.24.4 dotenv@17.4.2
-npm install argon2@0.45.1 bcryptjs@3.0.3 qrcode@1.5.4 bwip-js@4.11.4 chart.js@4.5.1 dayjs@1.11.23
-npm install --save-dev nodemon@3.1.14
-```
-
-Sau đó thêm phần `scripts` vào `package.json`:
-
-```json
-"scripts": {
-  "start": "node server.js",
-  "dev": "nodemon server.js"
-}
-```
-
-### Kiểm tra cài đặt thành công
-
-```bash
-npm ls --depth=0
-```
-
-Kết quả phải liệt kê đủ 12 thư viện ở mục 3, không có dòng `UNMET DEPENDENCY` hay `missing`.
-
-### Lưu ý về argon2
-
-`argon2` là thư viện native (biên dịch C). Thông thường npm tự tải bản dựng sẵn cho Windows x64. Nếu cài bị lỗi `node-gyp` / `gyp ERR!`:
-
-1. Cài **Visual Studio Build Tools** (chọn "Desktop development with C++").
-2. Cài **Python 3**.
-3. Xóa `node_modules` và chạy lại `npm install`.
 
 ---
 
-## 5. Chuẩn bị cơ sở dữ liệu
+## 2. Hướng dẫn khởi chạy nhanh (3 Bước)
 
-Dự án dùng chung database **`qlts_dev`** với dự án `QLTS-NTVINH`.
+### Bước 1: Nhập cơ sở dữ liệu (Import Database)
+Trong thư mục dự án đã có sẵn file dữ liệu đầy đủ: **`devmaster_demo_backup.sql`**.
 
-### Bước 5.1 – Bật MySQL
+* **Cách 1: Dùng phpMyAdmin (XAMPP / Laragon - Khuyên dùng, dễ nhất)**:
+  1. Mở trình duyệt vào [http://localhost/phpmyadmin](http://localhost/phpmyadmin).
+  2. Bấm vào tab **Databases (Cơ sở dữ liệu)**, tạo database mới tên là: `qlts_dev` (chọn bảng mã `utf8mb4_general_ci` hoặc `utf8mb4_unicode_ci`).
+  3. Chọn database `qlts_dev` vừa tạo, bấm tab **Import (Nhập)**.
+  4. Bấm **Choose File (Chọn tệp)**, chọn đến file `devmaster_demo_backup.sql` nằm trong thư mục dự án, rồi bấm **Import (Thực hiện)** ở cuối trang.
 
-Mở XAMPP / Laragon và bấm Start MySQL, hoặc bật dịch vụ MySQL80 trong Windows Services.
-
-### Bước 5.2 – Tạo database (nếu chưa có)
-
-```sql
-CREATE DATABASE qlts_dev CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-### Bước 5.3 – Tạo bảng và dữ liệu mẫu (dùng dự án QLTS-NTVINH)
-
-```bash
-cd /d/001/QLTS-NTVINH/backend
-npm install
-npm run db:migrate
-npm run db:seed
-```
-
-> Nếu database `qlts_dev` đã có dữ liệu thì bỏ qua bước 5.2 và 5.3.
+* **Cách 2: Dùng dòng lệnh (Command Line)**:
+  ```bash
+  # Đăng nhập MySQL và tạo database
+  mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS qlts_dev CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+  
+  # Import file devmaster_demo_backup.sql vào database
+  mysql -u root -p qlts_dev < devmaster_demo_backup.sql
+  ```
 
 ---
 
-## 6. Cấu hình file .env
-
-Tạo (hoặc kiểm tra) file `.env` ở thư mục gốc `D:\001\QLTS-Web-1-Code\`:
+### Bước 2: Cấu hình biến môi trường (`.env`)
+Kiểm tra file **`.env`** tại thư mục gốc của dự án. Nếu chưa có, tạo file tên là `.env` (hoặc sao chép từ `.env.example`) với nội dung như sau:
 
 ```env
 PORT=3000
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_USER=root
-DB_PASSWORD=mat_khau_mysql_cua_ban
+DB_PASSWORD=
 DB_NAME=qlts_dev
-SESSION_SECRET=chuoi_bi_mat_bat_ky
+SESSION_SECRET=qlts-devmaster-secret-key-2026
 ```
 
-| Biến | Ý nghĩa |
-|---|---|
-| PORT | Cổng chạy web (mặc định 3000) |
-| DB_HOST / DB_PORT | Địa chỉ và cổng MySQL |
-| DB_USER / DB_PASSWORD | Tài khoản MySQL |
-| DB_NAME | Tên database (`qlts_dev`) |
-| SESSION_SECRET | Khóa mã hóa phiên đăng nhập |
+> **Lưu ý:**
+> * Nếu bạn dùng **XAMPP / Laragon**: Mặc định `DB_USER=root` và `DB_PASSWORD=` (để trống).
+> * Nếu bạn dùng **MySQL Server cài độc lập**: Nhập mật khẩu tài khoản `root` của máy bạn vào `DB_PASSWORD`.
 
 ---
 
-## 7. Chạy dự án
+### Bước 3: Cài đặt thư viện & Khởi chạy
 
-### Bước 7.1 – Mở terminal đúng thư mục
-
-```bash
-cd /d/001/QLTS-Web-1-Code      # Git Bash
-cd D:\001\QLTS-Web-1-Code      # PowerShell / CMD
-```
-
-### Bước 7.2 – Khởi động server
+Mở Terminal (PowerShell, CMD hoặc Git Bash) tại thư mục dự án:
 
 ```bash
-npm run dev     # Chế độ phát triển – tự restart khi sửa code
-npm start       # Chế độ chạy thường
+# 1. Cài đặt các thư viện phụ thuộc (chỉ cần chạy lần đầu)
+npm install
+
+# 2. Khởi chạy ứng dụng
+npm run dev
 ```
 
-Thành công khi terminal hiển thị:
+*(Hoặc dùng lệnh `npm start` để chạy ở chế độ chuẩn)*
 
-```
+Khi màn hình Terminal xuất hiện thông báo:
+```text
 Server đang chạy tại http://localhost:3000
 Kết nối MySQL thành công!
 ```
 
-### Bước 7.3 – Truy cập
-
-Mở trình duyệt vào địa chỉ: **http://localhost:3000**
-
-Dừng server: nhấn `Ctrl + C` trong terminal.
+Mở trình duyệt truy cập: **http://localhost:3000** để trải nghiệm hệ thống.
 
 ---
 
-## 8. Tài khoản đăng nhập demo
+## 3. Danh sách tài khoản đăng nhập mẫu
 
-| Vai trò | Username | Mật khẩu |
+Hệ thống được thiết kế theo mô hình phân quyền chặt chẽ (RBAC). Bạn có thể đăng nhập thử theo các vai trò:
+
+| STT | Vai trò trong hệ thống | Tên đăng nhập (Username) | Mật khẩu mặc định | Ghi chú quyền hạn |
+|:---:|---|:---:|:---:|---|
+| 1 | **Quản trị viên Hệ thống** | `admin` | `Admin@QLTS2026!` | Toàn quyền quản trị người dùng, hệ thống và audit log |
+| 2 | **Ban Giám đốc** | `gd.trinh` | `Devmaster@2026!` | Phê duyệt đề xuất, giám sát toàn diện, xem khấu hao |
+| 3 | **Quản lý tài sản (Trưởng phòng CSVC)** | `tp.csvc` | `Devmaster@2026!` | Quản lý hồ sơ tài sản, kho, kiểm kê, danh mục |
+| 4 | **Kế toán trưởng / Kế toán tài sản** | `tp.ketoan`<br>`kt.huyen` | `Devmaster@2026!` | Xem và trích lập khấu hao tài sản, báo cáo tài chính |
+| 5 | **Kỹ thuật viên bảo trì** | `ktv.csvc.dung` | `Devmaster@2026!` | Tiếp nhận xử lý sự cố, cập nhật hoàn thành bảo trì |
+| 6 | **Trưởng các phòng ban** | `tp.hcns`<br>`tp.kythuat`<br>`tp.daotao` | `Devmaster@2026!` | Lập và duyệt đề xuất cấp phát/mua sắm phòng ban |
+| 7 | **Nhân viên thông thường** | `nv.hcns.1`<br>`nv.kythuat.1` | `Devmaster@2026!` | Lập yêu cầu đề xuất tài sản cá nhân |
+
+---
+
+## 4. Cấu trúc thư mục mã nguồn
+
+```text
+QLTS-Web-1-Code/
+├── devmaster_demo_backup.sql  # File sao lưu cơ sở dữ liệu MySQL đầy đủ
+├── server.js                  # Điểm khởi chạy chính của ứng dụng
+├── .env                       # File cấu hình biến môi trường kết nối CSDL
+├── package.json               # Khai báo các thư viện npm và lệnh chạy
+├── src/
+│   ├── config/                # Cấu hình kết nối MySQL và định nghĩa quyền
+│   │   ├── db.js
+│   │   └── permissions.js
+│   ├── controllers/           # Xử lý logic nghiệp vụ cho từng phân hệ
+│   ├── middlewares/           # Kiểm tra đăng nhập và phân quyền (Auth)
+│   ├── routes/                # Khai báo các tuyến đường dẫn URL
+│   ├── utils/                 # Các hàm tiện ích dùng chung (Khấu hao, Helpers)
+│   │   ├── hbsHelpers.js      # Bộ hàm bổ trợ cho giao diện Handlebars
+│   │   ├── depreciation.js    # Thuật toán tính khấu hao theo Thông tư BTC
+│   │   └── logger.js          # Ghi nhật ký biến động tài sản
+│   ├── views/                 # Giao diện ứng dụng (Handlebars Engine)
+│   │   ├── layouts/           # Khung layout chuẩn (main.hbs)
+│   │   ├── partials/          # Thanh điều hướng (sidebar, navbar)
+│   │   └── ...                # Giao diện các chức năng nghiệp vụ
+│   └── public/                # Tài nguyên tĩnh (CSS, JS)
+```
+
+---
+
+## 5. Xử lý các sự cố thường gặp (Troubleshooting)
+
+| Sự cố | Nguyên nhân | Cách khắc phục |
 |---|---|---|
-| Quản trị hệ thống (SYS_ADMIN) | admin | Admin@QLTS2026! |
-| Giám đốc | gd.trinh | Devmaster@2026! |
-| Trưởng phòng CSVC (Quản lý tài sản) | tp.csvc | Devmaster@2026! |
-| Kế toán | tp.ketoan, kt.huyen | Devmaster@2026! |
-| Nhân viên | nv.hcns.1 | Devmaster@2026! |
+| **`Kết nối MySQL thất bại: connect ECONNREFUSED`** | MySQL chưa được khởi động. | Mở XAMPP / Laragon và nhấn **Start** dịch vụ MySQL. |
+| **`Access denied for user 'root'@'localhost'`** | Sai mật khẩu MySQL trong file `.env`. | Mở file `.env` và điền đúng mật khẩu MySQL của bạn vào mục `DB_PASSWORD`. |
+| **`Unknown database 'qlts_dev'`** | Chưa tạo hoặc chưa import cơ sở dữ liệu. | Làm theo **Bước 1** để import file `devmaster_demo_backup.sql` vào MySQL. |
+| **`Error: listen EADDRINUSE: address already in use :::3000`** | Cổng 3000 đang bị ứng dụng khác chiếm dụng. | Mở `.env` đổi `PORT=3000` thành `PORT=3001` (hoặc cổng khác) rồi chạy lại. |
+| **`Cannot find module ...`** | Chưa cài đặt gói thư viện qua npm. | Chạy lệnh `npm install` tại thư mục chứa file `package.json`. |
+| **Lỗi thư mục lồng nhau sau khi giải nén** | Phần mềm giải nén tạo thêm thư mục cùng tên (ví dụ: `QLTS-Web-1-Code/QLTS-Web-1-Code`). | Dùng lệnh `cd` di chuyển vào đúng thư mục có chứa file `package.json` và `server.js` trước khi gõ lệnh chạy. |
 
 ---
 
-## 9. Xử lý lỗi thường gặp
-
-| Lỗi | Nguyên nhân | Cách khắc phục |
-|---|---|---|
-| ENOENT: Could not read package.json | Đứng sai thư mục (thư mục lồng sau giải nén) | `cd` vào thư mục chứa `package.json` |
-| Cannot find module 'xxx' | Chưa cài thư viện | Chạy `npm install` |
-| 'nodemon' is not recognized | Chưa cài devDependencies | Chạy `npm install` hoặc dùng `npm start` |
-| gyp ERR! khi cài argon2 | Thiếu công cụ biên dịch C++ | Xem mục 4 – Lưu ý về argon2 |
-| ECONNREFUSED 127.0.0.1:3306 | MySQL chưa bật | Bật MySQL |
-| Access denied for user 'root' | Sai tài khoản MySQL | Sửa `DB_USER` / `DB_PASSWORD` trong `.env` |
-| Unknown database 'qlts_dev' | Chưa tạo database | Làm lại mục 5 |
-| EADDRINUSE :::3000 | Cổng 3000 đang bị chiếm | Tắt tiến trình cũ hoặc đổi `PORT` |
-| Giao diện mất CSS / icon | Không có Internet (CDN) | Kết nối mạng rồi tải lại trang |
-
-Tìm và tắt tiến trình đang chiếm cổng 3000 (PowerShell):
-
-```powershell
-Get-NetTCPConnection -LocalPort 3000 | Select-Object OwningProcess
-Stop-Process -Id <OwningProcess> -Force
-```
-
----
-
-## 10. Sao lưu & khôi phục
-
-Bản backup có sẵn: **`D:\001\QLTS-Web-1-Code_backup_20261108.zip`** – gồm toàn bộ mã nguồn, `.env`, lịch sử Git (`.git`) và `node_modules` (chạy được ngay, không cần Internet để cài lại).
-
-### Tạo bản backup .zip mới (PowerShell)
-
-```powershell
-cd D:\001
-tar -a -c -f QLTS-Web-1-Code_backup_NGAY.zip QLTS-Web-1-Code
-```
-
-> Dùng `tar` thay cho `Compress-Archive` vì `Compress-Archive` bỏ qua thư mục ẩn `.git`. Muốn file nhẹ hơn thì thêm `--exclude=node_modules` (khi khôi phục chạy lại `npm install`).
-
-### Khôi phục từ bản backup
-
-1. Đổi tên hoặc xóa thư mục `D:\001\QLTS-Web-1-Code` hiện tại (nếu có).
-2. Giải nén file `.zip` **tại `D:\001\`** (chọn "Extract Here") – sẽ tạo ra `D:\001\QLTS-Web-1-Code\`.
-3. Kiểm tra `package.json` nằm ngay trong `D:\001\QLTS-Web-1-Code\` (không bị lồng thư mục).
-4. Chạy `npm run dev` (chạy `npm install` trước nếu bản backup không có `node_modules`).
-
----
-
-## 11. Lệnh nhanh
-
-```bash
-cd /d/001/QLTS-Web-1-Code
-npm install        # Lần đầu hoặc sau khi khôi phục backup
-npm run dev        # Chạy dự án
-# Mở http://localhost:3000
-```
+> 💡 **Mẹo:** Để tắt server khi đang chạy trên Terminal, nhấn tổ hợp phím **`Ctrl + C`**.

@@ -1,4 +1,4 @@
-﻿<div class="container-fluid p-0">
+<div class="container-fluid p-0">
   <div class="card border shadow-none">
     <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
       <div>
@@ -50,8 +50,8 @@
           </div>
 
           <div class="col-md-4">
-            <label class="form-label small fw-semibold">Vị trí lắp đặt</label>
-            <select class="form-select" name="location_id">
+            <label class="form-label small fw-semibold">Vị trí lắp đặt <span class="text-danger">*</span></label>
+            <select class="form-select" name="location_id" required>
               <option value="">-- Chọn vị trí / Kho --</option>
               {{#each formData.locations}}
                 <option value="{{this.id}}" {{#if (eq this.id ../asset.location_id)}}selected{{/if}}>{{this.name}}</option>
@@ -85,8 +85,8 @@
           </div>
 
           <div class="col-md-4">
-            <label class="form-label small fw-semibold">Nhà cung cấp</label>
-            <select class="form-select" name="supplier_id">
+            <label class="form-label small fw-semibold">Nhà cung cấp <span class="text-danger">*</span></label>
+            <select class="form-select" name="supplier_id" required>
               <option value="">-- Chọn nhà cung cấp --</option>
               {{#each formData.suppliers}}
                 <option value="{{this.id}}" {{#if (eq this.id ../asset.supplier_id)}}selected{{/if}}>{{this.name}}</option>

@@ -1,4 +1,4 @@
-﻿<div class="container-fluid p-0" style="max-width: 750px; margin: auto;">
+<div class="container-fluid p-0" style="max-width: 750px; margin: auto;">
   <div class="card border shadow-none">
     <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
       <div>
@@ -22,8 +22,9 @@
           </div>
 
           <div class="col-md-6">
-            <label class="form-label small fw-semibold">Phòng ban</label>
-            <select class="form-select" name="org_unit_id">
+            <label class="form-label small fw-semibold">Phòng ban <span class="text-danger">*</span></label>
+            <select class="form-select" name="org_unit_id" required>
+              <option value="">-- Chọn phòng ban --</option>
               {{#each formData.departments}}
                 <option value="{{this.id}}" {{#if (eq this.id ../employee.org_unit_id)}}selected{{/if}}>{{this.name}}</option>
               {{/each}}
@@ -31,8 +32,9 @@
           </div>
 
           <div class="col-md-6">
-            <label class="form-label small fw-semibold">Vai trò hệ thống</label>
-            <select class="form-select" name="role_id">
+            <label class="form-label small fw-semibold">Vai trò hệ thống <span class="text-danger">*</span></label>
+            <select class="form-select" name="role_id" required>
+              <option value="">-- Chọn vai trò --</option>
               {{#each formData.roles}}
                 <option value="{{this.id}}" {{#if (eq this.id ../employee.role_id)}}selected{{/if}}>{{this.name}} ({{this.code}})</option>
               {{/each}}
